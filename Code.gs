@@ -14,7 +14,7 @@ const HEADERS = {
   '代禱名單': ['紀錄代碼', '時間', '代禱牆代碼', '排', '名字', '填寫者', '填寫者 userId'],
   '發布者': ['LINE userId', '名稱', '備註'],
   '代禱卡': ['LINE userId', 'LINE名稱', '名單', '更新時間'],
-  '參與紀錄': ['LINE userId', '代禱牆代碼', '最後開啟'],
+  '參與紀錄': ['LINE userId', '代禱牆代碼', '最後開啟', '加入時間', 'LINE名稱', '角色'],
 };
 
 // 欄位位置（從 0 開始）
@@ -54,7 +54,11 @@ function doPost(e) {
       case 'session':     out = { ok: true, ...createSession(user) }; break;
       case 'logout':      deleteSession(req.session); out = { ok: true }; break;
       case 'me':          out = { ok: true, userId: user.userId, displayName: user.displayName, isAdmin: isPublisher(user.userId) }; break;
-      case 'wall':        out = { ok: true, wall: wallView(req.wallId, user) }; markJoined(user, req.wallId); break;
+      case 'wall':        out = { ok: true, ...openWall(user, req.wallId) }; break;
+      case 'joinWall':    out = { ok: true, wall: joinWall(user, req.wallId) }; break;
+      case 'leaveWall':   out = { ok: true, ...leaveWall(user, req.wallId) }; break;
+      case 'removeMembers': own(); out = { ok: true, wall: removeMembers(user, req.wallId, req.keys) }; break;
+      case 'setMemberRole': own(); out = { ok: true, wall: setMemberRole(user, req.wallId, req.key, req.role) }; break;
       case 'addNames':    out = { ok: true, ...addNames(user, req.wallId, req.group, req.names, req.cardDay) }; break;
       case 'getCard':     out = { ok: true, ...getCard(user) }; break;
       case 'saveCard':    out = { ok: true, ...saveCard(user, req.card) }; break;
@@ -64,6 +68,12 @@ function doPost(e) {
       case 'updateWall':  own(); out = { ok: true, wall: updateWall(req.wallId, req.wall || {}, user) }; break;
       case 'setOpen':     own(); out = { ok: true, wall: setOpen(req.wallId, !!req.open, user) }; break;
       case 'deleteWall':  own(); out = { ok: true, removed: deleteWall(req.wallId) }; break;
+      case 'deleteWalls': out = { ok: true, ...deleteWalls(user, req.wallIds) }; break;
+      case 'setOpenMany': out = { ok: true, ...setOpenMany(user, req.wallIds, !!req.open) }; break;
+      case 'removeNames': out = { ok: true, wall: removeNames(user, req.wallId, req.entryIds) }; break;
+      case 'editName':    out = { ok: true, wall: editName(user, req.wallId, req.entryId, req.name, req.group) }; break;
+      case 'moveNames':   own(); out = { ok: true, wall: moveNames(user, req.wallId, req.entryIds, req.group) }; break;
+      case 'adminOverview': requirePublisher(user); out = { ok: true, ...adminOverview(user) }; break;
       case 'myData':      out = { ok: true, ...myData(user) }; break;
       case 'deleteMyData': out = { ok: true, ...deleteMyData(user) }; break;
       default: throw new Error('未知的動作');
@@ -159,7 +169,7 @@ function withLock(fn) {
 /* ---------- 權限 ---------- */
 function isPublisher(uid) { return rows(SH.PUBLISHERS).some(r => String(r[0]).trim() === uid); }
 function creatorOf(row) { const m = /\((U[0-9a-f]+)\)\s*$/.exec(String(row[W.CREATOR] || '')); return m ? m[1] : ''; }
-function canManage(user, row) { return !!row && (creatorOf(row) === user.userId || isPublisher(user.userId)); }
+function canManage(user, row) { return !!row && (creatorOf(row) === user.userId || isPublisher(user.userId) || memberOf(user.userId, String(row[W.ID])).role === 'admin'); }
 function requireOwner(user, wallId) {
   const row = findWall(wallId).row;
   if (!canManage(user, row)) throw new Error('只有建立這面代禱牆的人可以管理');
@@ -220,7 +230,9 @@ function buildView(row, user, nameRows) {
   const byGroup = {};
   (nameRows || namesOf(w.id)).forEach(r => {
     const g = String(r[N.GROUP]);
-    (byGroup[g] = byGroup[g] || []).push({ id: String(r[N.ID]), name: String(r[N.NAME]), mine: !!user && String(r[N.UID]) === user.userId });
+    const e = { id: String(r[N.ID]), name: String(r[N.NAME]), mine: !!user && String(r[N.UID]) === user.userId };
+    if (manage) { e.by = String(r[N.BY] || ''); e.time = fmt(r[N.TIME], 'M/d HH:mm'); } // 後台才看得到是誰填的
+    (byGroup[g] = byGroup[g] || []).push(e);
   });
   const order = w.groups.slice();
   Object.keys(byGroup).forEach(g => { if (order.indexOf(g) < 0) order.push(g); }); // 舊資料或被移除的排仍顯示
@@ -229,6 +241,11 @@ function buildView(row, user, nameRows) {
   w.filled = w.list.filter(g => g.names.length).length;
   w.unfilled = w.list.length - w.filled;
   w.canManage = manage;
+  w.isCreator = !!user && creatorOf(row) === user.userId;
+  if (manage) {
+    w.members = membersOf(w.id).map(m => ({ key: m.uid, name: m.name, joined: m.joined, last: m.last, role: m.uid === creatorOf(row) ? 'owner' : m.role }));
+    if (!w.members.some(m => m.key === creatorOf(row))) w.members.unshift({ key: creatorOf(row), name: w.creator, joined: w.created, last: '', role: 'owner' });
+  }
   return w;
 }
 
@@ -275,6 +292,9 @@ function deleteWall(id) {
     let removed = 0;
     for (let i = data.length - 1; i >= 1; i--) if (String(data[i][N.WALL]) === String(id)) { nsh.deleteRow(i + 1); removed++; }
     f.sh.deleteRow(f.index);
+    const js = joinedSheet(), jd = js.getDataRange().getValues();
+    for (let i = jd.length - 1; i >= 1; i--) if (String(jd[i][1]) === String(id)) js.deleteRow(i + 1);
+    JOINED_MEMO = null;
     return removed;
   });
 }
@@ -284,7 +304,7 @@ function listWalls(user) {
   const admin = isPublisher(user.userId);
   const all = rows(SH.NAMES);
   return rows(SH.WALLS)
-    .filter(r => r[W.ID] && (admin || creatorOf(r) === user.userId))
+    .filter(r => r[W.ID] && (admin || creatorOf(r) === user.userId || memberOf(user.userId, String(r[W.ID])).role === 'admin'))
     .map(r => {
       const v = buildView(r, user, all.filter(n => String(n[N.WALL]) === String(r[W.ID])));
       v.mine = creatorOf(r) === user.userId;
@@ -311,6 +331,7 @@ function addNames(user, wallId, group, list, cardDay) {
     const f = findWall(wallId);
     const w = rowToWall(f.row);
     if (!w.open) throw new Error('這面代禱牆已經停止填寫');
+    if (!canManage(user, f.row) && !memberOf(user.userId, wallId).row) throw new Error('請先加入這面代禱牆');
     if (w.groups.indexOf(group) < 0) {
       if (!w.allowAdd) throw new Error('沒有這個排，請從清單中選擇');
       if (w.groups.length >= LIMITS.GROUPS) throw new Error('排的數量已達上限');
@@ -422,17 +443,14 @@ function getCard(user) {
   const titles = {}, wallRows = {};
   rows(SH.WALLS).forEach(r => { titles[String(r[W.ID])] = String(r[W.TITLE]); wallRows[String(r[W.ID])] = r; });
   const all = rows(SH.NAMES);
-  const onWall = {}, myWallIds = {};
+  const onWall = {};
   all.forEach(r => {
     if (String(r[N.UID]) !== user.userId) return;
     const wid = String(r[N.WALL]); if (!titles[wid]) return;
-    myWallIds[wid] = 1;
     const n = String(r[N.NAME]);
     (onWall[n] = onWall[n] || []).indexOf(titles[wid]) < 0 && onWall[n].push(titles[wid]);
   });
-  const js = sheet(SH.JOINED);
-  const joined = js ? rows(SH.JOINED).filter(r => String(r[0]) === user.userId).sort((a, b) => (b[2] || 0) - (a[2] || 0)).map(r => String(r[1])) : [];
-  Object.keys(myWallIds).forEach(id => { if (joined.indexOf(id) < 0) joined.push(id); });
+  const joined = joinedRows().slice(1).filter(r => String(r[0]) === user.userId).sort((a, b) => (b[2] || 0) - (a[2] || 0)).map(r => String(r[1]));
   const walls = joined.filter(id => wallRows[id]).slice(0, 30).map(id => {
     const v = buildView(wallRows[id], user, all.filter(n => String(n[N.WALL]) === id));
     v.mine = creatorOf(wallRows[id]) === user.userId;
@@ -447,16 +465,179 @@ function saveCard(user, input) {
   return { card };
 }
 
-/** 記錄打開過哪些代禱牆，方便從個人代禱卡把名字放上去 */
-function markJoined(user, wallId) {
+/* ---------- 代禱牆成員：只有建立者、總管理者和按「加入」的人看得到名單 ----------
+   「參與紀錄」工作表：LINE userId、代禱牆代碼、最後開啟、加入時間、LINE名稱、角色（member／admin＝協助管理） */
+let JOINED_MEMO = null;
+function joinedSheet() {
+  const ss = SpreadsheetApp.getActive();
+  let sh = ss.getSheetByName(SH.JOINED);
+  if (!sh) { sh = ss.insertSheet(SH.JOINED); sh.setFrozenRows(1); }
+  const h = HEADERS[SH.JOINED];
+  if (sh.getLastColumn() < h.length) sh.getRange(1, 1, 1, h.length).setValues([h]).setFontWeight('bold');
+  return sh;
+}
+function joinedRows() { return JOINED_MEMO || (JOINED_MEMO = joinedSheet().getDataRange().getValues()); }
+function memberOf(uid, wallId) {
+  const data = joinedRows();
+  for (let i = 1; i < data.length; i++) if (String(data[i][0]) === uid && String(data[i][1]) === String(wallId)) return { index: i + 1, row: data[i], role: String(data[i][5] || 'member') };
+  return { index: 0, row: null, role: '' };
+}
+function membersOf(wallId) {
+  return joinedRows().slice(1).filter(r => String(r[1]) === String(wallId))
+    .map(r => ({ uid: String(r[0]), name: String(r[4] || ''), joined: fmt(r[3] || r[2], 'yyyy/M/d'), last: fmt(r[2], 'M/d HH:mm'), role: String(r[5] || 'member') }));
+}
+function touchMember(user, wallId) {
   try {
-    withLock(() => {
-      const ss = SpreadsheetApp.getActive();
-      let sh = ss.getSheetByName(SH.JOINED);
-      if (!sh) { sh = ss.insertSheet(SH.JOINED); sh.appendRow(HEADERS[SH.JOINED]); sh.setFrozenRows(1); }
-      const data = sh.getDataRange().getValues();
-      for (let i = 1; i < data.length; i++) if (String(data[i][0]) === user.userId && String(data[i][1]) === String(wallId)) { sh.getRange(i + 1, 3).setValue(new Date()); return; }
-      sh.appendRow([user.userId, wallId, new Date()]);
-    });
+    const m = memberOf(user.userId, wallId); if (!m.index) return;
+    joinedSheet().getRange(m.index, 3).setValue(new Date());
+    if (user.displayName && String(m.row[4] || '') !== user.displayName) joinedSheet().getRange(m.index, 5).setValue(user.displayName);
   } catch (e) {}
+}
+/** 公開預覽：只有名稱、經文、各排人數，不含任何名字 */
+function previewOf(row) {
+  const w = buildView(row, null);
+  w.list = w.list.map(g => ({ name: g.name, names: [], count: g.names.length }));
+  w.preview = true;
+  w.memberCount = membersOf(w.id).length;
+  return w;
+}
+function openWall(user, wallId) {
+  const f = findWall(wallId);
+  if (canManage(user, f.row) || memberOf(user.userId, wallId).row) { touchMember(user, wallId); return { wall: buildView(f.row, user), joined: true }; }
+  return { wall: previewOf(f.row), joined: false };
+}
+function joinWall(user, wallId) {
+  return withLock(() => {
+    const f = findWall(wallId);
+    JOINED_MEMO = null;
+    if (!memberOf(user.userId, wallId).row) { joinedSheet().appendRow([user.userId, wallId, new Date(), new Date(), user.displayName || '', 'member']); JOINED_MEMO = null; }
+    return buildView(f.row, user);
+  });
+}
+function leaveWall(user, wallId) {
+  return withLock(() => {
+    JOINED_MEMO = null;
+    const m = memberOf(user.userId, wallId);
+    if (m.index) joinedSheet().deleteRow(m.index);
+    JOINED_MEMO = null;
+    return { left: !!m.index };
+  });
+}
+/** 後台：移除成員（不能移除建立者；協助管理的人不能移除其他協助管理者） */
+function removeMembers(user, wallId, keys) {
+  const set = {}; (Array.isArray(keys) ? keys : []).forEach(k => { set[String(k)] = 1; });
+  return withLock(() => {
+    const f = findWall(wallId), owner = creatorOf(f.row), boss = owner === user.userId || isPublisher(user.userId);
+    const sh = joinedSheet(), data = sh.getDataRange().getValues();
+    for (let i = data.length - 1; i >= 1; i--) {
+      const uid = String(data[i][0]);
+      if (String(data[i][1]) !== String(wallId) || !set[uid] || uid === owner) continue;
+      if (!boss && String(data[i][5]) === 'admin') continue;
+      sh.deleteRow(i + 1);
+    }
+    JOINED_MEMO = null;
+    return buildView(f.row, user);
+  });
+}
+/** 後台：設定角色（member 一般成員／admin 協助管理）；只有建立者或總管理者可以 */
+function setMemberRole(user, wallId, key, role) {
+  return withLock(() => {
+    const f = findWall(wallId);
+    if (creatorOf(f.row) !== user.userId && !isPublisher(user.userId)) throw new Error('只有建立者可以設定協助管理');
+    JOINED_MEMO = null;
+    const m = memberOf(String(key), wallId);
+    if (!m.index) throw new Error('這個人已經不是成員');
+    joinedSheet().getRange(m.index, 6).setValue(role === 'admin' ? 'admin' : 'member');
+    JOINED_MEMO = null;
+    return buildView(f.row, user);
+  });
+}
+
+/* ---------- 後台：建立者管理自己的代禱牆；總管理者（「發布者」工作表）管理全部 ---------- */
+function requirePublisher(user) { if (!isPublisher(user.userId)) throw new Error('只有總管理者可以使用這個功能'); }
+
+function deleteWalls(user, ids) {
+  ids = (Array.isArray(ids) ? ids : []).map(String);
+  const done = [], skipped = [];
+  ids.forEach(id => {
+    try { const row = findWall(id).row; if (!canManage(user, row)) { skipped.push(id); return; } deleteWall(id); done.push(id); }
+    catch (e) { skipped.push(id); }
+  });
+  return { deleted: done, skipped };
+}
+
+function setOpenMany(user, ids, open) {
+  const done = [];
+  (Array.isArray(ids) ? ids : []).map(String).forEach(id => {
+    try { const f = findWall(id); if (canManage(user, f.row)) { f.sh.getRange(f.index, W.OPEN + 1).setValue(open); done.push(id); } } catch (e) {}
+  });
+  return { updated: done, open };
+}
+
+/** 一次刪除好幾個名字：建立者／總管理者可刪全部，一般人只能刪自己填的 */
+function removeNames(user, wallId, entryIds) {
+  const set = {}; (Array.isArray(entryIds) ? entryIds : []).forEach(id => { set[String(id)] = 1; });
+  return withLock(() => {
+    const f = findWall(wallId), manage = canManage(user, f.row);
+    const nsh = sheet(SH.NAMES), data = nsh.getDataRange().getValues();
+    for (let i = data.length - 1; i >= 1; i--) {
+      if (!set[String(data[i][N.ID])] || String(data[i][N.WALL]) !== String(wallId)) continue;
+      if (!manage && String(data[i][N.UID]) !== user.userId) continue;
+      nsh.deleteRow(i + 1);
+    }
+    return buildView(f.row, user);
+  });
+}
+
+/** 修改一個名字（也可以換到別的排）：建立者／總管理者，或填寫者本人 */
+function editName(user, wallId, entryId, name, group) {
+  name = clip(name, LIMITS.NAME_LEN);
+  if (!name) throw new Error('名字不能空白');
+  return withLock(() => {
+    const f = findWall(wallId), w = rowToWall(f.row), manage = canManage(user, f.row);
+    const nsh = sheet(SH.NAMES), data = nsh.getDataRange().getValues();
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][N.ID]) !== String(entryId) || String(data[i][N.WALL]) !== String(wallId)) continue;
+      if (!manage && String(data[i][N.UID]) !== user.userId) throw new Error('只能修改自己填的名字');
+      let g = clip(group, LIMITS.GROUP_LEN) || String(data[i][N.GROUP]);
+      if (w.groups.indexOf(g) < 0 && g !== String(data[i][N.GROUP])) {
+        if (!manage && !w.allowAdd) throw new Error('沒有這個排');
+        w.groups.push(g); f.sh.getRange(f.index, W.GROUPS + 1).setValue(JSON.stringify(w.groups)); f.row[W.GROUPS] = JSON.stringify(w.groups);
+      }
+      nsh.getRange(i + 1, N.GROUP + 1, 1, 2).setValues([[g, name]]);
+      return buildView(f.row, user);
+    }
+    throw new Error('找不到這個名字，可能已經被刪除');
+  });
+}
+
+/** 把好幾個名字移到另一個排（建立者／總管理者） */
+function moveNames(user, wallId, entryIds, group) {
+  group = clip(group, LIMITS.GROUP_LEN);
+  if (!group) throw new Error('請選擇要移到哪一個排');
+  const set = {}; (Array.isArray(entryIds) ? entryIds : []).forEach(id => { set[String(id)] = 1; });
+  return withLock(() => {
+    const f = findWall(wallId), w = rowToWall(f.row);
+    if (w.groups.indexOf(group) < 0) { w.groups.push(group); f.sh.getRange(f.index, W.GROUPS + 1).setValue(JSON.stringify(w.groups)); f.row[W.GROUPS] = JSON.stringify(w.groups); }
+    const nsh = sheet(SH.NAMES), data = nsh.getDataRange().getValues();
+    for (let i = 1; i < data.length; i++) if (set[String(data[i][N.ID])] && String(data[i][N.WALL]) === String(wallId)) nsh.getRange(i + 1, N.GROUP + 1).setValue(group);
+    return buildView(f.row, user);
+  });
+}
+
+/** 總管理後台：全部代禱牆＋整體統計（個人代禱卡只算人數，不看內容） */
+function adminOverview(user) {
+  const names = rows(SH.NAMES), uids = {};
+  names.forEach(r => { uids[String(r[N.UID])] = 1; });
+  const cs = sheet(SH.CARDS), cards = cs ? rows(SH.CARDS) : [];
+  let cardNames = 0;
+  cards.forEach(r => { const c = parseJson(r[2], null); if (c && c.days) c.days.forEach(d => { cardNames += (d.names || []).length; }); });
+  const walls = rows(SH.WALLS).filter(r => r[W.ID]).map(r => {
+    const v = buildView(r, user, names.filter(n => String(n[N.WALL]) === String(r[W.ID])));
+    v.mine = creatorOf(r) === user.userId;
+    v.memberCount = membersOf(String(r[W.ID])).length;
+    v.fillers = Object.keys(names.filter(n => String(n[N.WALL]) === String(r[W.ID])).reduce((o, n) => (o[String(n[N.UID])] = 1, o), {})).length;
+    return v;
+  }).reverse();
+  return { walls, stats: { walls: walls.length, open: walls.filter(w => w.open).length, names: names.length, fillers: Object.keys(uids).length, cardUsers: cards.length, cardNames } };
 }

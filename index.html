@@ -284,6 +284,51 @@
   .poster-card .pcard .grid { margin-top: 6px; }
   .poster-card .verse { margin-top: 18px; }
 
+  /* ---------- 後台 ---------- */
+  .m-tools { position: sticky; top: 0; z-index: 3; background: var(--sheet); padding: 4px 0 10px; margin-bottom: 6px; border-bottom: 1px dashed var(--rule); }
+  .m-bar, .sel-bar, .sel-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+  .m-all { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; cursor: pointer; }
+  .m-all input, .m-row input[type=checkbox], .w-check { width: 20px; height: 20px; accent-color: var(--bar); flex: none; }
+  .m-n { font-size: 13px; color: var(--muted); margin-right: auto; }
+  .m-move { width: auto; min-height: 38px; padding: 4px 8px; font-size: 14px; }
+  .m-group h3 { font-family: var(--kai); font-size: 17px; color: var(--g2); margin: 14px 0 6px; letter-spacing: .06em; }
+  .m-group h3 small { font-family: var(--sans); font-size: 12px; color: var(--muted); letter-spacing: 0; font-weight: 400; }
+  .m-row { display: flex; align-items: center; gap: 10px; padding: 8px 4px; border-bottom: 1px solid var(--rule); cursor: pointer; }
+  .m-row .m-name { font-family: var(--kai); font-size: 17px; flex: 0 1 auto; min-width: 3.2em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .m-row .m-by { font-size: 12px; color: var(--muted); margin-left: auto; text-align: right; min-width: 0; line-height: 1.4; }
+  .m-row .m-edit { flex: none; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); background: transparent; color: var(--olive-ink); cursor: pointer; }
+  .m-row.editing { flex-wrap: wrap; cursor: default; background: var(--paper); border-radius: 12px; padding: 10px; }
+  .m-row.editing .inp { flex: 1 1 140px; min-height: 42px; }
+  .m-acts { display: flex; gap: 8px; width: 100%; justify-content: flex-end; }
+  .sel-bar { background: var(--sheet); border: 1px dashed var(--olive); border-radius: 14px; padding: 8px 10px; margin: 0 0 12px; font-size: 13px; }
+  .sel-bar > span { margin-right: auto; color: var(--muted); }
+  .sel-head { justify-content: space-between; margin: 0 2px 8px; }
+  .wall-item.selectable { display: flex; align-items: flex-start; gap: 10px; padding-left: 14px; }
+  .wall-item.selectable::before { display: none; }
+  .wall-item .w-check { margin-top: 6px; }
+  .wall-item .w-open { flex: 1; text-align: left; border: 0; background: none; padding: 0; font: inherit; color: inherit; cursor: pointer; }
+  div.wall-item { cursor: default; }
+  div.wall-item:not(.selectable) .w-open { display: block; }
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .stat-grid div { background: var(--sheet); border: 1.5px solid var(--line); border-radius: 18px; padding: 12px; text-align: center; }
+  .stat-grid b { display: block; font-family: var(--kai); font-size: 28px; color: var(--g2); line-height: 1.2; }
+  .stat-grid span { font-size: 12px; color: var(--muted); }
+  .sec-row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+  .admin-entry { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; border: 1.5px dashed var(--olive); background: var(--sheet); border-radius: 18px; padding: 12px 14px; margin-bottom: 16px; cursor: pointer; font: inherit; }
+  .admin-entry .altar { width: 30px; flex: none; }
+  .admin-entry .altar svg { width: 100%; display: block; }
+  .admin-entry b { font-family: var(--kai); font-size: 17px; color: var(--g2); display: block; }
+  .admin-entry small { color: var(--muted); }
+
+  .invite p { margin: 0 0 10px; }
+  .inv-groups { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 12px; }
+  .inv-groups span { border: 1px solid var(--line); border-radius: 999px; padding: 3px 4px 3px 12px; font-family: var(--kai); font-size: 15px; display: inline-flex; align-items: center; gap: 6px; }
+  .inv-groups em { font-style: normal; font-family: var(--sans); font-size: 11px; color: var(--bar); background: var(--pill); border-radius: 999px; padding: 0 7px; }
+  .role { flex: none; font-size: 12px; border-radius: 999px; padding: 2px 10px; border: 1px solid var(--line); background: transparent; color: var(--muted); font-family: var(--sans); cursor: pointer; }
+  .role.admin { border-color: var(--olive); color: var(--olive-ink); background: rgba(182,163,89,.12); }
+  .role.owner { border-color: var(--bar); color: var(--bar); cursor: default; }
+  .u-owner { width: 20px; height: 20px; flex: none; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; background: var(--bar); transform: scale(.7); }
+
   /* ---------- 圖卡預覽（模擬群組裡的 LINE 圖卡） ---------- */
   .pv-panel { background: rgba(182,163,89,.1); border: 1.5px dashed var(--olive); border-radius: 26px; padding: 12px 12px 16px; margin-bottom: 14px; }
   .pv-label { display: flex; align-items: baseline; gap: 10px; margin: 0 4px 10px; }
@@ -466,7 +511,7 @@ const splitNames = t => [...new Set(String(t || '').split(/[\n,，、;；]+/).ma
 
 /* ================= 預覽模式的範例資料 ================= */
 const demo = {
-  me: { userId: 'Udemo', displayName: '簡晨光', isAdmin: false },
+  me: { userId: 'Udemo', displayName: '簡晨光', isAdmin: true },
   walls: [{
     id: 'W1', title: '小區福音代禱牆', tag: '同心代禱', verse: verseText(VERSES[0]), desc: DEFAULT_DESC, allowAdd: true, theme: 'pom', open: true, creator: '簡晨光', created: '2026/11/18 21:30',
     groups: ['北溝社區排', '德福排', '讀經小排', '霧峰姊妹排', '兒童排', '青職排', '七靈社區排', '青少年排', '🏠大專週三李家排', '🏠大專週三弟兄排'],
@@ -484,9 +529,10 @@ demo.card = { days: [
 demo.onWall = { '康英滿': ['小區福音代禱牆'] };
 let demoSeq = 100;
 function demoView(w) {
-  const list = w.groups.concat(Object.keys(w.names).filter(g => !w.groups.includes(g))).map(g => ({ name: g, names: (w.names[g] || []).map((n, i) => ({ id: `${g}#${n}`, name: n, mine: ((w.mine || {})[g] || []).includes(n) })) }));
+  const list = w.groups.concat(Object.keys(w.names).filter(g => !w.groups.includes(g))).map(g => ({ name: g, names: (w.names[g] || []).map((n, i) => ({ id: `${g}#${n}`, name: n, mine: ((w.mine || {})[g] || []).includes(n), by: ((w.mine || {})[g] || []).includes(n) ? demo.me.displayName : ['陳新語', '林弟兄', '王姊妹'][i % 3], time: `11/${18 + (i % 3)} 20:1${i % 10}` })) }));
   const total = list.reduce((s, g) => s + g.names.length, 0), filled = list.filter(g => g.names.length).length;
-  return { id: w.id, title: w.title, tag: w.tag, verse: w.verse, desc: w.desc, groups: w.groups.slice(), allowAdd: w.allowAdd, theme: w.theme, open: w.open, creator: w.creator, created: w.created, list, total, filled, unfilled: list.length - filled, canManage: true, mine: true };
+  demo.members = demo.members || [{ key: 'Udemo', name: '簡晨光', joined: '2026/11/18', last: '11/20 12:00', role: 'owner' }, { key: 'U1', name: '陳新語', joined: '2026/11/18', last: '11/20 11:20', role: 'admin' }, { key: 'U2', name: '林弟兄', joined: '2026/11/19', last: '11/19 21:05', role: 'member' }, { key: 'U3', name: '王姊妹', joined: '2026/11/19', last: '11/20 08:40', role: 'member' }];
+  return { members: demo.members.map(m => ({ ...m })), isCreator: true, id: w.id, title: w.title, tag: w.tag, verse: w.verse, desc: w.desc, groups: w.groups.slice(), allowAdd: w.allowAdd, theme: w.theme, open: w.open, creator: w.creator, created: w.created, list, total, filled, unfilled: list.length - filled, canManage: true, mine: true };
 }
 async function demoApi(action, d) {
   await new Promise(r => setTimeout(r, 250));
@@ -495,7 +541,15 @@ async function demoApi(action, d) {
     case 'me': return { ok: true, ...demo.me };
     case 'session': return { ok: true, token: 'demo', expires: Date.now() + 864e5 };
     case 'listWalls': return { ok: true, walls: demo.walls.map(demoView).reverse() };
-    case 'wall': return { ok: true, wall: demoView(find(d.wallId)) };
+    case 'wall': {
+      const w = demoView(find(d.wallId));
+      if (['invite'].includes(PARAMS.get('demo')) && !demo.joined) { w.list = w.list.map(g => ({ name: g.name, names: [], count: g.names.length })); w.preview = true; w.memberCount = 14; return { ok: true, wall: w, joined: false }; }
+      return { ok: true, wall: w, joined: true };
+    }
+    case 'joinWall': demo.joined = true; return { ok: true, wall: demoView(find(d.wallId)) };
+    case 'leaveWall': return { ok: true, left: true };
+    case 'removeMembers': demo.members = (demo.members || []).filter(m => !d.keys.includes(m.key)); return { ok: true, wall: demoView(find(d.wallId)) };
+    case 'setMemberRole': (demo.members || []).forEach(m => { if (m.key === d.key) m.role = d.role; }); return { ok: true, wall: demoView(find(d.wallId)) };
     case 'createWall': {
       const w = { ...d.wall, id: 'W' + (++demoSeq), groups: (d.wall.groups || []).map(g => g.name || g), open: true, creator: demo.me.displayName, created: '剛剛', names: {}, mine: {} };
       demo.walls.push(w); return { ok: true, wall: demoView(w) };
@@ -518,6 +572,24 @@ async function demoApi(action, d) {
       const res = { ok: true, wall: demoView(w), group: d.group, added, skipped };
       if (d.cardDay !== undefined && d.cardDay !== null) { const day = demo.card.days[d.cardDay]; const a = d.names.filter(n => !day.names.includes(n)); day.names.push(...a); res.cardAdded = { day: d.cardDay, cat: day.cat, added: a }; }
       return res;
+    }
+    case 'removeNames': { const w = find(d.wallId); d.entryIds.forEach(id => { const [g, n] = id.split('#'); w.names[g] = (w.names[g] || []).filter(x => x !== n); }); return { ok: true, wall: demoView(w) }; }
+    case 'editName': {
+      const w = find(d.wallId), [g, n] = d.entryId.split('#');
+      w.names[g] = (w.names[g] || []).filter(x => x !== n);
+      if (!w.groups.includes(d.group)) w.groups.push(d.group);
+      (w.names[d.group] = w.names[d.group] || []).push(d.name.trim()); return { ok: true, wall: demoView(w) };
+    }
+    case 'moveNames': {
+      const w = find(d.wallId); if (!w.groups.includes(d.group)) w.groups.push(d.group);
+      d.entryIds.forEach(id => { const [g, n] = id.split('#'); w.names[g] = (w.names[g] || []).filter(x => x !== n); (w.names[d.group] = w.names[d.group] || []).push(n); });
+      return { ok: true, wall: demoView(w) };
+    }
+    case 'deleteWalls': demo.walls = demo.walls.filter(x => !d.wallIds.includes(x.id)); return { ok: true, deleted: d.wallIds, skipped: [] };
+    case 'setOpenMany': demo.walls.forEach(x => { if (d.wallIds.includes(x.id)) x.open = d.open; }); return { ok: true, updated: d.wallIds, open: d.open };
+    case 'adminOverview': {
+      const walls = demo.walls.map(w => ({ ...demoView(w), fillers: 6 })).reverse();
+      return { ok: true, walls, stats: { walls: walls.length, open: walls.filter(w => w.open).length, names: walls.reduce((s, w) => s + w.total, 0), fillers: 12, cardUsers: 9, cardNames: 86 } };
     }
     case 'removeName': {
       const w = find(d.wallId), [g, n] = d.entryId.split('#');
@@ -567,7 +639,7 @@ async function main() {
       if (!liff.isLoggedIn() && !getSession()) { liff.login({ redirectUri: location.href }); return; }
       if (liff.isLoggedIn() && !getSession()) { try { setSession(await api('session')); } catch (e) {} }
     }
-    const wallId = PARAMS.get('wall') || (DEMO && PARAMS.get('demo') === 'wall' ? 'W1' : '');
+    const wallId = PARAMS.get('wall') || (DEMO && ['wall', 'invite'].includes(PARAMS.get('demo')) ? 'W1' : '');
     const shareId = PARAMS.get('share');
     if (PARAMS.has('mydata')) await myDataFlow();
     else if (shareId) await forwardFlow(shareId);
@@ -586,15 +658,77 @@ async function wallFlow(id) {
   if (cached) { WALL = cached; drawWall(); }
   else view(loading());
   try {
-    const { wall } = await api('wall', { wallId: id });
-    const typed = $('names') ? $('names').value : '';
+    const r = await api('wall', { wallId: id });
+    if (r.joined === false) { try { localStorage.removeItem('pw.c.wall.' + id); } catch (e) {} return drawInvite(r.wall); }
+    const wall = r.wall, typed = $('names') ? $('names').value : '';
     WALL = wall; cacheSet('wall.' + id, wall); drawWall();
     if (typed && $('names')) $('names').value = typed;
   } catch (e) { if (cached) toast(e.message); else throw e; }
 }
 
+/* ================= 邀請：還沒加入的人只看到名稱、經文和各排人數 ================= */
+const gcount = g => g.count !== undefined ? g.count : g.names.length;
+function drawInvite(w) {
+  applyTheme(w);
+  document.title = w.title;
+  view(`
+    ${DEMO ? `<p class="demo-note">預覽模式：還沒加入的人看到的樣子。</p>` : ''}
+    ${heroHtml(w)}
+    <section class="card dot invite">
+      <h2>邀請你加入代禱牆</h2>
+      <p>${esc(w.creator || '建立者')} 邀請你一起為福音朋友同心代禱。加入後才看得到大家寫的名字，也可以填上你的福音朋友。</p>
+      <div class="inv-groups">${w.list.map(g => `<span>${esc(g.name)}<em>${gcount(g)}</em></span>`).join('')}</div>
+      <p class="hint">名單只給加入的人看，不會公開。${w.memberCount ? `已經有 ${w.memberCount} 人加入。` : ''}</p>
+      <button class="btn send" id="join">${ICON_SEND}加入代禱牆</button>
+    </section>
+    ${w.verse ? ornament() : ''}${verseHtml(w)}
+    <footer class="page-foot"><button class="link" id="mycard">我的代禱卡</button></footer>`);
+  $('mycard').onclick = () => { location.href = `${location.pathname}?tab=card${DEMO ? '&demo' : ''}`; };
+  $('join').onclick = async () => {
+    const b = $('join'); b.disabled = true; b.textContent = '加入中…';
+    try { const { wall } = await api('joinWall', { wallId: w.id }); WALL = wall; cacheSet('wall.' + w.id, wall); drawWall(); toast('已加入，可以一起代禱了'); }
+    catch (e) { toast(e.message); b.disabled = false; b.innerHTML = `${ICON_SEND}加入代禱牆`; }
+  };
+}
+
+/* ---------- 後台：成員（誰看得到這面代禱牆） ---------- */
+let USEL = new Set();
+const ROLE_TEXT = { owner: '建立者', admin: '協助管理', member: '成員' };
+function membersHtml(w) {
+  const ms = w.members || [];
+  const selectable = ms.filter(m => m.role !== 'owner');
+  return `<div class="m-bar" style="margin:0 0 8px">
+      <label class="m-all"><input type="checkbox" id="u-all" ${selectable.length && selectable.every(m => USEL.has(m.key)) ? 'checked' : ''}> 全選</label>
+      <span class="m-n">已選 <b>${USEL.size}</b></span>
+      <button class="btn small danger" id="u-del" ${USEL.size ? '' : 'disabled'}>移除成員</button>
+    </div>
+    ${ms.map(m => `<label class="m-row">${m.role === 'owner' ? '<span class="u-owner" aria-hidden="true"></span>' : `<input type="checkbox" data-us="${esc(m.key)}" ${USEL.has(m.key) ? 'checked' : ''}>`}
+      <span class="m-name">${esc(m.name || '（未命名）')}</span>
+      <span class="m-by">${m.joined ? `${esc(m.joined)} 加入` : ''}${m.last ? `・最近 ${esc(m.last)}` : ''}</span>
+      ${m.role === 'owner' ? `<span class="role owner">建立者</span>` : w.isCreator || ME_ADMIN() ? `<button type="button" class="role ${m.role}" data-role="${esc(m.key)}" data-to="${m.role === 'admin' ? 'member' : 'admin'}" title="點一下切換">${ROLE_TEXT[m.role] || '成員'}</button>` : `<span class="role ${m.role}">${ROLE_TEXT[m.role] || '成員'}</span>`}
+    </label>`).join('')}
+    <p class="hint">只有這裡的人看得到這面代禱牆和上面的名字。「協助管理」可以一起修改名單；點角色可以切換。移除後，對方要重新按邀請圖卡的「加入」才看得到。</p>`;
+}
+const ME_ADMIN = () => !!(ME && ME.isAdmin);
+function bindMembers(w, redraw) {
+  const box = $('d-members'); if (!box) return;
+  const re = () => { box.innerHTML = membersHtml(w); bindMembers(w, redraw); };
+  $('u-all').onchange = e => { (w.members || []).filter(m => m.role !== 'owner').forEach(m => e.target.checked ? USEL.add(m.key) : USEL.delete(m.key)); re(); };
+  box.querySelectorAll('[data-us]').forEach(c => c.onchange = () => { c.checked ? USEL.add(c.dataset.us) : USEL.delete(c.dataset.us); re(); });
+  box.querySelectorAll('[data-role]').forEach(b => b.onclick = async e => {
+    e.preventDefault(); b.disabled = true;
+    try { const r = await api('setMemberRole', { wallId: w.id, key: b.dataset.role, role: b.dataset.to }); redraw(r.wall); toast(b.dataset.to === 'admin' ? '已設為協助管理' : '已改為一般成員'); }
+    catch (x) { toast(x.message); b.disabled = false; }
+  });
+  $('u-del').onclick = () => armThen($('u-del'), `移除 ${USEL.size} 人？`, async () => {
+    $('u-del').disabled = true;
+    try { const n = USEL.size; const r = await api('removeMembers', { wallId: w.id, keys: [...USEL] }); USEL.clear(); redraw(r.wall); toast(`已移除 ${n} 人`); }
+    catch (x) { toast(x.message); $('u-del').disabled = false; }
+  });
+}
+
 function heroHtml(w) {
-  const seeds = w.list.map(g => `<span class="seed ${g.names.length ? 'f' : ''}"></span>`).join('');
+  const seeds = w.list.map(g => `<span class="seed ${gcount(g) ? 'f' : ''}"></span>`).join('');
   return `<section class="hero">
       <div class="art">${pomSvg()}</div>
       <div class="label">${w.tag ? `<span class="tag">${esc(w.tag)}</span>` : ''}<h1>${esc(w.title)}</h1></div>
@@ -685,7 +819,7 @@ function drawWall() {
     <footer class="page-foot">
       <button class="link" id="mycard">我的代禱卡</button>
       <button class="link" id="fwd">轉傳給其他群組或朋友</button>
-      ${w.canManage ? `<button class="link" id="manage">管理這面代禱牆</button>` : ''}
+      ${w.canManage ? `<button class="link" id="manage">代禱牆後台</button>` : `<button class="link" id="leave">退出這面代禱牆</button>`}
       <button class="link" onclick="myDataFlow()">我的個人資料</button>
     </footer>
     ${w.open ? `<div class="dock"><div class="inner"><button class="btn send" id="submit">${ICON_SEND}送出代禱名單</button></div></div>` : ''}`);
@@ -715,6 +849,9 @@ function drawWall() {
   $('fwd').onclick = () => share(w);
   bindShareBar('w-bar', { text: () => textList(w), shot: () => wallShot(w), name: () => wallShotName(w), line: () => share(w) });
   $('mycard').onclick = () => { location.href = `${location.pathname}?tab=card${DEMO ? '&demo' : ''}`; };
+  if ($('leave')) $('leave').onclick = () => armThen($('leave'), '確定退出？再按一次', async () => {
+    try { await api('leaveWall', { wallId: w.id }); try { localStorage.removeItem('pw.c.wall.' + w.id); } catch (e) {} toast('已退出'); setTimeout(() => location.reload(), 600); } catch (e) { toast(e.message); }
+  });
   if ($('tocard')) {
     $('tocard').onchange = e => { $('card-day').hidden = !e.target.checked; try { localStorage.setItem('pw.tocard', e.target.checked ? '1' : '0'); } catch (x) {} };
     document.querySelectorAll('[data-cd]').forEach(b => b.onclick = () => { document.querySelectorAll('[data-cd]').forEach(x => x.setAttribute('aria-pressed', x === b)); try { localStorage.setItem('pw.cardday', b.dataset.cd); } catch (x) {} });
@@ -818,22 +955,18 @@ const statBox = (n, label, t) => ({ type: 'box', layout: 'vertical', flex: 1, pa
 function buildWallFlex(w, news, opt = {}) {
   const t = themeOf(w);
   const perGroup = opt.perGroup || 40, maxGroups = opt.maxGroups || 40;
-  const filled = w.list.filter(g => g.names.length), empty = w.list.filter(g => !g.names.length);
+  const filled = w.list.filter(g => gcount(g)), empty = w.list.filter(g => !gcount(g));
   const shown = filled.slice(0, maxGroups);
-  const groupBox = g => {
-    const names = g.names.map(n => n.name);
-    const text = names.slice(0, perGroup).join(' · ') + (names.length > perGroup ? ` …等 ${names.length} 位` : '');
-    return { type: 'box', layout: 'vertical', borderColor: C.rule, borderWidth: '1px', cornerRadius: 'lg', paddingAll: '12px', spacing: 'sm', contents: [
-      { type: 'box', layout: 'horizontal', spacing: 'md', alignItems: 'center', contents: [
-        seedDot(t),
-        { type: 'text', text: g.name, weight: 'bold', size: 'md', color: t.g2, flex: 1, wrap: true },
-        pill(`${names.length} 位`, t) ] },
-      { type: 'text', text, size: 'sm', color: C.ink, wrap: true } ] };
-  };
+  // 群組圖卡不放名字（名單只給加入的人看），只列各排人數
+  const groupBox = g => ({ type: 'box', layout: 'horizontal', spacing: 'md', alignItems: 'center', borderColor: C.rule, borderWidth: '1px', cornerRadius: 'lg', paddingAll: '10px', paddingStart: '12px', contents: [
+    seedDot(t),
+    { type: 'text', text: g.name, weight: 'bold', size: 'sm', color: t.g2, flex: 1, wrap: true },
+    pill(`${gcount(g)} 位`, t) ] });
   const list = shown.map(groupBox);
-  if (filled.length > shown.length) list.push({ type: 'text', text: `…還有 ${filled.length - shown.length} 個排，打開代禱牆看完整名單`, size: 'xs', color: C.muted, wrap: true, margin: 'sm' });
+  if (filled.length > shown.length) list.push({ type: 'text', text: `…還有 ${filled.length - shown.length} 個排`, size: 'xs', color: C.muted, wrap: true, margin: 'sm' });
   if (empty.length) list.push({ type: 'text', text: `還沒有名單：${empty.map(g => g.name).join('、')}`.slice(0, 300), size: 'xs', color: C.muted, wrap: true, margin: 'sm' });
   if (!list.length) list.push({ type: 'text', text: '還沒有人填寫，第一位來為福音朋友代禱吧！', size: 'sm', color: C.muted, wrap: true, align: 'center' });
+  list.push({ type: 'text', text: '名單只給加入的人看。', size: 'xxs', color: C.muted, wrap: true, margin: 'md', align: 'center' });
 
   const head = [];
   if (w.tag) head.push({ type: 'box', layout: 'horizontal', contents: [{ type: 'box', layout: 'vertical', flex: 0, borderColor: t.bar, borderWidth: '1px', cornerRadius: 'xxl', paddingStart: '9px', paddingEnd: '9px',
@@ -854,7 +987,7 @@ function buildWallFlex(w, news, opt = {}) {
         { type: 'box', layout: 'vertical', contents: head },
         { type: 'box', layout: 'vertical', spacing: 'sm', margin: 'lg', contents: list } ] },
       footer: { type: 'box', layout: 'vertical', paddingAll: '14px', paddingTop: '0px', paddingBottom: '6px', contents: [
-        { type: 'button', style: 'primary', color: t.bar, height: 'sm', action: { type: 'uri', label: w.open === false ? '打開代禱牆' : '📝 我也要填代禱名單', uri: wallUrl(w.id) } },
+        { type: 'button', style: 'primary', color: t.bar, height: 'sm', action: { type: 'uri', label: w.open === false ? '打開代禱牆' : '🙏 加入代禱牆・一起代禱', uri: wallUrl(w.id) } },
         { type: 'box', layout: 'horizontal', margin: 'sm', contents: [
           { type: 'button', style: 'link', height: 'sm', color: t.bar, flex: 1, action: { type: 'uri', label: '我的代禱卡', uri: `https://liff.line.me/${LIFF_ID}?tab=card` } },
           { type: 'button', style: 'link', height: 'sm', color: C.muted, flex: 1, action: { type: 'uri', label: '轉傳', uri: shareUrl(w.id) } } ] } ] },
@@ -871,17 +1004,18 @@ function buildWallFlex(w, news, opt = {}) {
 /** 網頁上的圖卡預覽，盡量長得跟 LINE 裡一樣 */
 function cardHtml(w, poster) {
   const t = themeOf(w);
-  const filled = w.list.filter(g => g.names.length), empty = w.list.filter(g => !g.names.length);
-  return `<div class="lc" style="${themeVars(t)}">
+  const filled = w.list.filter(g => gcount(g)), empty = w.list.filter(g => !gcount(g));
+  return `<div class="lc ${poster ? '' : 'compact'}" style="${themeVars(t)}">
     ${bannerHtml()}
     <div class="h">${w.tag ? `<span class="tg">${esc(w.tag)}</span>` : ''}<div class="ti">${esc(w.title || '代禱牆名稱')}</div>${w.verse ? `<div class="vs">${esc(w.verse)}</div>` : ''}
       <div class="st"><div><b>${w.total}</b><span>位福音朋友</span></div><div><b>${w.filled}</b><span>個排已填</span></div><div><b>${w.unfilled}</b><span>個排未填</span></div></div></div>
     <div class="b">
-      ${filled.map(g => `<div class="g"><div class="r"><i></i><span>${esc(g.name)}</span><em>${g.names.length} 位</em></div><p>${g.names.map(n => esc(n.name)).join(' · ')}</p></div>`).join('')}
+      ${filled.map(g => `<div class="g"><div class="r"><i></i><span>${esc(g.name)}</span><em>${gcount(g)} 位</em></div>${poster ? `<p>${g.names.map(n => esc(n.name)).join(' · ')}</p>` : ''}</div>`).join('')}
+      ${poster ? '' : '<div class="none" style="text-align:center">名單只給加入的人看。</div>'}
       ${empty.length ? `<div class="none">還沒有名單：${esc(empty.map(g => g.name).join('、'))}</div>` : ''}
       ${!filled.length && !empty.length ? '<div class="none">還沒有設定排</div>' : ''}
     </div>
-    ${poster ? `<div class="poster-foot">同心代禱・${esc(fileDate().replace(/(\d{4})(\d{2})(\d{2})/, '$1/$2/$3'))}</div>` : `<div class="f"><div class="pb">${w.open === false ? '打開代禱牆' : '📝 我也要填代禱名單'}</div><div class="lk"><span style="color:var(--bar)">我的代禱卡</span>　　轉傳</div></div>`}
+    ${poster ? `<div class="poster-foot">同心代禱・${esc(fileDate().replace(/(\d{4})(\d{2})(\d{2})/, '$1/$2/$3'))}</div>` : `<div class="f"><div class="pb">${w.open === false ? '打開代禱牆' : '🙏 加入代禱牆・一起代禱'}</div><div class="lk"><span style="color:var(--bar)">我的代禱卡</span>　　轉傳</div></div>`}
   </div>`;
 }
 
@@ -1289,23 +1423,157 @@ function renderToWallDone(r) {
   $('dn-back').onclick = () => { TAB = 'card'; go({ view: 'tabs' }); };
 }
 
+/* ================= 後台：名單管理（選取、修改、移排、刪除） ================= */
+let MSEL = new Set(), MEDIT = '', MFILTER = '';
+function manageHtml(w) {
+  const q = MFILTER.trim();
+  const groups = w.list.map(g => ({ ...g, names: g.names.filter(n => !q || n.name.includes(q) || (n.by || '').includes(q) || g.name.includes(q)) })).filter(g => g.names.length || !q);
+  const all = groups.flatMap(g => g.names.map(n => n.id));
+  const opts = w.list.map(g => `<option value="${esc(g.name)}">${esc(g.name)}</option>`).join('');
+  return `<div class="m-tools">
+      <input class="inp" id="m-q" placeholder="搜尋名字、排或填寫者" value="${esc(MFILTER)}" aria-label="搜尋">
+      <div class="m-bar">
+        <label class="m-all"><input type="checkbox" id="m-all" ${all.length && all.every(id => MSEL.has(id)) ? 'checked' : ''}> 全選</label>
+        <span class="m-n">已選 <b>${MSEL.size}</b></span>
+        <select class="inp m-move" id="m-move" aria-label="移到哪一個排" ${MSEL.size ? '' : 'disabled'}><option value="">移到…</option>${opts}</select>
+        <button class="btn small danger" id="m-del" ${MSEL.size ? '' : 'disabled'}>刪除</button>
+      </div>
+    </div>
+    ${groups.length ? groups.map(g => `<div class="m-group"><h3>${esc(g.name)} <small>${g.names.length} 位</small></h3>
+      ${g.names.length ? g.names.map(n => MEDIT === n.id ? `<div class="m-row editing">
+          <input class="inp" id="me-name" maxlength="20" value="${esc(n.name)}" aria-label="名字">
+          <select class="inp" id="me-group" aria-label="排">${w.list.map(x => `<option ${x.name === g.name ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select>
+          <div class="m-acts"><button class="btn small send" id="me-save">儲存</button><button class="btn small ghost" id="me-cancel">取消</button></div>
+        </div>` : `<label class="m-row"><input type="checkbox" data-ms="${esc(n.id)}" ${MSEL.has(n.id) ? 'checked' : ''}>
+          <span class="m-name">${esc(n.name)}</span><span class="m-by">${esc(n.by || '')}${n.time ? `・${esc(n.time)}` : ''}</span>
+          <button type="button" class="m-edit" data-me="${esc(n.id)}" aria-label="修改 ${esc(n.name)}">✎</button></label>`).join('') : '<p class="muted small" style="margin:0 0 6px">還沒有名單</p>'}</div>`).join('') : '<p class="muted">找不到符合的名字。</p>'}`;
+}
+function bindManage(w, redraw) {
+  const box = $('d-manage');
+  const re = () => { box.innerHTML = manageHtml(w); bindManage(w, redraw); };
+  $('m-q').oninput = e => { MFILTER = e.target.value; const pos = e.target.selectionStart; re(); const q = $('m-q'); q.focus(); q.setSelectionRange(pos, pos); };
+  $('m-all').onchange = e => { const ids = [...box.querySelectorAll('[data-ms]')].map(x => x.dataset.ms); ids.forEach(id => e.target.checked ? MSEL.add(id) : MSEL.delete(id)); re(); };
+  box.querySelectorAll('[data-ms]').forEach(c => c.onchange = () => { c.checked ? MSEL.add(c.dataset.ms) : MSEL.delete(c.dataset.ms); re(); });
+  box.querySelectorAll('[data-me]').forEach(b => b.onclick = e => { e.preventDefault(); MEDIT = b.dataset.me; re(); $('me-name').focus(); });
+  if ($('me-cancel')) {
+    $('me-cancel').onclick = () => { MEDIT = ''; re(); };
+    $('me-save').onclick = async () => {
+      const btn = $('me-save'); btn.disabled = true;
+      try { const r = await api('editName', { wallId: w.id, entryId: MEDIT, name: $('me-name').value, group: $('me-group').value }); MEDIT = ''; redraw(r.wall); toast('已修改'); }
+      catch (e) { toast(e.message); btn.disabled = false; }
+    };
+    $('me-name').onkeydown = e => { if (e.key === 'Enter') $('me-save').click(); };
+  }
+  $('m-move').onchange = async e => {
+    const g = e.target.value; if (!g || !MSEL.size) return;
+    e.target.disabled = true;
+    try { const r = await api('moveNames', { wallId: w.id, entryIds: [...MSEL], group: g }); toast(`已把 ${MSEL.size} 位移到「${g}」`); MSEL.clear(); redraw(r.wall); }
+    catch (x) { toast(x.message); e.target.disabled = false; }
+  };
+  $('m-del').onclick = () => armThen($('m-del'), `刪除 ${MSEL.size} 位？`, async () => {
+    $('m-del').disabled = true;
+    try { const n = MSEL.size; const r = await api('removeNames', { wallId: w.id, entryIds: [...MSEL] }); MSEL.clear(); redraw(r.wall); toast(`已刪除 ${n} 位`); }
+    catch (x) { toast(x.message); $('m-del').disabled = false; }
+  });
+}
+
+/* ---------- 代禱牆清單的選取模式（我建立的／總管理後台共用） ---------- */
+let WSEL = new Set(), WSELECTING = false;
+function wallRows(list, { selectable, showCreator }) {
+  return list.map(w => `<div class="wall-item ${selectable ? 'selectable' : ''}" style="${themeVars(themeOf(w))}">
+      ${selectable ? `<input type="checkbox" class="w-check" data-ws="${esc(w.id)}" ${WSEL.has(w.id) ? 'checked' : ''} aria-label="選取 ${esc(w.title)}">` : ''}
+      <button type="button" class="w-open" data-open="${esc(w.id)}">
+        <b>${esc(w.title)}</b>
+        <span class="meta"><span class="state ${w.open ? '' : 'off'}">${w.open ? '填寫中' : '已停止'}</span><span>${w.total} 位福音朋友</span><span>${w.filled} 排已填・${w.unfilled} 排未填</span>${w.memberCount !== undefined ? `<span>${w.memberCount} 位成員</span>` : ''}</span>
+        <span class="meta"><span>${esc(w.created)}</span>${showCreator ? `<span>建立者：${esc(w.creator || '—')}</span>` : ''}</span>
+      </button>
+    </div>`).join('');
+}
+const selBarHtml = (id, n) => `<div class="sel-bar" id="${id}"><span>已選 <b>${n}</b></span>
+    <button class="btn small ghost" data-sa="close">停止填寫</button><button class="btn small ghost" data-sa="open">開放填寫</button>
+    <button class="btn small danger" data-sa="del" ${n ? '' : 'disabled'}>刪除</button></div>`;
+function bindSelBar(id, after) {
+  const bar = $(id); if (!bar) return;
+  bar.querySelectorAll('[data-sa]').forEach(b => b.onclick = () => {
+    if (!WSEL.size) return toast('請先勾選代禱牆');
+    const ids = [...WSEL];
+    const go = async () => {
+      b.disabled = true;
+      try {
+        if (b.dataset.sa === 'del') {
+          const r = await api('deleteWalls', { wallIds: ids });
+          WALLS = WALLS.filter(x => !r.deleted.includes(x.id)); JOINED = JOINED.filter(x => !r.deleted.includes(x.id));
+          toast(`已刪除 ${r.deleted.length} 面代禱牆${r.skipped.length ? `（${r.skipped.length} 面沒有權限）` : ''}`);
+        } else {
+          const open = b.dataset.sa === 'open', r = await api('setOpenMany', { wallIds: ids, open });
+          [WALLS, JOINED].forEach(arr => arr.forEach(x => { if (r.updated.includes(x.id)) x.open = open; }));
+          toast(`${open ? '已開放' : '已停止'} ${r.updated.length} 面代禱牆`);
+        }
+        cacheSet('platform', { me: ME, walls: WALLS }); WSEL.clear(); after();
+      } catch (e) { toast(e.message); b.disabled = false; }
+    };
+    if (b.dataset.sa === 'del') armThen(b, `確定刪除 ${ids.length} 面？`, go); else go();
+  });
+}
+function bindWallRows(scope, onOpen, after) {
+  scope.querySelectorAll('[data-open]').forEach(b => b.onclick = () => onOpen(b.dataset.open));
+  scope.querySelectorAll('[data-ws]').forEach(c => c.onchange = () => { c.checked ? WSEL.add(c.dataset.ws) : WSEL.delete(c.dataset.ws); after(); });
+}
+
+/* ---------- 總管理後台 ---------- */
+let ADMIN = null, AFILTER = '';
+async function renderAdmin() {
+  view(`<div class="subbar"><button class="back" id="back">‹ 代禱牆</button><h1>總管理後台</h1><span></span></div>${loading()}`);
+  $('back').onclick = () => { WSEL.clear(); TAB = 'walls'; go({ view: 'tabs' }); };
+  try { ADMIN = await api('adminOverview'); drawAdmin(); }
+  catch (e) { toast(e.message); TAB = 'walls'; go({ view: 'tabs' }); }
+}
+function drawAdmin() {
+  const s = ADMIN.stats, q = AFILTER.trim();
+  const list = ADMIN.walls.filter(w => !q || w.title.includes(q) || (w.creator || '').includes(q));
+  view(`<div class="subbar"><button class="back" id="back">‹ 代禱牆</button><h1>總管理後台</h1><span></span></div>
+    <div class="stat-grid">
+      <div><b>${s.walls}</b><span>代禱牆（填寫中 ${s.open}）</span></div>
+      <div><b>${s.names}</b><span>福音朋友名字</span></div>
+      <div><b>${s.fillers}</b><span>填寫過的人</span></div>
+      <div><b>${s.cardUsers}</b><span>使用代禱卡（${s.cardNames} 個名字）</span></div>
+    </div>
+    <p class="hint">個人代禱卡是每個人自己的名單，後台只看人數，不顯示內容。</p>
+    <input class="inp" id="a-q" placeholder="搜尋代禱牆名稱或建立者" value="${esc(AFILTER)}" style="margin:12px 0 8px" aria-label="搜尋">
+    <div class="sel-head"><label class="m-all"><input type="checkbox" id="a-all" ${list.length && list.every(w => WSEL.has(w.id)) ? 'checked' : ''}> 全選</label><button class="btn small ghost" id="a-copy">複製統計</button></div>
+    ${selBarHtml('a-sel', WSEL.size)}
+    <div id="a-list">${list.length ? wallRows(list, { selectable: true, showCreator: true }) : '<p class="muted">沒有符合的代禱牆。</p>'}</div>`);
+  $('back').onclick = () => { WSEL.clear(); TAB = 'walls'; go({ view: 'tabs' }); };
+  $('a-q').oninput = e => { AFILTER = e.target.value; const pos = e.target.selectionStart; drawAdmin(); const x = $('a-q'); x.focus(); x.setSelectionRange(pos, pos); };
+  $('a-all').onchange = e => { list.forEach(w => e.target.checked ? WSEL.add(w.id) : WSEL.delete(w.id)); drawAdmin(); };
+  $('a-copy').onclick = () => copyText([`${document.title}｜總管理統計`, `代禱牆 ${s.walls} 面（填寫中 ${s.open}）`, `福音朋友名字 ${s.names} 個、填寫過的人 ${s.fillers} 位`, `使用個人代禱卡 ${s.cardUsers} 人（${s.cardNames} 個名字）`, '', ...ADMIN.walls.map(w => `・${w.title}（${w.creator || '—'}）${w.total} 位・${w.open ? '填寫中' : '已停止'}`)].join('\n'), '已複製統計');
+  bindWallRows($('a-list'), id => { const w = ADMIN.walls.find(x => x.id === id); if (w) updateLocal(w); go({ view: 'detail', id, from: 'admin' }); }, drawAdmin);
+  bindSelBar('a-sel', async () => { ADMIN = await api('adminOverview').catch(() => ADMIN); drawAdmin(); });
+}
+
 /* ---------- 代禱牆分頁：我參與的＋我建立的 ---------- */
 function renderWallsTab() {
-  const created = new Set(WALLS.map(w => w.id));
+  const created = new Set(WALLS.filter(w => w.mine !== false).map(w => w.id));
+  const mineList = WALLS.filter(w => created.has(w.id));
   const joined = JOINED.filter(w => !created.has(w.id));
-  const item = (w, attr) => `<button class="wall-item" ${attr}="${esc(w.id)}" style="${themeVars(themeOf(w))}">
+  const visitItem = w => `<button class="wall-item" data-visit="${esc(w.id)}" style="${themeVars(themeOf(w))}">
       <b>${esc(w.title)}</b>
       <span class="meta"><span class="state ${w.open ? '' : 'off'}">${w.open ? '填寫中' : '已停止'}</span><span>${w.total} 位福音朋友</span><span>${w.filled} 排已填・${w.unfilled} 排未填</span></span>
-      ${attr === 'data-open' ? `<span class="meta"><span>${esc(w.created)}${ME.isAdmin && !w.mine ? `・${esc(w.creator)}` : ''}</span></span>` : ''}
     </button>`;
   $('panel').innerHTML = `
+    ${ME.isAdmin ? `<button class="admin-entry" id="to-admin"><span class="altar">${ALTAR_SVG}</span><span><b>總管理後台</b><small>全部代禱牆、整體統計；可勾選後停止、開放或刪除</small></span><span aria-hidden="true">›</span></button>` : ''}
     <h2 class="sec">我參與的代禱牆 <small>${joined.length}</small></h2>
-    ${joined.length ? joined.map(w => item(w, 'data-visit')).join('') : '<p class="muted small sec-empty">從群組裡的代禱牆圖卡打開過，就會出現在這裡。</p>'}
-    <h2 class="sec">我建立的代禱牆 <small>${WALLS.length}</small></h2>
-    ${WALLS.length ? WALLS.map(w => item(w, 'data-open')).join('') : '<p class="muted small sec-empty">還沒有建立代禱牆。</p>'}
+    ${joined.length ? joined.map(visitItem).join('') : '<p class="muted small sec-empty">從群組裡的代禱牆圖卡打開過，就會出現在這裡。</p>'}
+    <div class="sec-row"><h2 class="sec">我建立的代禱牆 <small>${mineList.length}</small></h2>${mineList.length ? `<button class="btn small ghost" id="w-select">${WSELECTING ? '完成' : '選取'}</button>` : ''}</div>
+    ${WSELECTING ? selBarHtml('w-sel', WSEL.size) : ''}
+    <div id="w-mine">${mineList.length ? wallRows(mineList, { selectable: WSELECTING }) : '<p class="muted small sec-empty">還沒有建立代禱牆。</p>'}</div>
+    <p class="hint">點代禱牆進入後台：可以發送、編輯、勾選名字修改或刪除。</p>
     <button class="btn" id="to-new" style="margin-top:6px">＋ 建立新的代禱牆</button>`;
-  document.querySelectorAll('[data-open]').forEach(b => b.onclick = () => go({ view: 'detail', id: b.dataset.open }));
   document.querySelectorAll('[data-visit]').forEach(b => b.onclick = () => { location.href = `${location.pathname}?wall=${encodeURIComponent(b.dataset.visit)}${DEMO ? '&demo' : ''}`; });
+  bindWallRows($('w-mine'), id => go({ view: 'detail', id }), renderWallsTab);
+  if ($('w-select')) $('w-select').onclick = () => { WSELECTING = !WSELECTING; WSEL.clear(); renderWallsTab(); };
+  bindSelBar('w-sel', renderWallsTab);
+  if ($('to-admin')) $('to-admin').onclick = () => { WSEL.clear(); WSELECTING = false; go({ view: 'admin' }); };
   $('to-new').onclick = () => { TAB = 'new'; render(); };
 }
 
@@ -1355,6 +1623,7 @@ function render() {
   if (ROUTE.view === 'detail') return renderDetail(ROUTE.id);
   if (ROUTE.view === 'edit') return renderEdit(ROUTE.id);
   if (ROUTE.view === 'towall') return renderToWall();
+  if (ROUTE.view === 'admin') return renderAdmin();
   const wallCount = WALLS.length + JOINED.filter(w => !WALLS.some(x => x.id === w.id)).length;
   view(`
     <header class="top"><a class="brand" href="./" id="home"><span class="logo">${pomSvg()}</span><div><h1>我的代禱卡．小區代禱牆</h1><p class="sub">金香壇代禱・以小排為單位同心代禱</p></div></a><button class="help" id="help" type="button" aria-label="使用教學">?</button></header>
@@ -1516,7 +1785,8 @@ function textList(w) {
 function drawDetail(w) {
   applyTheme(w);
   view(`
-    <div class="subbar"><button class="back" id="back">‹ 返回</button><h1>${esc(w.title)}</h1><span></span></div>
+    <div class="subbar"><button class="back" id="back">‹ 返回</button><h1>代禱牆後台</h1><span></span></div>
+    <h2 class="sec">${esc(w.title)}</h2>
     <section class="pv-panel"><div class="pv-label"><span class="t">目前的圖卡</span><small>${w.open ? '填寫中' : '已停止填寫'}</small></div>${cardHtml(w)}</section>
     ${shareBar('d-bar')}
     <div class="btn-grid">
@@ -1524,14 +1794,18 @@ function drawDetail(w) {
       <button class="btn" id="d-edit">編輯內容與排</button>
       <button class="btn ghost" id="d-toggle" style="grid-column:1 / -1">${w.open ? '停止填寫' : '重新開放填寫'}</button>
     </div>
-    <section class="card dot" style="margin-top:18px">
-      <h2>各排代禱名單 <small>共 ${w.total} 位</small></h2>
-      <div id="d-list">${listHtml(w, () => true)}</div>
-      ${w.total ? '<p class="hint" style="margin-top:12px">名字旁的 × 可以刪除，按兩下確認。</p>' : ''}
+    <section class="card" style="margin-top:18px">
+      <h2>成員 <small>${(w.members || []).length} 人看得到這面代禱牆</small></h2>
+      <div id="d-members">${membersHtml(w)}</div>
     </section>
-    <button class="btn danger" id="d-del">刪除這面代禱牆</button>
-    <p class="hint" style="text-align:center">刪除後名單也會一起刪除，群組裡的舊圖卡會打不開。</p>`);
-  $('back').onclick = () => { if (PARAMS.has('manage')) history.replaceState(null, '', location.pathname + (DEMO ? '?demo' : '')); TAB = 'walls'; go({ view: 'tabs' }); };
+    <section class="card" style="margin-top:18px">
+      <h2>名單管理 <small>共 ${w.total} 位</small></h2>
+      <p class="hint" style="margin:-6px 0 8px">勾選後可以移到別的排或刪除；按 ✎ 修改名字。</p>
+      <div id="d-manage">${manageHtml(w)}</div>
+    </section>
+    ${w.isCreator || ME_ADMIN() ? `<button class="btn danger" id="d-del">刪除這面代禱牆</button>
+    <p class="hint" style="text-align:center">刪除後名單和成員也會一起刪除，群組裡的舊圖卡會打不開。</p>` : ''}`);
+  $('back').onclick = () => { MSEL.clear(); USEL.clear(); MEDIT = ''; MFILTER = ''; if (PARAMS.has('manage')) history.replaceState(null, '', location.pathname + (DEMO ? '?demo' : '')); if (ROUTE.from === 'admin') return go({ view: 'admin' }); TAB = 'walls'; go({ view: 'tabs' }); };
   bindShareBar('d-bar', { text: () => textList(w), shot: () => wallShot(w), name: () => wallShotName(w), line: () => share(w) });
   $('d-open').onclick = () => { location.href = `${location.pathname}?wall=${encodeURIComponent(w.id)}${DEMO ? '&demo' : ''}`; };
   $('d-edit').onclick = () => go({ view: 'edit', id: w.id });
@@ -1540,8 +1814,9 @@ function drawDetail(w) {
     try { const r = await api('setOpen', { wallId: w.id, open: !w.open }); updateLocal(r.wall); toast(r.wall.open ? '已重新開放填寫' : '已停止填寫'); drawDetail(r.wall); }
     catch (e) { toast(e.message); b.disabled = false; }
   };
-  bindRemove($('d-list'), w.id, wall => { updateLocal(wall); const y = window.scrollY; drawDetail(wall); window.scrollTo(0, y); });
-  $('d-del').onclick = () => armThen($('d-del'), '確定刪除？再按一次', async () => {
+  const redraw = wall => { updateLocal(wall); const y = window.scrollY; drawDetail(wall); window.scrollTo(0, y); };
+  bindManage(w, redraw); bindMembers(w, redraw);
+  if ($('d-del')) $('d-del').onclick = () => armThen($('d-del'), '確定刪除？再按一次', async () => {
     $('d-del').disabled = true;
     try { await api('deleteWall', { wallId: w.id }); WALLS = WALLS.filter(x => x.id !== w.id); cacheSet('platform', { me: ME, walls: WALLS }); toast('已刪除'); TAB = 'walls'; go({ view: 'tabs' }); }
     catch (e) { toast(e.message); $('d-del').disabled = false; }
