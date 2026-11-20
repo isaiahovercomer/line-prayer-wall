@@ -10,9 +10,9 @@
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" sizes="180x180">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="代禱牆">
+<meta name="apple-mobile-web-app-title" content="我的代禱卡">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<title>LINE代禱牆建立平台</title>
+<title>我的代禱卡．小區代禱牆</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@400;700&display=swap" rel="stylesheet">
@@ -52,7 +52,7 @@
   header.top .brand { display: flex; align-items: center; gap: 12px; color: inherit; text-decoration: none; border-radius: 12px; }
   header.top .logo { width: 48px; height: 48px; flex: none; display: block; }
   header.top .logo svg { width: 100%; height: 100%; display: block; }
-  header.top h1 { font-family: var(--kai); font-weight: 700; font-size: 1.5rem; letter-spacing: .12em; margin: 0; line-height: 1.2; }
+  header.top h1 { font-family: var(--kai); font-weight: 700; font-size: clamp(1.1rem, 5.4vw, 1.5rem); letter-spacing: .06em; margin: 0; line-height: 1.25; }
   header.top .sub { margin: 2px 0 0; color: var(--muted); font-size: .85rem; letter-spacing: .04em; }
   .help { flex: none; width: 38px; height: 38px; border-radius: 50%; border: 1.5px solid var(--line); background: transparent; color: var(--muted); font-weight: 700; cursor: pointer; }
   .demo-note { background: #EDE6C8; color: #6C5F22; font-size: 13px; padding: 8px 12px; border-radius: 12px; margin: 0 0 10px; }
@@ -238,15 +238,67 @@
   .day-pick button { border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 4px 12px; font-family: var(--kai); font-size: 15px; cursor: pointer; }
   .day-pick button[aria-pressed="true"] { background: var(--bar); border-color: var(--bar); color: #fff; }
 
+  /* ---------- 一鍵：複製文字／存成圖片／傳到 LINE ---------- */
+  .share-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 14px; position: relative; }
+  .share-bar button { display: flex; flex-direction: column; align-items: center; gap: 2px; border: 1px solid var(--line); background: var(--sheet); border-radius: 16px; padding: 9px 4px 7px; font: inherit; font-size: 13px; color: var(--ink); cursor: pointer; min-height: 58px; }
+  .share-bar button svg { width: 22px; height: 22px; color: var(--olive-ink); }
+  .share-bar button.ln { border-color: var(--line-green); color: var(--share-ink); }
+  .share-bar button.ln svg { color: var(--line-green); }
+  .share-bar button:active { background: var(--paper); }
+  .share-bar button:disabled { opacity: .6; }
+  .poster { background: var(--paper); padding: 16px; }
+  .poster .lc { max-width: none; box-shadow: none; border: 1.5px solid var(--line); }
+  .poster .lc .poster-foot { text-align: center; font-size: 11px; color: var(--muted); padding: 2px 0 10px; font-family: var(--kai); letter-spacing: .1em; }
+  .save-sheet { position: fixed; inset: 0; z-index: 9999; background: rgba(20,22,30,.72); display: flex; align-items: center; justify-content: center; padding: 16px; }
+  .save-sheet .ss-panel { background: #fff; border-radius: 16px; padding: 14px; width: 100%; max-width: 440px; max-height: 92vh; display: flex; flex-direction: column; gap: 10px; }
+  .save-sheet .ss-tip { margin: 0; font-size: 14.5px; line-height: 1.6; }
+  .save-sheet .ss-img { display: block; width: 100%; height: auto; min-height: 0; flex: 1; object-fit: contain; border-radius: 10px; border: 1px solid var(--rule); -webkit-touch-callout: default; user-select: auto; }
+  .save-sheet .ss-btns { display: flex; gap: 8px; justify-content: center; }
+  #card-shot { background: var(--paper); }
+
+  /* ---------- 插圖元素 ---------- */
+  .hero .sprig { position: absolute; right: -8px; top: -6px; width: 118px; transform: rotate(8deg); pointer-events: none; }
+  .hero .sprig svg, .card-deco svg { width: 100%; display: block; }
+  .hero .scatter, .pcard .scatter, .card .scatter { position: absolute; inset: auto 0 0 auto; width: 46%; height: 56%; pointer-events: none; }
+  .hero .label { z-index: 1; }
+  .card-hero { min-height: 176px; margin-bottom: 14px; }
+  .card-hero .label { padding: 10px 10px 12px; }
+  .card-hero .altar { display: block; width: 34px; margin: 0 auto 2px; }
+  .card-hero .altar svg { width: 100%; display: block; }
+  .card-hero h1 { font-size: 1.6rem; margin-top: 4px; }
+  .card-hero .date { margin: 4px 0 0; font-size: 12px; color: var(--muted); letter-spacing: .08em; }
+  .orn { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 22px 8px 0; }
+  .orn i { flex: 1; height: 1px; background: linear-gradient(to right, transparent, var(--line)); }
+  .orn i:last-child { background: linear-gradient(to left, transparent, var(--line)); }
+  .orn b { width: 8px; height: 11px; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; background: var(--bar); opacity: .75; }
+  .orn b.d { background: var(--olive); transform: translateY(-2px); }
+  .card-deco { position: absolute; width: 92px; left: -14px; bottom: -10px; opacity: .55; transform: rotate(-8deg) scaleX(-1); pointer-events: none; }
+  .tabs button .ti { display: inline-block; width: 9px; height: 13px; margin-right: 5px; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; background: var(--line); vertical-align: -1px; }
+  .tabs button[aria-selected="true"] .ti { background: var(--bar); }
+  .tabs button .ti.wall { width: 12px; height: 10px; border-radius: 2px; background: linear-gradient(var(--line) 0 0) 0 0 / 100% 1px no-repeat, linear-gradient(var(--sheet) 0 0); border: 1.5px solid var(--line); }
+  .tabs button[aria-selected="true"] .ti.wall { border-color: var(--bar); background: var(--pill); }
+  .tabs button .ti.plus { width: auto; height: auto; background: none; border-radius: 0; color: inherit; font-family: var(--sans); font-weight: 700; }
+  .empty-art { width: 120px; margin: 0 auto 6px; position: relative; }
+  .empty-art .sp { position: absolute; width: 80px; right: -40px; top: -12px; }
+  .poster-card { background: var(--paper); padding: 16px; }
+  .poster-card .pcard .grid { margin-top: 6px; }
+  .poster-card .verse { margin-top: 18px; }
+
   /* ---------- 圖卡預覽（模擬群組裡的 LINE 圖卡） ---------- */
   .pv-panel { background: rgba(182,163,89,.1); border: 1.5px dashed var(--olive); border-radius: 26px; padding: 12px 12px 16px; margin-bottom: 14px; }
   .pv-label { display: flex; align-items: baseline; gap: 10px; margin: 0 4px 10px; }
   .pv-label .t { background: var(--olive); color: #fff; font-size: 12px; font-weight: 700; padding: 2px 10px; border-radius: 999px; letter-spacing: .06em; }
   .pv-label small { color: var(--muted); font-size: 12px; }
   .lc { border-radius: 18px; overflow: hidden; background: var(--sheet); box-shadow: 0 2px 10px rgba(60,20,25,.12); max-width: 340px; margin: 0 auto; font-size: 13px; }
-  .lc .img { display: block; width: 100%; aspect-ratio: 20 / 9; background: var(--sheet); overflow: hidden; position: relative; }
-  .lc .img svg { position: absolute; left: -6%; top: 50%; width: 52%; transform: translateY(-50%); }
-  .lc .img .ln { position: absolute; left: 48%; right: 8%; top: 30%; bottom: 30%; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+  .lc .img { display: block; width: 100%; aspect-ratio: 20 / 9; background: var(--sheet); overflow: hidden; position: relative; container-type: inline-size; }
+  .lc .img > svg:first-child { position: absolute; left: -6%; top: 50%; width: 52%; transform: translateY(-50%); }
+  .lc .img .ln { position: absolute; left: 50%; right: 7%; top: 24%; bottom: 20%; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); display: flex; align-items: center; justify-content: center; gap: 8px; gap: 2.4cqw; }
+  .lc .img .ln b { font-family: var(--kai); font-size: 22px; font-size: 6.6cqw; letter-spacing: .18em; color: var(--ink); font-weight: 700; }
+  .lc .img .baltar { width: 26px; width: 7.5cqw; display: block; }
+  .lc .img .baltar svg { width: 100%; display: block; }
+  .lc .img .bsprig { position: absolute; width: 30%; left: 30%; top: -4%; transform: rotate(-6deg); }
+  .lc .img .bsprig svg { width: 100%; display: block; }
+  .lc .img .scatter { position: absolute; right: 0; bottom: 0; width: 60%; height: 100%; }
   .lc .h { padding: 14px 16px 6px; }
   .lc .h .tg { display: inline-block; color: var(--bar); border: 1px solid var(--bar); border-radius: 999px; padding: 0 8px; font-size: 11px; }
   .lc .h .ti { font-family: var(--kai); font-size: 23px; font-weight: 700; letter-spacing: .1em; color: var(--g2); line-height: 1.3; margin: 4px 0 2px; word-break: break-word; }
@@ -398,7 +450,7 @@ const POM_SVG = (() => {
 })();
 const pomSvg = () => POM_SVG;
 /** 圖卡上方的石榴橫幅（LINE 圖卡用同一張圖的 PNG） */
-const bannerHtml = () => `<span class="img" aria-hidden="true">${pomSvg()}<span class="ln"></span></span>`;
+const bannerHtml = () => `<span class="img" aria-hidden="true">${pomSvg()}${scatterSeeds(10, 11)}<span class="bsprig">${SPRIG_SVG}</span><span class="ln"><span class="baltar">${ALTAR_SVG}</span><b>同心代禱</b></span></span>`;
 const splitVerse = v => { const m = /^「(.+)」\s*(.*)$/.exec(String(v || '').trim()); return m ? { text: m[1], ref: m[2] } : { text: String(v || '').trim(), ref: '' }; };
 
 const VERSES = [
@@ -546,6 +598,7 @@ function heroHtml(w) {
   return `<section class="hero">
       <div class="art">${pomSvg()}</div>
       <div class="label">${w.tag ? `<span class="tag">${esc(w.tag)}</span>` : ''}<h1>${esc(w.title)}</h1></div>
+      <span class="sprig">${SPRIG_SVG}</span>${scatterSeeds(8, 5)}
     </section>
     ${w.desc ? `<p class="intro">${esc(w.desc)}</p>` : ''}
     <div class="stats">
@@ -621,13 +674,14 @@ function drawWall() {
       <div class="day-pick" id="card-day" role="group" aria-label="放在代禱卡的哪一天" ${toCard ? '' : 'hidden'}>${cardCats().map((c, i) => `<button type="button" data-cd="${i}" aria-pressed="${i === cardDay}">${dayLabel(i)}・${esc(c)}</button>`).join('')}</div>
       <p class="posted" id="posted" hidden></p>
     </section>` : ''}
-    <section class="card" aria-labelledby="list-h">
+    <section class="card" aria-labelledby="list-h"><span class="card-deco" aria-hidden="true">${SPRIG_SVG}</span>
       <h2 id="list-h">各排代禱名單 <small>共 ${w.total} 位</small></h2>
       <div id="wall-list">${listHtml(w, n => n.mine || w.canManage)}</div>
       ${mineCount || w.canManage ? `<p class="hint" style="margin-top:12px">${w.canManage ? '你是這面代禱牆的建立者，每個名字旁都有 ×，可以刪除。' : '你填的名字旁邊有 ×，可以自己刪除。'}</p>` : ''}
       <button class="btn share" style="margin-top:14px" id="repost">${ICON_SEND}把代禱牆貼到聊天室</button>
+      ${shareBar('w-bar')}
     </section>
-    ${verseHtml(w)}
+    ${w.verse ? ornament() : ''}${verseHtml(w)}
     <footer class="page-foot">
       <button class="link" id="mycard">我的代禱卡</button>
       <button class="link" id="fwd">轉傳給其他群組或朋友</button>
@@ -659,6 +713,7 @@ function drawWall() {
   bindRemove($('wall-list'), w.id, wall => { WALL = wall; cacheSet('wall.' + wall.id, wall); keepTyped(drawWall); });
   $('repost').onclick = async () => { const b = $('repost'); b.disabled = true; await postWall(w); b.disabled = false; };
   $('fwd').onclick = () => share(w);
+  bindShareBar('w-bar', { text: () => textList(w), shot: () => wallShot(w), name: () => wallShotName(w), line: () => share(w) });
   $('mycard').onclick = () => { location.href = `${location.pathname}?tab=card${DEMO ? '&demo' : ''}`; };
   if ($('tocard')) {
     $('tocard').onchange = e => { $('card-day').hidden = !e.target.checked; try { localStorage.setItem('pw.tocard', e.target.checked ? '1' : '0'); } catch (x) {} };
@@ -814,7 +869,7 @@ function buildWallFlex(w, news, opt = {}) {
 }
 
 /** 網頁上的圖卡預覽，盡量長得跟 LINE 裡一樣 */
-function cardHtml(w) {
+function cardHtml(w, poster) {
   const t = themeOf(w);
   const filled = w.list.filter(g => g.names.length), empty = w.list.filter(g => !g.names.length);
   return `<div class="lc" style="${themeVars(t)}">
@@ -826,9 +881,132 @@ function cardHtml(w) {
       ${empty.length ? `<div class="none">還沒有名單：${esc(empty.map(g => g.name).join('、'))}</div>` : ''}
       ${!filled.length && !empty.length ? '<div class="none">還沒有設定排</div>' : ''}
     </div>
-    <div class="f"><div class="pb">${w.open === false ? '打開代禱牆' : '📝 我也要填代禱名單'}</div><div class="lk"><span style="color:var(--bar)">我的代禱卡</span>　　轉傳</div></div>
+    ${poster ? `<div class="poster-foot">同心代禱・${esc(fileDate().replace(/(\d{4})(\d{2})(\d{2})/, '$1/$2/$3'))}</div>` : `<div class="f"><div class="pb">${w.open === false ? '打開代禱牆' : '📝 我也要填代禱名單'}</div><div class="lk"><span style="color:var(--bar)">我的代禱卡</span>　　轉傳</div></div>`}
   </div>`;
 }
+
+/* ---------- 插圖元素：橄欖枝、金香壇、散落的石榴籽、花飾分隔 ---------- */
+const SPRIG_SVG = `<svg viewBox="0 0 140 70" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <path d="M6 62C40 50 78 30 134 8" stroke="#7FA27C" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+  ${[[24, 54, -28, '#8DB38A'], [40, 47, 30, '#9DBF97'], [56, 40, -32, '#7FA27C'], [72, 33, 26, '#8DB38A'], [88, 26, -30, '#9DBF97'], [104, 20, 24, '#7FA27C'], [120, 13, -26, '#8DB38A']]
+    .map(([x, y, r, c], i) => `<ellipse cx="${x}" cy="${y + (i % 2 ? 7 : -7)}" rx="11" ry="4.6" fill="${c}" transform="rotate(${r} ${x} ${y + (i % 2 ? 7 : -7)})"/>`).join('')}
+  <circle cx="64" cy="49" r="4.4" fill="#B6A359"/><circle cx="98" cy="35" r="3.8" fill="#C9B66A"/>
+</svg>`;
+const ALTAR_SVG = `<svg viewBox="0 0 64 72" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <path d="M32 26c-6-5 5-8-1-14s4-8 1-12" stroke="#B6A359" stroke-width="2.2" fill="none" stroke-linecap="round" opacity=".9"/>
+  <path d="M24 27c-4-4 3-6 0-10" stroke="#C9B66A" stroke-width="1.8" fill="none" stroke-linecap="round" opacity=".7"/>
+  <path d="M40 27c4-4-3-6 0-10" stroke="#C9B66A" stroke-width="1.8" fill="none" stroke-linecap="round" opacity=".7"/>
+  <path d="M15 34l2.5-5 2.5 5zM44 34l2.5-5 2.5 5z" fill="#A88A35"/>
+  <rect x="14" y="33" width="36" height="6" rx="1.5" fill="#C9A24A"/>
+  <rect x="18" y="39" width="28" height="22" fill="#DDBE62" stroke="#A88A35" stroke-width="1.2"/>
+  <path d="M18 44h28M18 56h28" stroke="#A88A35" stroke-width="1"/>
+  <rect x="26" y="47" width="12" height="6" rx="1" fill="none" stroke="#A88A35" stroke-width="1"/>
+  <rect x="14" y="61" width="36" height="5" rx="1.5" fill="#C9A24A"/>
+</svg>`;
+/** 散落的石榴籽（裝飾用，顏色跟著色調） */
+const scatterSeeds = (n = 9, seed = 7) => {
+  let s = seed; const rnd = () => (s = (s * 9301 + 49297) % 233280) / 233280;
+  return `<svg class="scatter" viewBox="0 0 200 120" preserveAspectRatio="none" aria-hidden="true">${Array.from({ length: n }, () => {
+    const x = 10 + rnd() * 180, y = 10 + rnd() * 100, r = rnd() * 360, deep = rnd() > .6;
+    return `<ellipse cx="${x.toFixed(0)}" cy="${y.toFixed(0)}" rx="3.2" ry="4.6" transform="rotate(${r.toFixed(0)} ${x.toFixed(0)} ${y.toFixed(0)})" style="fill:var(--${deep ? 'g2' : 'bar'})" opacity="${(0.18 + rnd() * .25).toFixed(2)}"/>`;
+  }).join('')}</svg>`;
+};
+/** 花飾分隔線：線—三顆石榴籽—線 */
+const ornament = () => `<div class="orn" aria-hidden="true"><i></i><b></b><b class="d"></b><b></b><i></i></div>`;
+const todayText = () => { const d = new Date(); return `${d.getMonth() + 1}月${d.getDate()}日・${dayLabel(d.getDay())}`; };
+/** 代禱卡頁首：石榴＋題字＋金香壇 */
+const cardHeroHtml = () => `<section class="hero card-hero">
+    <div class="art">${pomSvg()}</div>
+    <div class="label"><span class="altar">${ALTAR_SVG}</span><span class="tag">金香壇代禱</span><h1>我的代禱卡</h1><p class="date">${todayText()}</p></div>
+    <span class="sprig">${SPRIG_SVG}</span>${scatterSeeds(8, 3)}
+  </section>`;
+
+/* ================= 一鍵：複製文字／存成圖片／傳到 LINE ================= */
+const ICON_COPY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>';
+const ICON_CAM = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>';
+const shareBar = id => `<div class="share-bar" id="${id}" role="group" aria-label="複製、存圖、傳到 LINE">
+    <button type="button" data-sb="copy">${ICON_COPY}<span>複製文字</span></button>
+    <button type="button" data-sb="shot">${ICON_CAM}<span>存成圖片</span></button>
+    <button type="button" data-sb="line" class="ln">${ICON_SEND}<span>傳到 LINE</span></button>
+  </div>`;
+/** opts：text() 回傳要複製的文字；shot() 回傳 { el, done } 要截圖的元素；name 檔名；line() 傳到 LINE */
+function bindShareBar(id, opts) {
+  const bar = $(id); if (!bar) return;
+  const run = async (b, fn) => { if (b.disabled) return; b.disabled = true; try { await fn(); } catch (e) { toast(e.message || String(e)); } finally { b.disabled = false; } };
+  bar.querySelector('[data-sb=copy]').onclick = e => run(e.currentTarget, async () => copyText(opts.text(), '已複製，可以貼到記事本或 LINE'));
+  bar.querySelector('[data-sb=shot]').onclick = e => run(e.currentTarget, async () => {
+    const b = e.currentTarget, old = b.innerHTML; b.innerHTML = `${ICON_CAM}<span>產生中…</span>`;
+    try { const s = opts.shot(); try { await saveImage(s.el, opts.name()); } finally { s.done && s.done(); } }
+    finally { b.innerHTML = old; }
+  });
+  bar.querySelector('[data-sb=line]').onclick = e => run(e.currentTarget, () => opts.line());
+}
+
+/* 截圖工具（modern-screenshot，MIT，放在 lib/），按下才載入 */
+let SHOT_LIB = null;
+function loadShotLib() {
+  if (window.modernScreenshot) return Promise.resolve(window.modernScreenshot);
+  return SHOT_LIB || (SHOT_LIB = new Promise((res, rej) => {
+    const s = document.createElement('script'); s.src = 'lib/modern-screenshot.js';
+    s.onload = () => window.modernScreenshot ? res(window.modernScreenshot) : rej(new Error('截圖工具載入失敗'));
+    s.onerror = () => { SHOT_LIB = null; rej(new Error('截圖工具載入失敗，請再試一次')); };
+    document.head.appendChild(s);
+  }));
+}
+/** 在畫面外排一張要存的圖（不影響目前畫面），寬度和手機一樣 */
+function offscreen(html, width = 390) {
+  const box = document.createElement('div');
+  box.style.cssText = `position:fixed;left:-10000px;top:0;width:${width}px;pointer-events:none`;
+  box.innerHTML = html;
+  document.body.appendChild(box);
+  return { el: box.firstElementChild, done: () => box.remove() };
+}
+const isMobileUA = () => /Android|iPhone|iPad|iPod|Mobile|Line\//i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+async function saveImage(el, filename) {
+  if (DEMO && PARAMS.has('noshot')) return toast('預覽模式：已產生圖片');
+  const ms = await loadShotLib();
+  await document.fonts.ready.catch(() => {});
+  const blob = await ms.domToBlob(el, {
+    scale: Math.min(3, Math.max(2, window.devicePixelRatio || 2)), type: 'image/png', width: Math.ceil(el.getBoundingClientRect().width),
+    backgroundColor: '#F2F1E4', timeout: 20000,
+    style: { animation: 'none', transition: 'none', margin: '0', boxShadow: 'none' },
+    filter: n => !(n.classList && n.classList.contains('no-shot')),
+  });
+  if (!blob) throw new Error('無法產生圖片');
+  const file = new File([blob], filename, { type: 'image/png' });
+  if (!isMobileUA()) {
+    const url = URL.createObjectURL(blob), a = document.createElement('a');
+    a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 30000);
+    return toast('已存成圖片');
+  }
+  if (navigator.canShare && navigator.share) {
+    try { if (navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: filename }); return; } }
+    catch (e) { if (e && e.name === 'AbortError') return; }
+  }
+  showSaveSheet(blob, file, filename); // LINE 內建瀏覽器多半不能直接存：打開圖片讓人長按儲存
+}
+function showSaveSheet(blob, file, filename) {
+  const r = new FileReader();
+  r.onload = () => {
+    document.querySelectorAll('.save-sheet').forEach(x => x.remove());
+    const box = document.createElement('div');
+    box.className = 'save-sheet'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', '存成圖片');
+    box.innerHTML = `<div class="ss-panel"><p class="ss-tip"><b>長按下面的圖片</b>，選「儲存圖片」或「加入照片」，就會存到手機相簿。</p>
+      <img class="ss-img" alt="${esc(filename)}" src="${r.result}">
+      <div class="ss-btns"><a class="btn small ghost" href="${r.result}" download="${esc(filename)}">下載</a><button type="button" class="btn small send" id="ss-close">關閉</button></div></div>`;
+    document.body.appendChild(box);
+    const close = () => box.remove();
+    box.addEventListener('click', e => { if (e.target === box) close(); });
+    box.querySelector('#ss-close').onclick = close;
+  };
+  r.readAsDataURL(blob);
+}
+const fileDate = () => { const d = new Date(); return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`; };
+const safeName = s => String(s || '').replace(/[\\/:*?"<>|\s]+/g, '').slice(0, 24);
+/** 代禱牆存圖：跟群組圖卡一樣的版面，列出全部名字 */
+const wallShot = w => offscreen(`<div class="poster">${cardHtml(w, true)}</div>`);
+const wallShotName = w => `${safeName(w.title)}-${fileDate()}.png`;
 
 /* ================= 個人代禱卡（延續金香壇代禱卡：一週七天、每天一個類別） ================= */
 const WD = ['日', '一', '二', '三', '四', '五', '六'];
@@ -923,25 +1101,29 @@ function renderCard() {
     const slots = d.names.slice(); while (slots.length < 12 || slots.length % 2) slots.push('');
     body = `<div class="seeds" aria-hidden="true">${d.names.map(n => `<span class="seed ${marked.has(n) ? 'f' : ''}"></span>`).join('')}</div>
       <p class="count">${d.names.length ? `已代禱 ${marked.size}／${d.names.length}` : '這一天還沒有名字'}</p>
-      <div class="grid">${slots.map(n => n ? `<div class="cell ${marked.has(n) ? 'done' : ''}"><button class="mk" data-mark="${esc(n)}" aria-pressed="${marked.has(n)}"><span>${esc(n)}</span>${ON_WALL[n] ? `<span class="wb" title="已放上：${esc(ON_WALL[n].join('、'))}">牆</span>` : ''}</button><button class="lt" data-letter="${esc(n)}" aria-label="寫信給 ${esc(n)}" title="寫信給 ${esc(n)}">${ICON_LETTER}</button></div>` : `<div class="cell empty-cell" aria-hidden="true"></div>`).join('')}</div>
-      ${d.names.length ? `<p class="hint">點名字標記今天已經為他禱告；點信封寫一封「流通神聖的愛」的信給他，存好後可以傳到他的 LINE。標「牆」的已經放上團體代禱牆。</p>` : `<p class="empty">這一天的名單是空的，點「編輯名單」加入名字。</p>`}
+      <div class="grid">${slots.map(n => n ? `<div class="cell ${marked.has(n) ? 'done' : ''}"><button class="mk" data-mark="${esc(n)}" aria-pressed="${marked.has(n)}"><span>${esc(n)}</span>${ON_WALL[n] ? `<span class="wb" title="已放上：${esc(ON_WALL[n].join('、'))}">牆</span>` : ''}</button><button class="lt no-shot" data-letter="${esc(n)}" aria-label="寫信給 ${esc(n)}" title="寫信給 ${esc(n)}">${ICON_LETTER}</button></div>` : `<div class="cell empty-cell" aria-hidden="true"></div>`).join('')}</div>
+      ${d.names.length ? `<p class="hint no-shot">點名字標記今天已經為他禱告；點信封寫一封「流通神聖的愛」的信給他，存好後可以傳到他的 LINE。標「牆」的已經放上團體代禱牆。</p>` : `<p class="empty">這一天的名單是空的，點「編輯名單」加入名字。</p>`}
+      <div class="no-shot">
       <div class="actions">
         <button class="btn edit" id="card-edit">編輯名單</button>
         <button class="btn send" id="card-towall">放上代禱牆</button>
-        <button class="btn line" id="card-line">傳到 LINE</button>
       </div>
+      ${shareBar('c-bar')}
       <div class="actions tools">
-        <button class="btn code" id="card-copy">複製名單</button>
         <button class="btn code" id="card-paste">貼上名字</button>
         <button class="btn code" id="card-code">名單代碼</button>
+      </div>
       </div>`;
   }
-  $('panel').innerHTML = `${pend}${dayNav}
-    <section class="pcard">
+  $('panel').innerHTML = `${cardHeroHtml()}${pend}${dayNav}
+    <div id="card-shot">
+    <section class="pcard">${scatterSeeds(6, 13)}
       <div class="head"><span class="wd">${dayLabel(sel)}</span>${sel === today ? '<span class="tag">今天</span>' : ''}<h2>${esc(d.cat)}</h2></div>
       ${body}
     </section>
-    <blockquote class="verse">${esc(CARD_VERSE.text)}<cite>${esc(CARD_VERSE.ref)}</cite></blockquote>`;
+    ${ornament()}
+    <blockquote class="verse">${esc(CARD_VERSE.text)}<cite>${esc(CARD_VERSE.ref)}</cite></blockquote>
+    </div>`;
   bindCard();
 }
 
@@ -998,15 +1180,44 @@ function bindCard() {
     const r = mergeCard(CARD, inc); CARD_MODE = 'view'; renderCard();
     await persistCard(r.card, r.added ? `已匯入 ${r.added} 個名字` : '這些名字都已經在名單裡了'); renderCard();
   });
-  on('card-copy', () => copyText(cardText(sel), '已複製，可以貼到 LINE'));
-  on('card-line', () => shareText(cardText(sel)));
+  bindShareBar('c-bar', { text: () => cardText(sel), line: () => shareText(cardText(sel)),
+    name: () => `金香壇代禱-${dayLabel(sel)}${safeName(d.cat)}-${fileDate()}.png`,
+    shot: () => cardPoster(sel) });
   on('card-towall', () => { TOWALL = { picked: new Set(), wallId: '', group: '' }; go({ view: 'towall' }); });
+}
+/** 代禱卡存圖：石榴頁首＋這一天的名單＋經文（不含按鈕） */
+function cardPoster(sel) {
+  const d = CARD.days[sel], marked = new Set(MARKS[sel] || []);
+  const slots = d.names.slice(); while (slots.length < 6 || slots.length % 2) slots.push('');
+  return offscreen(`<div class="poster-card">
+    ${cardHeroHtml()}
+    <section class="pcard">${scatterSeeds(6, 13)}
+      <div class="head"><span class="wd">${dayLabel(sel)}</span><h2>${esc(d.cat)}</h2></div>
+      <div class="grid">${slots.map(n => n ? `<div class="cell ${marked.has(n) ? 'done' : ''}"><span class="mk"><span>${esc(n)}</span></span></div>` : '<div class="cell empty-cell"></div>').join('')}</div>
+    </section>
+    ${ornament()}
+    <blockquote class="verse">${esc(CARD_VERSE.text)}<cite>${esc(CARD_VERSE.ref)}</cite></blockquote>
+  </div>`);
 }
 function readDraft() {
   if ($('cat-in')) CARD_DRAFT.cat = $('cat-in').value;
   document.querySelectorAll('[data-ci]').forEach(i => { CARD_DRAFT.names[+i.dataset.ci] = i.value; });
 }
-function copyText(text, done) { navigator.clipboard.writeText(text).then(() => toast(done), () => toast('無法複製，請長按文字自行複製')); }
+async function copyText(text, done) {
+  try { await navigator.clipboard.writeText(text); toast(done); return; } catch (e) {}
+  try { // 舊方法：LINE 內建瀏覽器有時不允許 clipboard API
+    const ta = document.createElement('textarea'); ta.value = text; ta.setAttribute('readonly', ''); ta.style.cssText = 'position:fixed;left:-9999px;top:0';
+    document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0, text.length); const ok = document.execCommand('copy'); ta.remove();
+    if (ok) { toast(done); return; }
+  } catch (e) {}
+  // 還是不行：打開文字讓人長按全選複製
+  document.querySelectorAll('.save-sheet').forEach(x => x.remove());
+  const box = document.createElement('div'); box.className = 'save-sheet'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', '複製文字');
+  box.innerHTML = `<div class="ss-panel"><p class="ss-tip"><b>長按下面的文字</b>，選「全選」再「複製」。</p><textarea class="inp" readonly style="min-height:240px">${esc(text)}</textarea><div class="ss-btns"><button type="button" class="btn small send" id="ss-close">關閉</button></div></div>`;
+  document.body.appendChild(box);
+  box.addEventListener('click', e => { if (e.target === box) box.remove(); });
+  box.querySelector('#ss-close').onclick = () => box.remove();
+}
 async function shareText(text) {
   if (DEMO) return toast('預覽模式：正式版會跳出 LINE 的選擇畫面');
   if (!liff.isApiAvailable('shareTargetPicker')) return copyText(text, '已複製，可以貼到 LINE');
@@ -1064,16 +1275,16 @@ function renderToWall() {
 function renderToWallDone(r) {
   applyTheme(r.wall);
   view(`<section class="solo"><div class="msg-card">
-      <div style="width:80px;margin:0 auto">${pomSvg()}</div>
+      <div class="empty-art">${pomSvg()}<span class="sp">${SPRIG_SVG}</span></div>
       <h1>已放上代禱牆</h1>
       <p>${r.added.length ? `已為「${esc(r.group)}」加入 ${r.added.length} 位：${esc(r.added.join('、'))}` : ''}${r.skipped.length ? `<br><span class="muted small">${esc(r.skipped.join('、'))} 已經在名單上</span>` : ''}</p>
       <p class="muted small">${esc(r.wall.title)}：共 ${r.wall.total} 位福音朋友</p>
     </div>
     <div class="pv-panel" style="margin-top:14px">${cardHtml(r.wall)}</div>
-    <button class="btn line" id="dn-share">${ICON_SEND}把代禱牆傳到 LINE 群組</button>
+    ${shareBar('dn-bar')}
     <div class="btn-grid"><button class="btn" id="dn-open">打開代禱牆</button><button class="btn ghost" id="dn-back">回到代禱卡</button></div>
   </section>`);
-  $('dn-share').onclick = () => share(r.wall);
+  bindShareBar('dn-bar', { text: () => textList(r.wall), shot: () => wallShot(r.wall), name: () => wallShotName(r.wall), line: () => share(r.wall) });
   $('dn-open').onclick = () => { location.href = `${location.pathname}?wall=${encodeURIComponent(r.wall.id)}${DEMO ? '&demo' : ''}`; };
   $('dn-back').onclick = () => { TAB = 'card'; go({ view: 'tabs' }); };
 }
@@ -1146,12 +1357,12 @@ function render() {
   if (ROUTE.view === 'towall') return renderToWall();
   const wallCount = WALLS.length + JOINED.filter(w => !WALLS.some(x => x.id === w.id)).length;
   view(`
-    <header class="top"><a class="brand" href="./" id="home"><span class="logo">${pomSvg()}</span><div><h1>同心代禱</h1><p class="sub">個人代禱卡・團體代禱牆</p></div></a><button class="help" id="help" type="button" aria-label="使用教學">?</button></header>
+    <header class="top"><a class="brand" href="./" id="home"><span class="logo">${pomSvg()}</span><div><h1>我的代禱卡．小區代禱牆</h1><p class="sub">金香壇代禱・以小排為單位同心代禱</p></div></a><button class="help" id="help" type="button" aria-label="使用教學">?</button></header>
     ${DEMO ? `<p class="demo-note">預覽模式：目前使用範例資料。</p>` : ''}
     <nav class="tabs" role="tablist">
-      <button role="tab" aria-selected="${TAB === 'card'}" data-tab="card">我的代禱卡</button>
-      <button role="tab" aria-selected="${TAB === 'walls'}" data-tab="walls">代禱牆<span class="n">${wallCount}</span></button>
-      <button role="tab" aria-selected="${TAB === 'new'}" data-tab="new">建立代禱牆</button>
+      <button role="tab" aria-selected="${TAB === 'card'}" data-tab="card"><span class="ti" aria-hidden="true"></span>我的代禱卡</button>
+      <button role="tab" aria-selected="${TAB === 'walls'}" data-tab="walls"><span class="ti wall" aria-hidden="true"></span>代禱牆<span class="n">${wallCount}</span></button>
+      <button role="tab" aria-selected="${TAB === 'new'}" data-tab="new"><span class="ti plus" aria-hidden="true">＋</span>建立</button>
     </nav>
     <div id="panel"></div>
     <footer class="page-foot">${isStandalone() ? '' : '<button class="link" id="install-link">安裝到手機桌面</button>'}<button class="link" onclick="myDataFlow()">我的個人資料</button></footer>
@@ -1307,12 +1518,11 @@ function drawDetail(w) {
   view(`
     <div class="subbar"><button class="back" id="back">‹ 返回</button><h1>${esc(w.title)}</h1><span></span></div>
     <section class="pv-panel"><div class="pv-label"><span class="t">目前的圖卡</span><small>${w.open ? '填寫中' : '已停止填寫'}</small></div>${cardHtml(w)}</section>
-    <button class="btn line" id="d-share">${ICON_SEND}傳到 LINE 群組</button>
+    ${shareBar('d-bar')}
     <div class="btn-grid">
       <button class="btn" id="d-open">打開填寫頁</button>
       <button class="btn" id="d-edit">編輯內容與排</button>
-      <button class="btn code" id="d-copy">複製文字名單</button>
-      <button class="btn ghost" id="d-toggle">${w.open ? '停止填寫' : '重新開放填寫'}</button>
+      <button class="btn ghost" id="d-toggle" style="grid-column:1 / -1">${w.open ? '停止填寫' : '重新開放填寫'}</button>
     </div>
     <section class="card dot" style="margin-top:18px">
       <h2>各排代禱名單 <small>共 ${w.total} 位</small></h2>
@@ -1322,10 +1532,9 @@ function drawDetail(w) {
     <button class="btn danger" id="d-del">刪除這面代禱牆</button>
     <p class="hint" style="text-align:center">刪除後名單也會一起刪除，群組裡的舊圖卡會打不開。</p>`);
   $('back').onclick = () => { if (PARAMS.has('manage')) history.replaceState(null, '', location.pathname + (DEMO ? '?demo' : '')); TAB = 'walls'; go({ view: 'tabs' }); };
-  $('d-share').onclick = () => share(w);
+  bindShareBar('d-bar', { text: () => textList(w), shot: () => wallShot(w), name: () => wallShotName(w), line: () => share(w) });
   $('d-open').onclick = () => { location.href = `${location.pathname}?wall=${encodeURIComponent(w.id)}${DEMO ? '&demo' : ''}`; };
   $('d-edit').onclick = () => go({ view: 'edit', id: w.id });
-  $('d-copy').onclick = () => navigator.clipboard.writeText(textList(w)).then(() => toast('已複製，可以貼到記事本或聊天室'), () => toast('無法複製'));
   $('d-toggle').onclick = async () => {
     const b = $('d-toggle'); b.disabled = true;
     try { const r = await api('setOpen', { wallId: w.id, open: !w.open }); updateLocal(r.wall); toast(r.wall.open ? '已重新開放填寫' : '已停止填寫'); drawDetail(r.wall); }
@@ -1398,14 +1607,14 @@ function startInstall() {
   installFlow();
 }
 function installFlow() {
-  document.title = '安裝「代禱牆」';
+  document.title = '安裝「我的代禱卡．小區代禱牆」';
   const steps = isIOS()
     ? `<ol class="install-steps"><li>用 <b>Safari</b> 開啟這個頁面</li><li>點下方的「分享」按鈕</li><li>往下滑，點「<b>加入主畫面</b>」</li><li>按右上角「新增」</li></ol>`
     : `<ol class="install-steps"><li>點上面的「安裝到手機桌面」</li><li>如果沒有反應：點瀏覽器右上角「⋮」選單</li><li>選「<b>安裝應用程式</b>」或「<b>加到主畫面</b>」</li></ol>`;
   view(`<section class="solo"><div class="msg-card">
     <img src="icons/icon-192.png" alt="" width="88" height="88" style="border-radius:22px">
-    <h1>代禱牆</h1>
-    <p class="muted">把「建立代禱牆圖卡」平台放到手機桌面，像 App 一樣一點就開。</p>
+    <h1>我的代禱卡．小區代禱牆</h1>
+    <p class="muted">把「我的代禱卡．小區代禱牆」放到手機桌面，像 App 一樣一點就開。</p>
     ${isStandalone() ? '<p class="posted">已經安裝好了，從桌面的圖示打開即可。</p>' : `<button class="btn send" id="do-install" ${isIOS() ? 'hidden' : ''}>安裝到手機桌面</button>${steps}`}
     <p class="muted small">第一次從桌面打開時，會請你用 LINE 帳號登入一次。</p>
     <button class="btn ghost" id="go-platform" style="margin-top:10px">前往平台</button>

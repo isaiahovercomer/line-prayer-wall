@@ -1,5 +1,5 @@
 /**
- * LINE代禱牆建立平台 — Google Apps Script 後端
+ * 我的代禱卡．小區代禱牆 — Google Apps Script 後端
  * 貼到 Google 試算表的「擴充功能 → Apps Script」。第一次（或更新程式後）執行一次 setup()，再部署新版本。
  */
 

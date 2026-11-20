@@ -1,7 +1,7 @@
 {
   "id": "./",
-  "name": "LINE代禱牆建立平台",
-  "short_name": "代禱牆",
+  "name": "我的代禱卡．小區代禱牆",
+  "short_name": "我的代禱卡",
   "description": "建立代禱牆圖卡、發到 LINE 群組，大家依排填寫正在代禱的福音朋友。",
   "lang": "zh-Hant",
   "start_url": "./?pwa=1",
