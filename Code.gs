@@ -21,7 +21,7 @@ const HEADERS = {
 const W = { ID: 0, TITLE: 1, TAG: 2, VERSE: 3, DESC: 4, GROUPS: 5, ALLOW: 6, THEME: 7, OPEN: 8, CREATOR: 9, CREATED: 10 };
 const N = { ID: 0, TIME: 1, WALL: 2, GROUP: 3, NAME: 4, BY: 5, UID: 6 };
 
-const THEMES = ['pom', 'olive', 'leaf', 'sky'];
+const THEMES = ['pom', 'olive', 'leaf', 'sky', 'plum', 'amber', 'teal', 'navy', 'rose', 'earth'];
 const LIMITS = { GROUPS: 40, GROUP_LEN: 20, NAME_LEN: 20, PER_SUBMIT: 30, TITLE: 40, TAG: 16, VERSE: 120, DESC: 300 };
 
 /** 建立工作表並補齊標題列；更新程式後再執行一次也安全 */
