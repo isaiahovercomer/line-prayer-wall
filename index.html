@@ -586,7 +586,7 @@ const splitNames = t => [...new Set(String(t || '').split(/[\n,，、;；]+/).ma
 
 /* ================= 預覽模式的範例資料 ================= */
 const demo = {
-  me: { userId: 'Udemo', displayName: '簡晨光', isAdmin: true },
+  me: { userId: 'Udemo', displayName: '簡晨光', isAdmin: PARAMS.get('demo') !== 'creator' }, // ?demo=creator：一般建立者（看到「後台」而不是「總管理」）
   walls: [{
     id: 'W1', title: '小區福音代禱牆', tag: '同心代禱', verse: verseText(VERSES[0]), desc: DEFAULT_DESC, allowAdd: true, theme: 'pom', open: true, creator: '簡晨光', created: '2026/11/18 21:30',
     groups: ['北溝社區排', '德福排', '讀經小排', '霧峰姊妹排', '兒童排', '青職排', '七靈社區排', '青少年排', '🏠大專週三李家排', '🏠大專週三弟兄排'],
@@ -1595,6 +1595,22 @@ function bindWallRows(scope, onOpen, after) {
   scope.querySelectorAll('[data-ws]').forEach(c => c.onchange = () => { c.checked ? WSEL.add(c.dataset.ws) : WSEL.delete(c.dataset.ws); after(); });
 }
 
+/* ---------- 建立者後台：我建立（或協助管理）的代禱牆 ---------- */
+function renderMine() {
+  view(`<div class="subbar"><button class="back" id="back">‹ 返回</button><h1>我的代禱牆後台</h1><span></span></div>
+    <p class="hint" style="margin:-4px 2px 12px">你建立或協助管理的代禱牆。勾選後可以停止、開放或刪除；點進去可以管理成員和名單。</p>
+    ${WALLS.length ? `<div class="sel-head"><label class="m-all"><input type="checkbox" id="mn-all" ${WALLS.every(w => WSEL.has(w.id)) ? 'checked' : ''}> 全選</label></div>
+    ${selBarHtml('mn-sel', WSEL.size)}
+    <div id="mn-list">${wallRows(WALLS, { selectable: true })}</div>` : '<p class="muted">還沒有建立代禱牆。</p>'}
+    <button class="btn send" id="mn-new" style="margin-top:12px">＋ 建立新的代禱牆</button>`);
+  $('back').onclick = () => { WSEL.clear(); TAB = 'walls'; go({ view: 'tabs' }); };
+  $('mn-new').onclick = () => { WSEL.clear(); TAB = 'new'; go({ view: 'tabs' }); };
+  if (!WALLS.length) return;
+  $('mn-all').onchange = e => { WALLS.forEach(w => e.target.checked ? WSEL.add(w.id) : WSEL.delete(w.id)); renderMine(); };
+  bindWallRows($('mn-list'), id => go({ view: 'detail', id, from: 'mine' }), renderMine);
+  bindSelBar('mn-sel', renderMine);
+}
+
 /* ---------- 總管理後台 ---------- */
 let ADMIN = null, AFILTER = '';
 async function renderAdmin() {
@@ -1699,6 +1715,7 @@ function render() {
   if (ROUTE.view === 'edit') return renderEdit(ROUTE.id);
   if (ROUTE.view === 'towall') return renderToWall();
   if (ROUTE.view === 'admin') return renderAdmin();
+  if (ROUTE.view === 'mine') return renderMine();
   const wallCount = WALLS.length + JOINED.filter(w => !WALLS.some(x => x.id === w.id)).length;
   view(`
     <header class="top"><a class="brand" href="./" id="home" data-home aria-label="回到首頁"><span class="logo">${pomSvg()}</span><div><h1>我的代禱卡．小區代禱牆</h1><p class="sub">金香壇代禱・以小排為單位同心代禱</p></div></a><div class="top-acts">${modeBtn()}<button class="help" id="help" type="button" aria-label="使用教學">?</button></div></header>
@@ -1706,8 +1723,9 @@ function render() {
     <nav class="tabs" role="tablist">
       <button role="tab" aria-selected="${TAB === 'card'}" data-tab="card"><span class="ti" aria-hidden="true"></span>我的代禱卡</button>
       <button role="tab" aria-selected="${TAB === 'walls'}" data-tab="walls"><span class="ti wall" aria-hidden="true"></span>代禱牆<span class="n">${wallCount}</span></button>
-      ${ME.isAdmin ? `<button role="tab" aria-selected="false" data-tab="admin"><span class="ti admin" aria-hidden="true"></span>總管理</button>` : ''}
       <button role="tab" aria-selected="${TAB === 'new'}" data-tab="new" class="tab-new"><span aria-hidden="true">＋</span> 建立</button>
+      ${ME.isAdmin ? `<button role="tab" aria-selected="false" data-tab="admin"><span class="ti admin" aria-hidden="true"></span>總管理</button>`
+        : WALLS.length ? `<button role="tab" aria-selected="false" data-tab="mine"><span class="ti admin" aria-hidden="true"></span>後台</button>` : ''}
     </nav>
     <div id="panel"></div>
     <footer class="page-foot">${isStandalone() ? '' : '<button class="link" id="install-link">安裝到手機桌面</button>'}<button class="link" onclick="myDataFlow()">我的個人資料</button></footer>
@@ -1715,6 +1733,7 @@ function render() {
   document.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => {
     if (TAB === 'card' && CARD_MODE === 'edit' && b.dataset.tab !== 'card') return toast('請先儲存或取消編輯');
     if (b.dataset.tab === 'admin') { WSEL.clear(); WSELECTING = false; return go({ view: 'admin' }); }
+    if (b.dataset.tab === 'mine') { WSEL.clear(); WSELECTING = false; return go({ view: 'mine' }); }
     TAB = b.dataset.tab; render(); if (!PARAMS.has('notour')) maybeStartTour();
   });
   const cur = document.querySelector('.tabs [aria-selected="true"]'); if (cur) cur.scrollIntoView({ block: 'nearest', inline: 'nearest' });
@@ -1885,7 +1904,7 @@ function drawDetail(w) {
     </section>
     ${w.isCreator || ME_ADMIN() ? `<button class="btn danger" id="d-del">刪除這面代禱牆</button>
     <p class="hint" style="text-align:center">刪除後名單和成員也會一起刪除，群組裡的舊圖卡會打不開。</p>` : ''}`);
-  $('back').onclick = () => { MSEL.clear(); USEL.clear(); MEDIT = ''; MFILTER = ''; if (PARAMS.has('manage')) history.replaceState(null, '', location.pathname + (DEMO ? '?demo' : '')); if (ROUTE.from === 'admin') return go({ view: 'admin' }); TAB = 'walls'; go({ view: 'tabs' }); };
+  $('back').onclick = () => { MSEL.clear(); USEL.clear(); MEDIT = ''; MFILTER = ''; if (PARAMS.has('manage')) history.replaceState(null, '', location.pathname + (DEMO ? '?demo' : '')); if (ROUTE.from === 'admin') return go({ view: 'admin' }); if (ROUTE.from === 'mine') return go({ view: 'mine' }); TAB = 'walls'; go({ view: 'tabs' }); };
   bindShareBar('d-bar', { text: () => textList(w), shot: () => wallShot(w), name: () => wallShotName(w), line: () => share(w) });
   $('d-open').onclick = () => { location.href = `${location.pathname}?wall=${encodeURIComponent(w.id)}${DEMO ? '&demo' : ''}`; };
   $('d-edit').onclick = () => go({ view: 'edit', id: w.id });
