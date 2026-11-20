@@ -1,6 +1,6 @@
 // 安裝到手機桌面用的 Service Worker。
 // 一律先抓網路上的最新版，抓不到（離線）才用上次存下來的，所以更新網頁後不會卡在舊版。
-const CACHE = 'prayer-wall-v9';
+const CACHE = 'prayer-wall-v10';
 const ASSETS = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/icon.svg', './img/hero-pom.jpg', './lib/modern-screenshot.js'];
 
 self.addEventListener('install', e => {

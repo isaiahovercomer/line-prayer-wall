@@ -246,6 +246,21 @@
   .move-card .move-pom { width: 64px; height: 64px; margin: 0 auto 6px; }
   .move-card .move-pom svg { width: 100%; height: 100%; }
   .move-card .btn { display: block; width: 100%; text-align: center; margin-top: 16px; box-sizing: border-box; }
+  .mig-note { display: flex; gap: 12px; align-items: center; background: var(--sheet); border: 2px solid var(--olive); border-radius: 18px; padding: 14px 16px; margin-bottom: 14px; }
+  .mig-note p { margin: 0; flex: 1; font-size: 15px; line-height: 1.6; }
+  .mig-note .ok { flex: none; width: 40px; height: 40px; border-radius: 50%; background: var(--olive); color: #fff; display: grid; place-items: center; font-size: 22px; font-weight: 700; }
+  .mig-note.busy .loading { flex: none; }
+  .move-card .big { font-size: 1.15rem; line-height: 1.7; margin: 10px 0 4px; }
+  .move-card .btn.huge { font-size: 1.3rem; padding: 18px 20px; border-radius: 999px; }
+  .guest-note { background: var(--sheet); border: 1.5px solid var(--line, rgba(0,0,0,.1)); border-radius: 18px; padding: 12px 14px; margin-bottom: 14px; }
+  .guest-note p { margin: 0; font-size: 14px; line-height: 1.6; }
+  .guest-note .actions { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .guest-lock { text-align: center; margin-top: 8px; }
+  .guest-lock .move-pom { width: 64px; height: 64px; margin: 0 auto 6px; }
+  .guest-lock .move-pom svg { width: 100%; height: 100%; }
+  .huge-sync { display: block; width: 100%; box-sizing: border-box; font-size: 1.25rem; padding: 16px 20px; border-radius: 999px; margin: -4px 0 16px; }
+  .guest-lock h2 { margin: 6px 0 8px; }
+  .guest-lock .btn { display: block; width: 100%; box-sizing: border-box; text-align: center; margin-top: 12px; }
   .old-box { background: var(--sheet); border: 1.5px dashed var(--olive); border-radius: 18px; padding: 12px 14px; margin: 12px 0; }
   .old-box p { margin: 0 0 8px; font-size: 14px; }
   .pick-names { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -474,18 +489,22 @@ const DEMO = LIFF_ID.startsWith('請填') || PARAMS.has('demo');
 /* 從舊站「金香壇代禱卡」搬家：舊網址轉過來時帶 #n=名單&s=同步碼。
    先存到這支手機（登入 LINE 會重新導向，網址上的 # 會不見），再把網址清乾淨。 */
 const MOVE_KEY = 'pw.move';
+function moveKey(n, sc) { let h = 2166136261; const t = String(n || '') + '|' + String(sc || ''); for (let i = 0; i < t.length; i++) { h ^= t.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; } return h.toString(36) + t.length.toString(36); }
+function moveDone() { try { return JSON.parse(localStorage.getItem('pw.moved') || '[]') || []; } catch (e) { return []; } }
 (function captureMove() {
   const h = new URLSearchParams(location.hash.replace(/^#/, ''));
   const n = h.get('n') || (PARAMS.get('sync') ? String(PARAMS.get('import') || '').replace(/^GIA1\./, '') : ''), sc = (h.get('s') || PARAMS.get('sync') || '').toUpperCase().replace(/[^A-Z2-9]/g, '');
   if (!n && sc.length !== 20) return;
+  if (location.hash) history.replaceState(null, '', location.pathname + location.search);
+  if (moveDone().includes(moveKey(n, sc))) return;   // 這份已經同步到 LINE 帳號過了，舊網址再帶來就不必再問
   try {
     const old = JSON.parse(localStorage.getItem(MOVE_KEY) || 'null') || {};
     localStorage.setItem(MOVE_KEY, JSON.stringify({ n: n || old.n || '', s: sc.length === 20 ? sc : (old.s || ''), at: Date.now() }));
   } catch (e) {}
-  if (location.hash) history.replaceState(null, '', location.pathname + location.search);
 })();
-const getMove = () => { try { const m = JSON.parse(localStorage.getItem(MOVE_KEY) || 'null'); return m && (m.n || m.s) && Date.now() - m.at < 30 * 864e5 ? m : null; } catch (e) { return null; } };
-const clearMove = () => { try { localStorage.removeItem(MOVE_KEY); } catch (e) {} };
+// 還沒同步完成前一直保留（每次從舊網址進來都會再出現「同步代禱名單」），同步到 LINE 帳號後才清掉
+const getMove = () => { try { const m = JSON.parse(localStorage.getItem(MOVE_KEY) || 'null'); return m && (m.n || m.s) ? m : null; } catch (e) { return null; } };
+const clearMove = () => { try { const m = getMove(); if (m) localStorage.setItem('pw.moved', JSON.stringify(moveDone().concat(moveKey(m.n, m.s)).slice(-20))); localStorage.removeItem(MOVE_KEY); } catch (e) {} };
 
 const $app = document.getElementById('app');
 const $ = id => document.getElementById(id);
@@ -729,7 +748,7 @@ async function demoApi(action, d) {
 /* ================= 登入與後端 ================= */
 const SESSION_KEY = 'pw.session';
 const getSession = () => { try { const s = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null'); return s && s.expires > Date.now() + 60000 ? s : null; } catch (e) { return null; } };
-const setSession = s => { try { s ? localStorage.setItem(SESSION_KEY, JSON.stringify({ token: s.token, expires: s.expires })) : localStorage.removeItem(SESSION_KEY); } catch (e) {} };
+const setSession = s => { try { if (s) { localStorage.setItem(SESSION_KEY, JSON.stringify({ token: s.token, expires: s.expires })); localStorage.setItem('pw.ever', '1'); } else localStorage.removeItem(SESSION_KEY); } catch (e) {} };
 const CACHE_OK = !DEMO;
 const cacheGet = k => { if (!CACHE_OK) return null; try { return JSON.parse(localStorage.getItem('pw.c.' + k) || 'null'); } catch (e) { return null; } };
 const cacheSet = (k, v) => { if (!CACHE_OK) return; try { localStorage.setItem('pw.c.' + k, JSON.stringify(v)); } catch (e) {} };
@@ -738,7 +757,8 @@ async function api(action, data = {}) {
   if (DEMO) return demoApi(action, data);
   const body = { action, ...data };
   const s = action === 'session' ? null : getSession();
-  if (s) body.session = s.token; else { await LIFF_READY; body.idToken = liff.getIDToken(); }
+  if (GUEST) { if (action !== 'claimOld') { loginNow(TAB); throw new Error('這個功能需要登入 LINE'); } }
+  else if (s) body.session = s.token; else { await LIFF_READY; body.idToken = liff.getIDToken(); }
   const r = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) });
   const j = await r.json();
   if (!j.ok) {
@@ -757,7 +777,12 @@ async function api(action, data = {}) {
 async function main() {
   try {
     if (PARAMS.has('install')) return installFlow();
-    if (!DEMO && getMove() && !getSession() && !PARAMS.has('liff.state') && !PARAMS.has('here') && !/\bLine\//i.test(navigator.userAgent)) return moveWelcome();
+    // 不在 LINE 的 LIFF 裡、也還沒登入過：先用「這支手機」模式打開代禱卡，不要一進來就要求登入（和舊的金香壇代禱卡一樣）
+    GUEST = !DEMO && !getSession() && !PARAMS.has('liff.state') && !PARAMS.has('login') && !PARAMS.has('code') && !/LIFF\//i.test(navigator.userAgent)
+      && !PARAMS.get('wall') && !PARAMS.get('share') && !PARAMS.has('mydata') && !PARAMS.has('manage');
+    if (GUEST && getMove()) return moveLanding();
+    if (GUEST && localStorage.getItem('pw.ever')) GUEST = false;   // 這個瀏覽器登入過：直接登入，不要出現空白的手機代禱卡
+    if (GUEST) return guestFlow();
     if (!DEMO && (!getSession() || PARAMS.has('liff.state'))) {
       // 第一次登入，或 LINE 帶著 liff.state 轉址時，才需要等 LINE 初始化
       await LIFF_READY;
@@ -775,23 +800,52 @@ async function main() {
   }
 }
 
-/* ================= 舊站搬過來的歡迎頁（在 LINE 以外的瀏覽器打開時） ================= */
-function moveWelcome() {
-  const m = getMove(), inc = m.n ? decodeList('#n=' + m.n) : null, cnt = inc ? countList(inc) : 0;
-  const q = new URLSearchParams({ tab: 'card' });
-  if (inc) q.set('import', encodeList(inc));
-  if (m.s) q.set('sync', m.s);
-  const lineUrl = `https://liff.line.me/${LIFF_ID}?${q}`;
+/* ================= 未登入：這支手機模式 =================
+   在一般瀏覽器（例如從舊的金香壇代禱卡網址轉過來）打開時，代禱卡先存在這支手機，不必登入；
+   要存到雲端、使用代禱牆或建立代禱牆時才登入 LINE。登入後會問要不要把這支手機的名單合併到 LINE 帳號。 */
+let GUEST = false;
+const GUEST_KEY = 'pw.guest.card';
+const guestCard = () => { try { const c = JSON.parse(localStorage.getItem(GUEST_KEY) || 'null'); return c && c.days && c.days.length === 7 ? c : null; } catch (e) { return null; } };
+const blankCardLocal = () => ({ days: ['家人', '親戚', '好友', '同事(學)', '鄰居', '聖徒', '馬路'].map(cat => ({ cat, names: [] })) });
+function loginNow(tab) {
+  const back = location.origin + location.pathname + `?login=1&tab=${tab || TAB || 'card'}`;
+  toast('正在前往 LINE 登入…');
+  LIFF_READY.then(() => liff.login({ redirectUri: back })).catch(() => toast('LINE 登入元件載入失敗，請稍後再試，或改用「在 LINE 裡打開」'));
+}
+const openInLineUrl = () => { const c = guestCard(); const q = new URLSearchParams({ tab: 'card' }); if (c && countList(c)) q.set('import', encodeList(c)); return `https://liff.line.me/${LIFF_ID}?${q}`; };
+function guestNote() {
+  return `<div class="guest-note"><p><b>目前名單只存在這支手機。</b>登入 LINE 後可以存到雲端（換手機不會不見），也能使用小區代禱牆。</p>
+    <div class="actions"><button class="btn small send" data-login>登入 LINE</button><a class="btn small" href="${esc(openInLineUrl())}">在 LINE 裡打開</a></div></div>`;
+}
+function guestLocked(what) {
+  $('panel').innerHTML = `<div class="msg-card guest-lock"><div class="move-pom">${pomSvg()}</div><h2>${what}需要登入 LINE</h2>
+    <p class="muted">代禱牆是和小區、小排的弟兄姊妹一起用的，需要知道你是誰。登入後，這支手機上的代禱卡名單也可以一起存到雲端。</p>
+    <button class="btn send" data-login>登入 LINE</button><a class="btn ghost" href="${esc(openInLineUrl())}">在 LINE 裡打開</a></div>`;
+  bindLogin();
+}
+function bindLogin() { document.querySelectorAll('[data-login]').forEach(b => b.onclick = () => loginNow(TAB)); }
+async function guestFlow() {
+  resetTheme();
+  ME = { userId: '', displayName: '這支手機', isAdmin: false, guest: true }; WALLS = []; JOINED = []; ON_WALL = {};
+  CARD = guestCard() || blankCardLocal();
+  TAB = 'card';
+  const move = getMove();
+  render();
+  if (move) autoMigrate(); else if (!PARAMS.has('notour')) maybeStartTour();
+}
+
+/** 從舊站轉過來、還沒登入：只有一個大按鈕「同步代禱名單」→ 登入 LINE → 回來自動同步 */
+function moveLanding() {
   view(`<section class="solo"><div class="msg-card move-card">
     <div class="move-pom">${pomSvg()}</div>
     <h1>金香壇代禱卡搬家了</h1>
-    <p>新家是「${SITE_TITLE}」。${cnt ? `這支手機上的 <b>${cnt} 個名字</b>已經一起帶過來了` : '你的名單會用同步碼接回來'}${cnt && m.s ? '，雲端名單也會用同步碼接回' : ''}。</p>
-    <p class="muted small">新網站用 LINE 登入，名單跟著你的 LINE 帳號，換手機也不會不見；以後不必再記同步碼。</p>
-    <a class="btn send" id="mv-line" href="${esc(lineUrl)}">在 LINE 裡打開（建議）</a>
-    <button class="btn ghost" id="mv-here" style="margin-top:10px">在這個瀏覽器登入 LINE</button>
-    <p class="muted small" style="margin-top:14px">打開後會先問你要不要合併，原有的名字不會被刪掉。</p>
+    <p class="big">請按下面的按鈕，<br>把你的代禱名單搬過來。</p>
+    <button class="btn send huge" id="mv-sync">同步代禱名單</button>
+    <p class="muted small" style="margin-top:14px">會請你用 LINE 登入一次。之後名單就跟著你的 LINE，換手機也不會不見。</p>
+    <button class="link small" id="mv-skip" style="margin-top:18px">先不要登入，只在這支手機使用</button>
   </div></section>`);
-  $('mv-here').onclick = () => { location.href = location.pathname + '?here=1&tab=card'; };
+  $('mv-sync').onclick = () => { $('mv-sync').disabled = true; $('mv-sync').textContent = '正在前往 LINE…'; loginNow('card'); };
+  $('mv-skip').onclick = () => guestFlow();
 }
 
 /* ================= 成員：代禱牆頁 ================= */
@@ -1360,6 +1414,7 @@ function cardText(i) {
   return `金香壇代禱｜${dayLabel(i)}－${d.cat}\n${d.names.length ? d.names.map((n, k) => `${k + 1}. ${n}`).join('\n') : '（尚無名單）'}\n\n撒上十二23「${CARD_VERSE.text}」\n\n我的代禱卡：https://liff.line.me/${LIFF_ID}?tab=card`;
 }
 async function persistCard(card, msg) {
+  if (GUEST) { CARD = card; try { localStorage.setItem(GUEST_KEY, JSON.stringify(card)); } catch (e) {} if (msg) toast(msg); return; }
   CARD = card; cacheSet('card', CARD);
   try { const r = await api('saveCard', { card }); CARD = r.card; cacheSet('card', CARD); if (msg) toast(msg); }
   catch (e) { toast('儲存失敗：' + e.message); }
@@ -1371,7 +1426,7 @@ function renderCard() {
   const marked = new Set((MARKS[sel] || []).filter(n => d.names.includes(n)));
   const dayNav = `<nav class="days" role="tablist" aria-label="選擇代禱日">${CARD.days.map((x, i) => `<button role="tab" aria-selected="${i === sel}" class="day ${i === sel ? 'on' : ''} ${i === today ? 'today' : ''}" data-day="${i}"><span class="wd">${i === 0 ? '主日' : WD[i]}</span><span class="ct">${esc(x.cat)}</span></button>`).join('')}</nav>`;
   const pend = SYNC_BUSY && PENDING_FROM === 'old' ? `<div class="import-note"><p><b>正在用同步碼接回舊代禱卡的雲端名單…</b></p></div>`
-    : PENDING_IMPORT ? `<div class="import-note"><p><b>${PENDING_FROM === 'old' ? '從舊的「金香壇代禱卡」帶來的名單' : '收到一份代禱卡名單'}</b>（${countList(PENDING_IMPORT)} 個名字），要合併到你的代禱卡嗎？原有的名字不會被刪掉。</p><div class="actions"><button class="btn small send" id="imp-ok">合併</button><button class="btn small ghost" id="imp-no">略過</button></div></div>` : '';
+    : PENDING_IMPORT ? `<div class="import-note"><p><b>${PENDING_FROM === 'old' ? '從舊的「金香壇代禱卡」帶來的名單' : PENDING_FROM === 'guest' ? '這支手機上（登入前）的代禱卡名單' : '收到一份代禱卡名單'}</b>（${countList(PENDING_IMPORT)} 個名字），要合併到你的代禱卡嗎？原有的名字不會被刪掉。</p><div class="actions"><button class="btn small send" id="imp-ok">合併</button><button class="btn small ghost" id="imp-no">略過</button></div></div>` : '';
   let body = '';
   if (CARD_MODE === 'edit') {
     const n = CARD_DRAFT.names;
@@ -1412,7 +1467,7 @@ function renderCard() {
       </div>
       </div>`;
   }
-  $('panel').innerHTML = `${cardHeroHtml()}${pend}${dayNav}
+  $('panel').innerHTML = `${cardHeroHtml()}${migrateNote()}${pend}${GUEST && !PENDING_IMPORT && !MIGRATING ? guestNote() : ''}${dayNav}
     <div id="card-shot">
     <section class="pcard">${scatterSeeds(6, 13)}
       <div class="head"><span class="wd">${dayLabel(sel)}</span>${sel === today ? '<span class="tag">今天</span>' : ''}<h2>${esc(d.cat)}</h2></div>
@@ -1431,8 +1486,8 @@ function bindCard() {
     CARD_SEL = +b.dataset.day; CARD_MODE = 'view'; PASTE_PARSED = null; renderCard();
   });
   if ($('imp-ok')) {
-    $('imp-ok').onclick = async () => { const r = mergeCard(CARD, PENDING_IMPORT); PENDING_IMPORT = null; PENDING_FROM = ''; clearMove(); renderCard(); await persistCard(r.card, r.added ? `已匯入 ${r.added} 個名字` : '這些名字都已經在名單裡了'); renderCard(); };
-    $('imp-no').onclick = () => { PENDING_IMPORT = null; PENDING_FROM = ''; clearMove(); renderCard(); };
+    $('imp-ok').onclick = async () => { const r = mergeCard(CARD, PENDING_IMPORT); PENDING_IMPORT = null; PENDING_FROM = ''; clearMove(); if (!GUEST) try { localStorage.removeItem(GUEST_KEY); } catch (e) {} renderCard(); await persistCard(r.card, r.added ? `已匯入 ${r.added} 個名字` : '這些名字都已經在名單裡了'); renderCard(); };
+    $('imp-no').onclick = () => { PENDING_IMPORT = null; PENDING_FROM = ''; clearMove(); if (!GUEST) try { localStorage.removeItem(GUEST_KEY); } catch (e) {} renderCard(); };
   }
   document.querySelectorAll('[data-letter]').forEach(b => b.onclick = () => {
     if (DEMO) return toast(`預覽模式：正式版會打開寫給「${b.dataset.letter}」的信紙`);
@@ -1486,7 +1541,9 @@ function bindCard() {
   bindShareBar('c-bar', { text: () => cardText(sel), line: () => shareText(cardText(sel)),
     name: () => `金香壇代禱-${dayLabel(sel)}${safeName(d.cat)}-${fileDate()}.png`,
     shot: () => cardPoster(sel) });
-  on('card-towall', () => { TOWALL = { picked: new Set(), wallId: '', group: '' }; go({ view: 'towall' }); });
+  bindLogin();
+  on('mig-ok', () => { MIGRATING = null; renderCard(); });
+  on('card-towall', () => { if (GUEST) return guestLocked('放上代禱牆'); TOWALL = { picked: new Set(), wallId: '', group: '' }; go({ view: 'towall' }); });
 }
 /** 代禱卡存圖：石榴頁首＋這一天的名單＋經文（不含按鈕） */
 function cardPoster(sel) {
@@ -1524,7 +1581,7 @@ async function copyText(text, done) {
 async function shareText(text) {
   if (DEMO) return toast('預覽模式：正式版會跳出 LINE 的選擇畫面');
   try { await LIFF_READY; } catch (e) { return copyText(text, '已複製，可以貼到 LINE'); }
-  if (!liff.isApiAvailable('shareTargetPicker')) return copyText(text, '已複製，可以貼到 LINE');
+  if (GUEST || !liff.isApiAvailable('shareTargetPicker')) return copyText(text, '已複製，可以貼到 LINE');
   try { const r = await liff.shareTargetPicker([{ type: 'text', text: text.slice(0, 4900) }], { isMultiple: true }); toast(r ? '已傳到 LINE' : '已取消'); }
   catch (e) { toast('傳送失敗：' + e.message); }
 }
@@ -1792,15 +1849,9 @@ async function platformFlow() {
   try { const saved = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null'); if (saved && saved.groups) draft = { ...blankDraft(), ...saved }; } catch (e) {}
   const imp = PARAMS.get('import') || (/[#&]n=/.test(location.hash) ? location.hash : '');
   if (imp) { PENDING_IMPORT = decodeList(imp); if (PENDING_IMPORT) TAB = 'card'; }
-  const move = getMove();
-  if (move) {
-    const inc = move.n ? decodeList('#n=' + move.n) : null;
-    if (inc) PENDING_IMPORT = PENDING_IMPORT ? mergeCard(PENDING_IMPORT, inc).card : inc;
-    PENDING_FROM = 'old'; TAB = 'card';
-    if (move.s) claimSync(move.s, true);
-  } else if (PARAMS.get('sync')) { PENDING_FROM = 'old'; TAB = 'card'; claimSync(PARAMS.get('sync'), true); }
+  if (needMigrate()) { TAB = 'card'; MIGRATING = { state: 'busy' }; }
   if (PENDING_IMPORT && !PENDING_FROM && /[?&]import=/.test(location.search)) PENDING_FROM = 'link';
-  if (PARAMS.has('import') || PARAMS.has('sync') || PARAMS.has('here')) { const q = new URLSearchParams(location.search); ['import', 'sync', 'here'].forEach(k => q.delete(k)); history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '')); }
+  if (PARAMS.has('import') || PARAMS.has('sync') || PARAMS.has('here') || PARAMS.has('login')) { const q = new URLSearchParams(location.search); ['import', 'sync', 'here', 'login'].forEach(k => q.delete(k)); history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '')); }
   const cached = cacheGet('platform'), cachedCard = cacheGet('card'), cx = cacheGet('cardx');
   const boot = api('boot').then(r => [r.me, { walls: r.created }, r]); // 首頁資料一次拿齊（r.walls 是我參與的代禱牆）
   const manageId = PARAMS.get('manage');
@@ -1812,12 +1863,38 @@ async function platformFlow() {
   if (cached && cached.me && cachedCard) {
     ME = cached.me; WALLS = cached.walls || []; CARD = cachedCard; ON_WALL = (cx && cx.onWall) || {}; JOINED = (cx && cx.walls) || [];
     first();
-    boot.then(res => { const wasAdmin = !!(ME && ME.isAdmin); apply(res); if (!!ME.isAdmin !== wasAdmin && ROUTE.view === 'tabs' && CARD_MODE === 'view') render(); else softRefresh(); }).catch(e => toast(e.message));
+    boot.then(res => { const wasAdmin = !!(ME && ME.isAdmin); apply(res); if (!!ME.isAdmin !== wasAdmin && ROUTE.view === 'tabs' && CARD_MODE === 'view') render(); else softRefresh(); return autoMigrate(); }).catch(e => toast(e.message));
     return;
   }
   view(loading());
   apply(await boot);
   first();
+  autoMigrate();
+}
+
+/* ---------- 自動同步：舊站帶來的名單＋舊同步碼的雲端名單＋登入前存在這支手機的名單，一次合併到代禱卡，不用再按「合併」 ---------- */
+let MIGRATING = null;
+const needMigrate = () => !!getMove() || (!GUEST && !!guestCard() && countList(guestCard()) > 0);
+async function autoMigrate() {
+  if (!needMigrate()) { if (MIGRATING && MIGRATING.state === 'busy') { MIGRATING = null; softRefresh(); } return; }
+  MIGRATING = { state: 'busy' }; TAB = 'card'; if (ROUTE.view === 'tabs') render();
+  const move = getMove(), gc = GUEST ? null : guestCard();
+  let inc = blankCardLocal(), cloud = false;
+  if (move && move.n) { const d = decodeList('#n=' + move.n); if (d) inc = mergeCard(inc, d).card; }
+  if (gc) inc = mergeCard(inc, gc).card;
+  if (move && move.s) { try { const r = await api('claimOld', { code: move.s }); if (r.found) { inc = mergeCard(inc, r.data).card; cloud = true; } } catch (e) {} }
+  const m = mergeCard(CARD, inc);
+  await persistCard(m.card);
+  if (!GUEST) { clearMove(); try { localStorage.removeItem(GUEST_KEY); } catch (e) {} }
+  MIGRATING = { state: 'done', added: m.added, total: countList(inc), cloud };
+  if (ROUTE.view === 'tabs') { TAB = 'card'; render(); }
+}
+function migrateNote() {
+  if (!MIGRATING) return '';
+  if (MIGRATING.state === 'busy') return `<div class="mig-note busy"><span class="loading" style="padding:0"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span><p><b>正在同步代禱名單…</b><br>請稍等，不用按任何按鈕。</p></div>`;
+  const { added, total } = MIGRATING;
+  if (GUEST) return `<div class="mig-note"><p><b>還差一步：同步到你的 LINE</b><br>${total ? `舊代禱卡的 ${total} 個名字先放在這支手機。` : ''}按下面的按鈕登入 LINE，名單才會存好，換手機也不會不見。</p></div><button class="btn send huge-sync" data-login>同步代禱名單</button>`;
+  return `<div class="mig-note"><div class="ok" aria-hidden="true">✓</div><p><b>代禱名單同步好了</b><br>${total ? `舊代禱卡的 ${total} 個名字都在這裡了${added < total ? `（其中 ${total - added} 個原本就有）` : ''}。` : '舊代禱卡裡沒有找到名字。'}${GUEST ? '' : '以後從 LINE 打開就看得到。'}</p><button class="btn small" id="mig-ok">好</button></div>`;
 }
 
 function softRefresh() {
@@ -1849,8 +1926,8 @@ function render() {
         : WALLS.length ? `<button role="tab" aria-selected="false" data-tab="mine"><span class="ti admin" aria-hidden="true"></span>後台</button>` : ''}
     </nav>
     <div id="panel"></div>
-    <footer class="page-foot">${isStandalone() ? '' : '<button class="link" id="install-link">安裝到手機桌面</button>'}<button class="link" onclick="myDataFlow()">我的個人資料</button></footer>
-    ${TAB === 'new' ? `<div class="dock"><div class="inner"><button class="btn send" id="send">${ICON_SEND}建立並傳到 LINE 群組</button></div></div>` : ''}`);
+    <footer class="page-foot">${isStandalone() ? '' : '<button class="link" id="install-link">安裝到手機桌面</button>'}${GUEST ? '<button class="link" data-login>登入 LINE</button>' : '<button class="link" onclick="myDataFlow()">我的個人資料</button>'}</footer>
+    ${TAB === 'new' && !GUEST ? `<div class="dock"><div class="inner"><button class="btn send" id="send">${ICON_SEND}建立並傳到 LINE 群組</button></div></div>` : ''}`);
   document.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => {
     if (TAB === 'card' && CARD_MODE === 'edit' && b.dataset.tab !== 'card') return toast('請先儲存或取消編輯');
     if (b.dataset.tab === 'admin') { WSEL.clear(); WSELECTING = false; return go({ view: 'admin' }); }
@@ -1860,6 +1937,7 @@ function render() {
   const cur = document.querySelector('.tabs [aria-selected="true"]'); if (cur) cur.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   $('help').onclick = () => startTour(TAB === 'card' ? CARD_TOUR : TOUR_STEPS);
   if ($('install-link')) $('install-link').onclick = startInstall;
+  if (GUEST && TAB !== 'card') return guestLocked(TAB === 'new' ? '建立代禱牆' : '代禱牆');
   if (TAB === 'new') renderCompose(); else if (TAB === 'walls') renderWallsTab(); else renderCard();
 }
 

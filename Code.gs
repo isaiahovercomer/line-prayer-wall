@@ -50,7 +50,9 @@ function doPost(e) {
     const req = JSON.parse((e && e.postData && e.postData.contents) || '{}');
     MEMO = ['boot', 'wall', 'listWalls', 'getCard', 'adminOverview', 'myData', 'me'].indexOf(req.action) >= 0 ? {} : null;
     // 有平台自己的通行證就用通行證（60 天有效），否則向 LINE 驗證 ID token
-    const user = req.session && req.action !== 'session' ? userFromSession(req.session) : verifyIdToken(req.idToken);
+    // 用舊同步碼接回名單可以不登入（和舊站一樣，知道 20 碼同步碼才讀得到那一份）
+    const guest = req.action === 'claimOld' && !req.session && !req.idToken;
+    const user = guest ? { userId: '', displayName: '未登入' } : req.session && req.action !== 'session' ? userFromSession(req.session) : verifyIdToken(req.idToken);
     const own = () => requireOwner(user, req.wallId); // 代禱牆建立者或管理員
     switch (req.action) {
       case 'session':     out = { ok: true, ...createSession(user) }; break;
@@ -728,15 +730,16 @@ function claimOld(user, code) {
   const live = fetchOldLive(id);
   return withLock(() => {
     const sh = oldSheet(), at = findOldRow(sh, id);
-    let rec = null;
+    let rec = null, prev = null;
     if (at) {
-      const r = sh.getRange(at, 1, 1, OLD.HEAD.length).getValues()[0];
+      const r = prev = sh.getRange(at, 1, 1, OLD.HEAD.length).getValues()[0];
       const data = parseJson(r[1], null);
       if (validOldData(data)) rec = { data, updatedAt: Number(r[2]) || 0 };
     }
     if (live && (!rec || live.updatedAt >= rec.updatedAt)) rec = live;
     if (!rec) return { found: false };
-    const vals = [id, JSON.stringify(rec.data), rec.updatedAt, countNames(rec.data), live ? '舊站雲端' : '匯出檔', (user.displayName || '') + ' (' + user.userId + ')', new Date()];
+    const vals = [id, JSON.stringify(rec.data), rec.updatedAt, countNames(rec.data), live ? '舊站雲端' : '匯出檔', user.userId ? (user.displayName || '') + ' (' + user.userId + ')' : '（未登入的手機）', new Date()];
+    if (!user.userId && prev && String(prev[5]).trim()) { vals[5] = prev[5]; vals[6] = prev[6]; } // 未登入的接回不蓋掉已登入者的紀錄
     if (at) sh.getRange(at, 1, 1, vals.length).setValues([vals]); else sh.appendRow(vals);
     return { found: true, data: rec.data, updatedAt: rec.updatedAt, nameCount: countNames(rec.data) };
   });
