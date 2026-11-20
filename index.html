@@ -15,11 +15,15 @@
 <title>我的代禱卡．小區代禱牆</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@400;700&display=swap" rel="stylesheet">
+<!-- 楷體字型不擋畫面：先用系統字顯示，字型下載好再換上 -->
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@400;700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@400;700&display=swap"></noscript>
 <link rel="preconnect" href="https://script.google.com" crossorigin>
 <link rel="preconnect" href="https://script.googleusercontent.com" crossorigin>
 <link rel="preconnect" href="https://api.line.me" crossorigin>
-<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<link rel="preconnect" href="https://static.line-scdn.net" crossorigin>
+<!-- LINE SDK 背景下載，不擋畫面；需要時再等它（見 LIFF_READY） -->
+<script async src="https://static.line-scdn.net/liff/edge/2/sdk.js" id="liff-sdk"></script>
 <style>
   :root {
     /* 延續「金香壇代禱卡」：米白紙色、石榴紅、楷體、石榴籽 */
@@ -469,7 +473,24 @@ const view = html => { $app.innerHTML = (/class="top/.test(html) ? '' : slimTop(
 const loading = () => `<div class="loading" role="status" aria-label="載入中"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>`;
 const wallUrl = id => `https://liff.line.me/${LIFF_ID}?wall=${encodeURIComponent(id)}`;
 const shareUrl = id => `https://liff.line.me/${LIFF_ID}?share=${encodeURIComponent(id)}`;
-const inClient = () => !DEMO && typeof liff !== 'undefined' && liff.isInClient && liff.isInClient();
+const inClient = () => !DEMO && LIFF_OK && liff.isInClient && liff.isInClient();
+/* LINE SDK：背景載入＋初始化。已經有 60 天通行證時，不用等它就先向後端拿資料 */
+let LIFF_OK = false;
+const loadLiffSdk = () => new Promise((res, rej) => {
+  if (window.liff) return res();
+  const s = $('liff-sdk') || document.head.appendChild(Object.assign(document.createElement('script'), { src: 'https://static.line-scdn.net/liff/edge/2/sdk.js' }));
+  s.addEventListener('load', () => res(), { once: true });
+  s.addEventListener('error', () => rej(new Error('LINE 元件載入失敗，請檢查網路後重新開啟')), { once: true });
+  if (window.liff) res();
+});
+const LIFF_READY = DEMO ? Promise.resolve() : loadLiffSdk().then(() => liff.init({ liffId: LIFF_ID })).then(() => { LIFF_OK = true; onLiffReady(); });
+LIFF_READY.catch(() => {});
+/** LINE 初始化完成後，把需要 LINE 的按鈕狀態補上（例如「送出後貼到聊天室」） */
+function onLiffReady() {
+  const sw = $('autopost'); if (!sw || !canPost()) return;
+  sw.disabled = false; let on = true; try { on = localStorage.getItem('pw.autopost') !== '0'; } catch (e) {} sw.checked = on;
+  const small = sw.closest('.switch-row') && sw.closest('.switch-row').querySelector('small'); if (small) small.textContent = '把最新的代禱牆圖卡貼回群組';
+}
 const ICON_LETTER = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5.5" width="18" height="13" rx="2"/><path d="m3.5 7 8.5 6 8.5-6"/></svg>';
 /** 寫信：用「流通神聖的愛圖卡」平台的信紙，收信人先填好，寫完存下就能傳到他的 LINE */
 const LETTER_LIFF = '2012412693-IhnpCNtr';
@@ -614,6 +635,7 @@ async function demoApi(action, d) {
   const find = id => { const w = demo.walls.find(x => x.id === id); if (!w) throw new Error('找不到這面代禱牆'); return w; };
   switch (action) {
     case 'me': return { ok: true, ...demo.me };
+    case 'boot': return { ok: true, me: { ...demo.me }, created: demo.walls.map(demoView).reverse(), card: JSON.parse(JSON.stringify(demo.card)), onWall: demo.onWall, walls: demo.walls.map(demoView) };
     case 'session': return { ok: true, token: 'demo', expires: Date.now() + 864e5 };
     case 'listWalls': return { ok: true, walls: demo.walls.map(demoView).reverse() };
     case 'wall': {
@@ -690,16 +712,16 @@ async function api(action, data = {}) {
   if (DEMO) return demoApi(action, data);
   const body = { action, ...data };
   const s = action === 'session' ? null : getSession();
-  if (s) body.session = s.token; else body.idToken = liff.getIDToken();
+  if (s) body.session = s.token; else { await LIFF_READY; body.idToken = liff.getIDToken(); }
   const r = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) });
   const j = await r.json();
   if (!j.ok) {
     if (j.error === 'SESSION_EXPIRED') {
-      setSession(null);
+      setSession(null); await LIFF_READY;
       if (liff.isLoggedIn()) return api(action, data);
       liff.login({ redirectUri: location.href }); throw new Error('登入已過期，正在重新登入');
     }
-    if (j.error === 'TOKEN_EXPIRED') { liff.logout(); liff.login({ redirectUri: location.href }); throw new Error('登入已過期，正在重新登入'); }
+    if (j.error === 'TOKEN_EXPIRED') { await LIFF_READY; liff.logout(); liff.login({ redirectUri: location.href }); throw new Error('登入已過期，正在重新登入'); }
     throw new Error(j.error);
   }
   return j;
@@ -709,8 +731,9 @@ async function api(action, data = {}) {
 async function main() {
   try {
     if (PARAMS.has('install')) return installFlow();
-    if (!DEMO) {
-      await liff.init({ liffId: LIFF_ID });
+    if (!DEMO && (!getSession() || PARAMS.has('liff.state'))) {
+      // 第一次登入，或 LINE 帶著 liff.state 轉址時，才需要等 LINE 初始化
+      await LIFF_READY;
       if (!liff.isLoggedIn() && !getSession()) { liff.login({ redirectUri: location.href }); return; }
       if (liff.isLoggedIn() && !getSession()) { try { setSession(await api('session')); } catch (e) {} }
     }
@@ -975,6 +998,7 @@ async function postWall(w, news) {
   const note = $('posted');
   const say = (t, warn) => { if (note) { note.hidden = false; note.textContent = t; note.classList.toggle('warn', !!warn); } else toast(t); };
   if (DEMO) { say('預覽模式：正式版會在群組貼出最新的代禱牆圖卡'); return true; }
+  await LIFF_READY.catch(() => {});
   if (!canPost()) { say('要從群組裡的圖卡打開，才能貼回聊天室。也可以用「轉傳給其他群組或朋友」。', true); return false; }
   try {
     if (liff.permission) {
@@ -993,6 +1017,7 @@ async function postWall(w, news) {
 /* ================= 轉傳 ================= */
 async function share(w) {
   if (DEMO) { toast('預覽模式：正式版會在這裡跳出群組選單'); return false; }
+  try { await LIFF_READY; } catch (e) { toast(e.message); return false; }
   if (!liff.isLoggedIn()) { toast('發送到群組前需要登入 LINE 一次'); setTimeout(() => liff.login({ redirectUri: location.href }), 600); return false; }
   if (!liff.isApiAvailable('shareTargetPicker')) { toast('無法開啟群組選單，請確認 LIFF 已開啟 Share target picker'); return false; }
   try {
@@ -1057,7 +1082,7 @@ function buildWallFlex(w, news, opt = {}) {
     contents: {
       type: 'bubble', size: 'mega',
       styles: { body: { backgroundColor: C.sheet }, footer: { backgroundColor: C.sheet } },
-      hero: { type: 'image', url: `${SITE}img/hero-${w.theme in THEMES ? w.theme : 'pom'}.png`, size: 'full', aspectRatio: '20:9', aspectMode: 'cover', action: { type: 'uri', uri: wallUrl(w.id) } },
+      hero: { type: 'image', url: `${SITE}img/hero-${w.theme in THEMES ? w.theme : 'pom'}.jpg`, size: 'full', aspectRatio: '20:9', aspectMode: 'cover', action: { type: 'uri', uri: wallUrl(w.id) } },
       body: { type: 'box', layout: 'vertical', paddingAll: '18px', spacing: 'md', contents: [
         { type: 'box', layout: 'vertical', contents: head },
         { type: 'box', layout: 'vertical', spacing: 'sm', margin: 'lg', contents: list } ] },
@@ -1429,6 +1454,7 @@ async function copyText(text, done) {
 }
 async function shareText(text) {
   if (DEMO) return toast('預覽模式：正式版會跳出 LINE 的選擇畫面');
+  try { await LIFF_READY; } catch (e) { return copyText(text, '已複製，可以貼到 LINE'); }
   if (!liff.isApiAvailable('shareTargetPicker')) return copyText(text, '已複製，可以貼到 LINE');
   try { const r = await liff.shareTargetPicker([{ type: 'text', text: text.slice(0, 4900) }], { isMultiple: true }); toast(r ? '已傳到 LINE' : '已取消'); }
   catch (e) { toast('傳送失敗：' + e.message); }
@@ -1681,7 +1707,7 @@ async function platformFlow() {
   const imp = PARAMS.get('import') || (/[#&]n=/.test(location.hash) ? location.hash : '');
   if (imp) { PENDING_IMPORT = decodeList(imp); if (PENDING_IMPORT) TAB = 'card'; }
   const cached = cacheGet('platform'), cachedCard = cacheGet('card'), cx = cacheGet('cardx');
-  const boot = Promise.all([api('me'), api('listWalls'), api('getCard')]);
+  const boot = api('boot').then(r => [r.me, { walls: r.created }, r]); // 首頁資料一次拿齊（r.walls 是我參與的代禱牆）
   const manageId = PARAMS.get('manage');
   const apply = ([me, r, c]) => { ME = me; WALLS = r.walls; CARD = c.card; ON_WALL = c.onWall || {}; JOINED = c.walls || []; cacheSet('platform', { me: ME, walls: WALLS }); cacheSet('card', CARD); cacheSet('cardx', { onWall: ON_WALL, walls: JOINED }); };
   const first = () => {

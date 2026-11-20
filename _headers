@@ -1,0 +1,15 @@
+# Cloudflare Pages 快取設定
+# 首頁每次都確認有沒有新版（很快，內容沒變就不重抓）
+/
+  Cache-Control: no-cache
+/index.html
+  Cache-Control: no-cache
+/sw.js
+  Cache-Control: no-cache
+# 圖片、圖示、截圖工具很少變：手機存一週
+/img/*
+  Cache-Control: public, max-age=604800
+/icons/*
+  Cache-Control: public, max-age=604800
+/lib/*
+  Cache-Control: public, max-age=2592000

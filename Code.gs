@@ -47,12 +47,14 @@ function doPost(e) {
   let out;
   try {
     const req = JSON.parse((e && e.postData && e.postData.contents) || '{}');
+    MEMO = ['boot', 'wall', 'listWalls', 'getCard', 'adminOverview', 'myData', 'me'].indexOf(req.action) >= 0 ? {} : null;
     // 有平台自己的通行證就用通行證（60 天有效），否則向 LINE 驗證 ID token
     const user = req.session && req.action !== 'session' ? userFromSession(req.session) : verifyIdToken(req.idToken);
     const own = () => requireOwner(user, req.wallId); // 代禱牆建立者或管理員
     switch (req.action) {
       case 'session':     out = { ok: true, ...createSession(user) }; break;
       case 'logout':      deleteSession(req.session); out = { ok: true }; break;
+      case 'boot':        out = { ok: true, me: { userId: user.userId, displayName: user.displayName, isAdmin: isPublisher(user.userId) }, created: listWalls(user), ...getCard(user) }; break; // 首頁一次拿齊：created＝我建立的，walls＝我參與的
       case 'me':          out = { ok: true, userId: user.userId, displayName: user.displayName, isAdmin: isPublisher(user.userId) }; break;
       case 'wall':        out = { ok: true, ...openWall(user, req.wallId) }; break;
       case 'joinWall':    out = { ok: true, wall: joinWall(user, req.wallId) }; break;
@@ -152,7 +154,15 @@ function verifyIdToken(idToken) {
 
 /* ---------- 工具 ---------- */
 function sheet(name) { return SpreadsheetApp.getActive().getSheetByName(name); }
-function rows(name) { const v = sheet(name).getDataRange().getValues(); v.shift(); return v; }
+/* 唯讀的動作開啟 MEMO：同一次請求裡，同一張工作表只讀一次（省下大部分時間） */
+let MEMO = null;
+function rows(name) {
+  if (MEMO && MEMO[name]) return MEMO[name];
+  const sh = sheet(name); if (!sh) return [];
+  const v = sh.getDataRange().getValues(); v.shift();
+  if (MEMO) MEMO[name] = v;
+  return v;
+}
 function tz() { return Session.getScriptTimeZone(); }
 function isTrue(v) { return v === true || String(v).toUpperCase() === 'TRUE'; }
 function fmt(d, pattern) { return d instanceof Date ? Utilities.formatDate(d, tz(), pattern || 'yyyy/MM/dd HH:mm') : String(d || ''); }
