@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#2D4F8E">
+<meta name="theme-color" content="#F2F1E4">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
 <link rel="icon" href="icons/favicon-32.png" type="image/png" sizes="32x32">
@@ -15,200 +15,221 @@
 <title>LINE代禱牆建立平台</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@400;700&display=swap" rel="stylesheet">
 <link rel="preconnect" href="https://script.google.com" crossorigin>
 <link rel="preconnect" href="https://script.googleusercontent.com" crossorigin>
 <link rel="preconnect" href="https://api.line.me" crossorigin>
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   :root {
-    /* 平台配色：禱告藍（與活動登記的鼠尾草綠、其他平台區分） */
-    --bg: #EEF2F8;          /* 頁面底色 */
-    --bg-2: #E3E9F3;        /* 柔和襯底 */
-    --paper: #FFFFFF;
-    --ink: #1E2A44;         /* 主要文字 */
-    --ink-2: #5B667D;       /* 次要文字 */
-    --rule: #DCE3EE;        /* 分隔、邊框 */
-    --brand: #2D4F8E;       /* 主要按鈕（白字對比達 AA） */
-    --brand-dark: #23407A;
-    --brand-soft: #E6EDF8;
-    --gold: #F2C14E;
-    --on-brand: #F7F9FD;
-    --stamp: #B03A2E;       /* 刪除 */
-    --ok: #2E7D4F;
-    --shadow: 0 1px 2px rgba(30, 42, 68, .05), 0 8px 24px rgba(30, 42, 68, .08);
-    --sans: "Noto Sans TC", -apple-system, "PingFang TC", "Microsoft JhengHei", sans-serif;
-    /* 代禱牆色調（每面牆可以不同，預設禱告藍） */
-    --g1: #4A72B8; --g2: #22407C; --accent: #F5C451; --bar: #3B63A8; --pill: #E6EDF8; --tint: #EEF2F8;
+    /* 延續「金香壇代禱卡」：米白紙色、石榴紅、楷體、石榴籽 */
+    --paper: #F2F1E4;       /* 頁面底色 */
+    --sheet: #FBFAF2;       /* 卡片紙 */
+    --ink: #2E322F;
+    --muted: #767B73;
+    --line: #A8ACA4;        /* 外框 */
+    --rule: #D9D8CC;        /* 內部分隔 */
+    --olive: #B6A359; --olive-ink: #8A7A2E; --leaf: #8DB38A;
+    --line-green: #06C755; --share-ink: #0B8F45;
+    --stamp: #A12A3C;
+    --kai: "LXGW WenKai TC", "Kaiti TC", "BiauKai", "DFKai-SB", serif;
+    --sans: "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
+    /* 每面代禱牆的色調（預設石榴紅） */
+    --bar: #A12A3C; --g2: #6F1A28; --pill: #E7C9CD;
   }
   * { box-sizing: border-box; }
-  html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 16px; line-height: 1.6; -webkit-text-size-adjust: 100%; }
+  html, body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--sans); font-size: 16px; line-height: 1.6; -webkit-text-size-adjust: 100%; }
   button, input, textarea { font: inherit; color: inherit; }
-  :focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
+  :focus-visible { outline: 3px solid var(--olive); outline-offset: 2px; }
   [hidden] { display: none !important; }
-  #app { max-width: 480px; margin: 0 auto; padding: 0 16px calc(120px + env(safe-area-inset-bottom)); }
-  .muted { color: var(--ink-2); }
+  #app { max-width: 560px; margin: 0 auto; padding: 20px 16px calc(120px + env(safe-area-inset-bottom)); }
+  .muted { color: var(--muted); }
   .small { font-size: 13px; }
+  .kai { font-family: var(--kai); }
 
   /* ---------- 平台頂部 ---------- */
-  header.top { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 0 -16px; padding: calc(20px + env(safe-area-inset-top)) 16px 18px; background: linear-gradient(135deg, #3E66AE, #22407C); color: #fff; }
+  header.top { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 14px; padding-top: env(safe-area-inset-top); }
   header.top .brand { display: flex; align-items: center; gap: 12px; color: inherit; text-decoration: none; border-radius: 12px; }
-  header.top .logo { width: 44px; height: 44px; flex: none; border-radius: 11px; box-shadow: 0 2px 8px rgba(0,0,0,.18); }
-  header.top h1 { font-weight: 900; font-size: 22px; letter-spacing: .04em; margin: 0; }
-  header.top .sub { font-size: 12px; color: #FFE7A8; letter-spacing: .12em; margin: 0; }
-  .help { flex: none; width: 36px; height: 36px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,.6); background: transparent; color: #fff; font-weight: 700; cursor: pointer; }
-  .demo-note { background: #FFF4D6; color: #7A5A12; font-size: 13px; padding: 8px 12px; border-radius: 8px; margin: 10px 0 4px; }
+  header.top .logo { width: 48px; height: 48px; flex: none; display: block; }
+  header.top .logo svg { width: 100%; height: 100%; display: block; }
+  header.top h1 { font-family: var(--kai); font-weight: 700; font-size: 1.5rem; letter-spacing: .12em; margin: 0; line-height: 1.2; }
+  header.top .sub { margin: 2px 0 0; color: var(--muted); font-size: .85rem; letter-spacing: .04em; }
+  .help { flex: none; width: 38px; height: 38px; border-radius: 50%; border: 1.5px solid var(--line); background: transparent; color: var(--muted); font-weight: 700; cursor: pointer; }
+  .demo-note { background: #EDE6C8; color: #6C5F22; font-size: 13px; padding: 8px 12px; border-radius: 12px; margin: 0 0 10px; }
 
-  .tabs { display: flex; gap: 22px; border-bottom: 2px solid var(--rule); margin: 14px 0 20px; }
-  .tabs button { background: none; border: 0; padding: 10px 0; font-size: 16px; font-weight: 500; color: var(--ink-2); border-bottom: 3px solid transparent; margin-bottom: -2px; cursor: pointer; }
-  .tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--brand); font-weight: 700; }
-  .tabs .n { font-size: 13px; color: var(--ink-2); margin-left: 4px; }
-  .subbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 16px 0 14px; }
-  .back { background: none; border: 0; padding: 6px 0; font-size: 16px; color: var(--ink-2); cursor: pointer; }
-  .subbar h1 { font-size: 17px; margin: 0; }
+  .tabs { display: flex; gap: 22px; border-bottom: 1.5px solid var(--line); margin: 4px 0 18px; }
+  .tabs button { background: none; border: 0; padding: 10px 0; font-family: var(--kai); font-size: 17px; letter-spacing: .06em; color: var(--muted); border-bottom: 3px solid transparent; margin-bottom: -1.5px; cursor: pointer; }
+  .tabs button[aria-selected="true"] { color: var(--g2); border-bottom-color: var(--bar); font-weight: 700; }
+  .tabs .n { font-family: var(--sans); font-size: 12px; margin-left: 4px; }
+  .subbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 0 0 14px; }
+  .back { background: none; border: 0; padding: 6px 0; font-size: 16px; color: var(--muted); cursor: pointer; }
+  .subbar h1 { font-family: var(--kai); font-size: 19px; letter-spacing: .08em; margin: 0; color: var(--g2); }
 
-  /* ---------- 卡片、表單 ---------- */
-  .card { background: var(--paper); border-radius: 18px; box-shadow: var(--shadow); padding: 18px 18px 20px; margin: 0 0 16px; }
-  .card > h2 { font-size: 17px; margin: 0 0 14px; display: flex; justify-content: space-between; align-items: baseline; }
-  .card > h2 small { font-size: 13px; font-weight: 400; color: var(--ink-2); }
-  .step { font-size: 15px; font-weight: 700; margin: 4px 0 10px; }
+  /* ---------- 紙卡、表單 ---------- */
+  .card { background: var(--sheet); border: 1.5px solid var(--line); border-radius: 26px; padding: 22px 18px 20px; margin: 0 0 16px; position: relative; overflow: hidden; }
+  .card.dot::before { content: ""; position: absolute; right: -26px; top: -26px; width: 96px; height: 96px; border-radius: 50%; background: var(--bar); opacity: .12; }
+  .card > h2 { position: relative; font-family: var(--kai); font-weight: 700; font-size: 1.45rem; letter-spacing: .1em; color: var(--g2); margin: 0 0 14px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .card > h2 small { font-family: var(--sans); font-size: 13px; font-weight: 400; letter-spacing: 0; color: var(--muted); }
+  .step { font-size: 15px; font-weight: 700; margin: 4px 0 10px; color: var(--ink); }
+  .step b { font-family: var(--kai); color: var(--bar); margin-right: 4px; }
   .field { display: block; margin-bottom: 16px; }
-  .field > span { display: block; font-size: 14px; font-weight: 500; color: var(--ink); margin-bottom: 6px; }
-  .field > span em { font-style: normal; font-weight: 400; color: var(--ink-2); font-size: 13px; margin-left: 6px; }
-  .field input, .field textarea, .inp { width: 100%; background: var(--paper); border: 1.5px solid var(--rule); border-radius: 12px; padding: 11px 14px; font-size: 16px; min-height: 48px; }
-  .field textarea, textarea.inp { min-height: 96px; resize: vertical; line-height: 1.6; }
-  .field input:focus, .field textarea:focus, .inp:focus { border-color: var(--brand); outline: none; box-shadow: 0 0 0 3px var(--brand-soft); }
-  .hint { color: var(--ink-2); font-size: 13px; margin: 6px 2px 0; }
+  .field > span { display: block; font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+  .field > span em { font-style: normal; font-weight: 400; color: var(--muted); font-size: 13px; margin-left: 6px; }
+  .field input, .field textarea, .inp { width: 100%; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 11px 14px; font-size: 16px; min-height: 48px; }
+  .field textarea, textarea.inp { min-height: 96px; resize: vertical; line-height: 1.7; }
+  #names { font-family: var(--kai); font-size: 18px; }
+  .field input:focus, .field textarea:focus, .inp:focus { border-color: var(--bar); outline: none; box-shadow: 0 0 0 3px var(--pill); }
+  .hint { color: var(--muted); font-size: 13px; margin: 6px 2px 0; line-height: 1.6; }
   .presets { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-  .presets button { background: var(--brand-soft); border: 0; border-radius: 999px; padding: 4px 12px; font-size: 13px; color: var(--brand); cursor: pointer; }
+  .presets button { background: transparent; border: 1px solid var(--olive); border-radius: 999px; padding: 3px 12px; font-size: 13px; color: var(--olive-ink); cursor: pointer; }
 
-  .btn { display: block; width: 100%; border: 0; border-radius: 14px; padding: 15px; font-size: 17px; font-weight: 700; cursor: pointer; text-align: center; text-decoration: none; }
+  .btn { appearance: none; display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; border: 1.5px solid var(--bar); border-radius: 999px; padding: 12px 18px; min-height: 48px; font-size: 16px; font-weight: 700; cursor: pointer; text-align: center; text-decoration: none; background: transparent; color: var(--bar); letter-spacing: .04em; }
   .btn.send { background: var(--bar); color: #fff; box-shadow: 0 6px 16px -8px var(--g2); }
-  .btn.send:active { filter: brightness(.92); }
-  .btn.plain { background: var(--paper); color: var(--bar); border: 1.5px solid var(--bar); }
-  .btn.ghost { background: var(--paper); color: var(--ink); border: 1.5px solid var(--rule); }
-  .btn.danger { background: transparent; color: var(--stamp); border: 1.5px solid rgba(176,58,46,.35); }
+  .btn.send:active { background: var(--g2); }
+  .btn.line { background: var(--line-green); border-color: var(--line-green); color: #fff; }
+  .btn.share { border-color: var(--line-green); color: var(--share-ink); background: transparent; }
+  .btn.plain { background: transparent; }
+  .btn.ghost { border-color: var(--line); color: var(--muted); font-weight: 500; }
+  .btn.code { border-color: var(--olive); color: var(--olive-ink); font-weight: 500; }
+  .btn.danger { border-color: rgba(161,42,60,.45); color: var(--stamp); font-weight: 500; }
   .btn.danger.armed { background: var(--stamp); color: #fff; border-color: var(--stamp); }
-  .btn.small { display: inline-block; width: auto; padding: 8px 14px; font-size: 14px; border-radius: 10px; }
+  .btn.small { display: inline-flex; width: auto; padding: 6px 14px; min-height: 38px; font-size: 14px; font-weight: 500; }
   .btn:disabled { opacity: .55; cursor: default; }
-  .btn svg { width: 18px; height: 18px; vertical-align: -3px; margin-right: 6px; }
+  .btn svg { width: 18px; height: 18px; flex: none; }
   .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-  .btn-grid .btn { padding: 12px 8px; font-size: 15px; }
-  .dock { position: fixed; left: 0; right: 0; bottom: 0; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: linear-gradient(to top, var(--tint) 70%, transparent); z-index: 5; }
-  .dock .inner { max-width: 480px; margin: 0 auto; }
+  .btn-grid .btn { font-size: 15px; }
+  .dock { position: fixed; left: 0; right: 0; bottom: 0; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: linear-gradient(to top, var(--paper) 70%, rgba(242,241,228,0)); z-index: 5; }
+  .dock .inner { max-width: 528px; margin: 0 auto; }
 
   /* 開關 */
   .switch-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 4px 0; }
   .switch-row b { display: block; font-size: 15px; }
-  .switch-row small { display: block; color: var(--ink-2); font-size: 13px; }
+  .switch-row small { display: block; color: var(--muted); font-size: 13px; }
   .switch { position: relative; flex: none; width: 52px; height: 30px; }
   .switch input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; z-index: 1; }
-  .switch span { position: absolute; inset: 0; border-radius: 999px; background: #C9D1DE; transition: background .2s; }
+  .switch span { position: absolute; inset: 0; border-radius: 999px; background: #C9C8BC; transition: background .2s; }
   .switch span::after { content: ""; position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25); transition: transform .2s; }
-  .switch input:checked + span { background: #2FB55A; }
+  .switch input:checked + span { background: var(--line-green); }
   .switch input:checked + span::after { transform: translateX(22px); }
-  .switch input:focus-visible + span { outline: 3px solid var(--brand); outline-offset: 2px; }
+  .switch input:focus-visible + span { outline: 3px solid var(--olive); outline-offset: 2px; }
 
-  /* ---------- 代禱牆頁首（成員頁） ---------- */
-  .hero { margin: 16px 0; border-radius: 20px; padding: 26px 20px 18px; color: #fff; text-align: center; background: linear-gradient(150deg, var(--g1), var(--g2)); box-shadow: 0 10px 26px -14px var(--g2); }
-  .hero .icon { font-size: 34px; line-height: 1; }
-  .hero .tag { color: var(--accent); font-weight: 700; font-size: 14px; letter-spacing: .1em; margin: 8px 0 2px; }
-  .hero h1 { font-size: 24px; font-weight: 900; margin: 0 0 6px; letter-spacing: .03em; }
-  .hero p { margin: 0 auto; font-size: 14px; opacity: .92; max-width: 22em; }
-  .hero .verse { font-size: 13px; opacity: .85; margin-top: 6px; }
-  .stats { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 16px; background: rgba(255,255,255,.14); border-radius: 14px; }
-  .stats div { padding: 10px 4px; }
-  .stats div + div { border-left: 1px solid rgba(255,255,255,.22); }
-  .stats b { display: block; font-size: 28px; font-weight: 900; line-height: 1.15; }
-  .stats span { font-size: 12px; opacity: .9; }
-  .closed-note { background: #FFF4D6; color: #7A5A12; border-radius: 12px; padding: 10px 14px; font-size: 14px; margin: 0 0 16px; }
+  /* ---------- 代禱牆頁首（石榴插畫＋題字） ---------- */
+  .hero { position: relative; display: grid; grid-template-columns: 46% 1fr; align-items: center; min-height: 190px; border-radius: 26px; overflow: hidden; background: var(--sheet); border: 1.5px solid var(--line); box-shadow: 0 6px 18px rgba(60,20,25,.12); margin-bottom: 16px; }
+  .hero .art { align-self: stretch; position: relative; }
+  .hero .art svg { position: absolute; left: -18%; top: 50%; width: 125%; transform: translateY(-50%); }
+  .hero .label { position: relative; margin: 18px 14px 18px 0; padding: 14px 12px; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); text-align: center; }
+  .hero .tag { font-size: 12px; color: var(--bar); border: 1px solid var(--bar); border-radius: 999px; padding: 0 9px; display: inline-block; letter-spacing: .1em; }
+  .hero h1 { font-family: var(--kai); font-weight: 700; font-size: 1.75rem; line-height: 1.3; letter-spacing: .14em; margin: 6px 0 0; color: var(--ink); word-break: break-word; }
+  .intro { margin: 0 4px 14px; color: var(--muted); font-size: 15px; }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); border: 1.5px solid var(--line); border-radius: 18px; overflow: hidden; background: var(--sheet); margin-bottom: 16px; }
+  .stats div { padding: 10px 4px 8px; text-align: center; }
+  .stats div + div { border-left: 1px solid var(--line); }
+  .stats b { display: block; font-family: var(--kai); font-size: 30px; line-height: 1.15; color: var(--g2); }
+  .stats span { font-size: 12px; color: var(--muted); }
+  .seeds { display: flex; flex-wrap: wrap; gap: 5px; margin: -4px 4px 16px; }
+  .seed { width: 9px; height: 13px; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; background: var(--pill); }
+  .seed.f { background: var(--bar); }
+  .closed-note { background: #EDE6C8; color: #6C5F22; border-radius: 14px; padding: 10px 14px; font-size: 14px; margin: 0 0 16px; }
+  .verse { margin: 26px 4px 0; font-family: var(--kai); color: var(--muted); font-size: 1rem; line-height: 1.9; letter-spacing: .05em; border-left: 3px solid var(--olive); padding-left: 12px; }
+  .verse cite { display: block; font-style: normal; font-size: .85rem; }
 
   /* 選排 */
   .group-pick { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .group-pick button { display: flex; align-items: center; justify-content: space-between; gap: 6px; text-align: left; background: var(--tint); border: 1.5px solid transparent; border-radius: 12px; padding: 10px 12px; min-height: 48px; font-size: 15px; cursor: pointer; line-height: 1.35; }
-  .group-pick button .c { flex: none; font-size: 12px; font-weight: 700; color: var(--bar); background: var(--pill); border-radius: 999px; padding: 0 8px; }
-  .group-pick button[aria-pressed="true"] { background: var(--paper); border-color: var(--bar); color: var(--bar); font-weight: 700; box-shadow: 0 0 0 3px var(--pill); }
-  .group-pick button.add { justify-content: center; border: 1.5px dashed var(--ink-2); background: transparent; color: var(--ink-2); }
+  .group-pick button { display: flex; align-items: center; justify-content: space-between; gap: 6px; text-align: left; background: transparent; border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; min-height: 52px; font-family: var(--kai); font-size: 16px; cursor: pointer; line-height: 1.35; }
+  .group-pick button .c { flex: none; font-family: var(--sans); font-size: 12px; color: var(--muted); }
+  .group-pick button[aria-pressed="true"] { background: var(--bar); border-color: var(--bar); color: #fff; }
+  .group-pick button[aria-pressed="true"] .c { color: rgba(255,255,255,.85); }
+  .group-pick button.add { justify-content: center; border-style: dashed; color: var(--muted); font-family: var(--sans); font-size: 14px; }
   .new-group { display: flex; gap: 8px; margin-top: 10px; }
   .new-group .inp { min-height: 44px; }
 
   /* 各排名單 */
-  .wall-group { padding: 12px 0; border-top: 1px solid var(--rule); }
+  .wall-group { position: relative; padding: 12px 0; border-top: 1px dashed var(--rule); }
   .wall-group:first-of-type { border-top: 0; padding-top: 0; }
-  .wall-group h3 { display: flex; justify-content: space-between; align-items: baseline; margin: 0 0 8px; font-size: 15px; color: var(--bar); }
-  .wall-group h3 small { color: var(--ink-2); font-weight: 400; font-size: 13px; }
-  .wall-group.empty h3 { color: var(--ink); font-weight: 500; margin: 0; }
-  .names { display: flex; flex-wrap: wrap; gap: 6px; }
-  .name { display: inline-flex; align-items: center; gap: 2px; background: var(--tint); border-radius: 999px; padding: 4px 12px; font-size: 15px; }
-  .name.mine { background: var(--pill); color: var(--bar); font-weight: 500; padding-right: 4px; }
-  .name.fresh { animation: pop .6s ease; }
-  @keyframes pop { 0% { transform: scale(.7); opacity: 0; } 70% { transform: scale(1.06); } 100% { transform: scale(1); opacity: 1; } }
-  .name button { border: 0; background: transparent; color: inherit; width: 26px; height: 26px; border-radius: 50%; font-size: 16px; line-height: 1; cursor: pointer; opacity: .75; }
-  .name button:hover { background: rgba(0,0,0,.06); opacity: 1; }
-  .posted { color: var(--ok); font-size: 14px; margin: 10px 0 0; }
+  .wall-group h3 { display: flex; justify-content: space-between; align-items: baseline; margin: 0 0 8px; font-family: var(--kai); font-size: 18px; letter-spacing: .06em; color: var(--g2); }
+  .wall-group h3 small { font-family: var(--sans); color: var(--muted); font-weight: 400; font-size: 13px; letter-spacing: 0; }
+  .wall-group.empty h3 { color: var(--muted); font-weight: 400; margin: 0; }
+  .names { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+  .name { position: relative; display: flex; align-items: center; min-height: 46px; padding: 6px 6px 6px 30px; font-family: var(--kai); font-size: 17px; border-bottom: 1px solid var(--rule); }
+  .name:nth-child(odd) { border-right: 1px solid var(--rule); }
+  .name:nth-last-child(1), .name:nth-last-child(2):nth-child(odd) { border-bottom: 0; }
+  .name::before { content: ""; position: absolute; left: 11px; top: 50%; width: 10px; height: 14px; margin-top: -7px; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; background: var(--bar); }
+  .name span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+  .name.fresh { animation: pop .8s ease; }
+  @keyframes pop { 0% { background: var(--pill); } 100% { background: transparent; } }
+  .name button { flex: none; border: 0; background: transparent; color: var(--muted); width: 32px; height: 32px; border-radius: 50%; font-size: 18px; line-height: 1; cursor: pointer; }
+  .name button:hover { background: rgba(0,0,0,.05); color: var(--stamp); }
+  .name button.armed { background: var(--stamp); color: #fff; font-size: 12px; width: auto; padding: 0 8px; border-radius: 999px; }
+  .posted { color: var(--share-ink); font-size: 14px; margin: 10px 0 0; }
   .posted.warn { color: var(--stamp); }
   .page-foot { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px 18px; margin: 22px 0 0; }
-  .link { background: none; border: 0; color: var(--ink-2); font-size: 14px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; padding: 6px 0; }
+  .link { background: none; border: 0; color: var(--muted); font-size: 14px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; padding: 6px 0; }
 
   /* ---------- 圖卡預覽（模擬群組裡的 LINE 圖卡） ---------- */
-  .pv-panel { background: var(--bg-2); border: 1.5px dashed #A9B7CF; border-radius: 20px; padding: 12px 12px 16px; margin-bottom: 8px; }
-  .pv-label { display: flex; align-items: baseline; gap: 10px; margin: 0 2px 10px; }
-  .pv-label .t { background: var(--brand); color: #fff; font-size: 12px; font-weight: 700; padding: 2px 10px; border-radius: 999px; letter-spacing: .06em; }
-  .pv-label small { color: var(--ink-2); font-size: 12px; }
-  .lc { border-radius: 16px; overflow: hidden; background: var(--tint); box-shadow: 0 2px 10px rgba(30,42,68,.12); max-width: 340px; margin: 0 auto; font-size: 13px; }
-  .lc .h { background: linear-gradient(150deg, var(--g1), var(--g2)); color: #fff; padding: 18px 18px 16px; }
-  .lc .h .tg { color: var(--accent); font-weight: 700; font-size: 13px; }
-  .lc .h .ti { font-size: 21px; font-weight: 900; line-height: 1.3; margin: 2px 0 4px; word-break: break-word; }
-  .lc .h .vs { font-size: 11px; opacity: .85; }
-  .lc .h .st { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 12px; }
-  .lc .h .st div { background: rgba(255,255,255,.15); border-radius: 10px; text-align: center; padding: 6px 2px; }
-  .lc .h .st b { display: block; font-size: 22px; line-height: 1.2; }
-  .lc .h .st span { font-size: 11px; opacity: .9; }
-  .lc .b { padding: 10px; display: grid; gap: 8px; }
-  .lc .g { background: #fff; border-radius: 12px; padding: 10px 12px; }
-  .lc .g .r { display: flex; align-items: center; gap: 8px; font-weight: 700; }
-  .lc .g .r i { width: 4px; height: 16px; border-radius: 2px; background: var(--bar); flex: none; }
+  .pv-panel { background: rgba(182,163,89,.1); border: 1.5px dashed var(--olive); border-radius: 26px; padding: 12px 12px 16px; margin-bottom: 14px; }
+  .pv-label { display: flex; align-items: baseline; gap: 10px; margin: 0 4px 10px; }
+  .pv-label .t { background: var(--olive); color: #fff; font-size: 12px; font-weight: 700; padding: 2px 10px; border-radius: 999px; letter-spacing: .06em; }
+  .pv-label small { color: var(--muted); font-size: 12px; }
+  .lc { border-radius: 18px; overflow: hidden; background: var(--sheet); box-shadow: 0 2px 10px rgba(60,20,25,.12); max-width: 340px; margin: 0 auto; font-size: 13px; }
+  .lc .img { display: block; width: 100%; aspect-ratio: 20 / 9; background: var(--sheet); overflow: hidden; position: relative; }
+  .lc .img svg { position: absolute; left: -6%; top: 50%; width: 52%; transform: translateY(-50%); }
+  .lc .img .ln { position: absolute; left: 48%; right: 8%; top: 30%; bottom: 30%; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+  .lc .h { padding: 14px 16px 6px; }
+  .lc .h .tg { display: inline-block; color: var(--bar); border: 1px solid var(--bar); border-radius: 999px; padding: 0 8px; font-size: 11px; }
+  .lc .h .ti { font-family: var(--kai); font-size: 23px; font-weight: 700; letter-spacing: .1em; color: var(--g2); line-height: 1.3; margin: 4px 0 2px; word-break: break-word; }
+  .lc .h .vs { font-size: 11px; color: var(--muted); }
+  .lc .h .st { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--line); border-radius: 12px; margin-top: 10px; overflow: hidden; }
+  .lc .h .st div { text-align: center; padding: 5px 2px; }
+  .lc .h .st div + div { border-left: 1px solid var(--line); }
+  .lc .h .st b { display: block; font-size: 20px; line-height: 1.2; color: var(--g2); }
+  .lc .h .st span { font-size: 10px; color: var(--muted); }
+  .lc .b { padding: 8px 12px 10px; display: grid; gap: 7px; }
+  .lc .g { border: 1px solid var(--rule); border-radius: 12px; padding: 8px 11px; }
+  .lc .g .r { display: flex; align-items: center; gap: 7px; font-weight: 700; }
+  .lc .g .r i { width: 8px; height: 11px; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; background: var(--bar); flex: none; }
   .lc .g .r span { flex: 1; }
   .lc .g .r em { font-style: normal; font-size: 11px; color: var(--bar); background: var(--pill); border-radius: 999px; padding: 0 8px; }
-  .lc .g p { margin: 4px 0 0; color: var(--ink-2); word-break: break-word; }
-  .lc .none { color: var(--ink-2); font-size: 12px; padding: 0 4px; }
-  .lc .f { background: #fff; padding: 10px 12px 8px; text-align: center; }
+  .lc .g p { margin: 3px 0 0; color: var(--muted); word-break: break-word; }
+  .lc .none { color: var(--muted); font-size: 12px; padding: 0 2px; }
+  .lc .f { padding: 4px 12px 8px; text-align: center; }
   .lc .f .pb { background: var(--bar); color: #fff; font-weight: 700; border-radius: 8px; padding: 8px; }
-  .lc .f .lk { color: var(--ink-2); font-size: 12px; padding-top: 6px; }
+  .lc .f .lk { color: var(--muted); font-size: 12px; padding-top: 6px; }
 
   /* ---------- 建立表單 ---------- */
   .group-rows { display: grid; gap: 8px; }
   .group-row { display: flex; gap: 8px; align-items: center; }
-  .group-row .inp { min-height: 44px; padding: 8px 12px; }
-  .group-row .n { flex: none; font-size: 12px; color: var(--ink-2); min-width: 3em; text-align: right; }
-  .icon-btn { flex: none; width: 40px; height: 40px; border-radius: 10px; border: 1.5px solid var(--rule); background: var(--paper); color: var(--ink-2); font-size: 18px; cursor: pointer; }
+  .group-row .inp { min-height: 44px; padding: 8px 12px; font-family: var(--kai); font-size: 17px; }
+  .group-row .n { flex: none; font-size: 12px; color: var(--muted); min-width: 3em; text-align: right; }
+  .icon-btn { flex: none; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line); background: transparent; color: var(--muted); font-size: 18px; cursor: pointer; }
   .icon-btn.armed { background: var(--stamp); border-color: var(--stamp); color: #fff; }
-  .row-acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-  .row-acts .btn.small { background: var(--brand-soft); color: var(--brand); }
-  .swatches { display: flex; flex-wrap: wrap; gap: 10px; }
-  .swatches button { width: 64px; border: 0; background: none; padding: 0; cursor: pointer; text-align: center; font-size: 12px; color: var(--ink-2); }
-  .swatches i { display: block; height: 40px; border-radius: 12px; margin-bottom: 4px; border: 3px solid transparent; }
-  .swatches button[aria-pressed="true"] i { border-color: var(--paper); box-shadow: 0 0 0 2.5px var(--ink); }
+  .row-acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .row-acts .btn.small { border-color: var(--olive); color: var(--olive-ink); }
+  .swatches { display: flex; flex-wrap: wrap; gap: 12px; }
+  .swatches button { width: 66px; border: 0; background: none; padding: 0; cursor: pointer; text-align: center; font-size: 13px; color: var(--muted); font-family: var(--kai); }
+  .swatches i { display: block; height: 44px; border-radius: 14px; margin-bottom: 4px; border: 3px solid transparent; position: relative; }
+  .swatches i::after { content: ""; position: absolute; left: 50%; top: 50%; width: 12px; height: 17px; margin: -8px 0 0 -6px; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; background: rgba(255,255,255,.75); }
+  .swatches button[aria-pressed="true"] i { border-color: var(--sheet); box-shadow: 0 0 0 2.5px var(--ink); }
   .swatches button[aria-pressed="true"] { color: var(--ink); font-weight: 700; }
 
   /* 已建立列表 */
-  .wall-item { display: block; width: 100%; text-align: left; border: 0; background: var(--paper); border-radius: 16px; box-shadow: var(--shadow); padding: 14px 16px 14px 20px; margin-bottom: 12px; cursor: pointer; position: relative; overflow: hidden; }
-  .wall-item::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: linear-gradient(var(--g1), var(--g2)); }
-  .wall-item b { display: block; font-size: 17px; }
-  .wall-item .meta { font-size: 13px; color: var(--ink-2); display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 2px; }
-  .state { display: inline-block; font-size: 12px; font-weight: 700; border-radius: 999px; padding: 0 8px; background: #E2F3E8; color: var(--ok); }
-  .state.off { background: #F1E3E1; color: var(--stamp); }
-  .empty-box { text-align: center; padding: 40px 10px; color: var(--ink-2); }
+  .wall-item { display: block; width: 100%; text-align: left; border: 1.5px solid var(--line); background: var(--sheet); border-radius: 22px; padding: 14px 18px 14px 40px; margin-bottom: 12px; cursor: pointer; position: relative; overflow: hidden; }
+  .wall-item::before { content: ""; position: absolute; left: 16px; top: 20px; width: 12px; height: 17px; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; background: var(--bar); }
+  .wall-item::after { content: ""; position: absolute; right: -22px; top: -22px; width: 70px; height: 70px; border-radius: 50%; background: var(--bar); opacity: .1; }
+  .wall-item b { display: block; font-family: var(--kai); font-size: 19px; letter-spacing: .08em; color: var(--g2); }
+  .wall-item .meta { font-size: 13px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 2px; }
+  .state { display: inline-block; font-size: 12px; border: 1px solid var(--share-ink); color: var(--share-ink); border-radius: 999px; padding: 0 8px; }
+  .state.off { border-color: var(--stamp); color: var(--stamp); }
+  .empty-box { text-align: center; padding: 40px 10px; color: var(--muted); }
 
-  .loading { display: flex; justify-content: center; gap: 8px; padding: 80px 0; }
-  .loading .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--brand); animation: blink 1s infinite ease-in-out; }
+  .loading { display: flex; justify-content: center; gap: 6px; padding: 80px 0; }
+  .loading .dot { width: 10px; height: 14px; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; background: var(--bar); animation: blink 1s infinite ease-in-out; }
   .loading .dot:nth-child(2) { animation-delay: .15s; } .loading .dot:nth-child(3) { animation-delay: .3s; }
   @keyframes blink { 0%, 80%, 100% { opacity: .25; transform: scale(.8); } 40% { opacity: 1; transform: scale(1); } }
-  .toast { position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom)); transform: translate(-50%, 20px); background: var(--ink); color: #fff; padding: 11px 18px; border-radius: 12px; font-size: 15px; max-width: calc(100% - 32px); opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; z-index: 30; }
+  .toast { position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom)); transform: translate(-50%, 20px); background: var(--ink); color: #fff; padding: 11px 18px; border-radius: 14px; font-size: 15px; max-width: calc(100% - 32px); opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; z-index: 30; }
   .toast.show { opacity: 1; transform: translate(-50%, 0); }
-  .solo { padding-top: 30px; }
-  .msg-card { background: var(--paper); border-radius: 18px; box-shadow: var(--shadow); padding: 26px 22px; text-align: center; }
-  .msg-card h1 { font-size: 20px; margin: 6px 0 8px; }
+  .solo { padding-top: 10px; }
+  .msg-card { background: var(--sheet); border: 1.5px solid var(--line); border-radius: 26px; padding: 26px 22px; text-align: center; }
+  .msg-card h1 { font-family: var(--kai); font-size: 1.5rem; letter-spacing: .1em; color: var(--g2); margin: 6px 0 8px; }
   .install-steps { text-align: left; padding-left: 1.4em; }
   .install-steps li { margin: 6px 0; }
   .mylist { list-style: none; padding: 0; margin: 10px 0; text-align: left; }
@@ -216,14 +237,14 @@
 
   /* ---------- 使用教學 ---------- */
   .tour-mask { position: fixed; inset: 0; z-index: 40; }
-  .tour-hole { position: fixed; border-radius: 14px; box-shadow: 0 0 0 9999px rgba(18, 26, 44, .62); transition: all .25s; pointer-events: none; z-index: 41; }
-  .tour-tip { position: fixed; left: 16px; right: 16px; max-width: 448px; margin: 0 auto; background: var(--paper); border-radius: 16px; padding: 16px 18px 14px; z-index: 42; box-shadow: 0 12px 30px rgba(0,0,0,.25); }
-  .tour-tip .k { font-size: 12px; color: var(--brand); font-weight: 700; letter-spacing: .08em; }
-  .tour-tip h3 { margin: 2px 0 4px; font-size: 17px; }
-  .tour-tip p { margin: 0 0 12px; font-size: 15px; color: var(--ink-2); }
-  .tour-tip .acts { display: flex; justify-content: space-between; align-items: center; }
-  .tour-tip .acts .btn.small { background: var(--brand); color: #fff; }
-  @media (prefers-reduced-motion: reduce) { .tour-hole, .toast, .switch span, .switch span::after { transition: none; } .name.fresh { animation: none; } }
+  .tour-hole { position: fixed; border-radius: 20px; box-shadow: 0 0 0 9999px rgba(40, 30, 28, .6); transition: all .25s; pointer-events: none; z-index: 41; }
+  .tour-tip { position: fixed; left: 16px; right: 16px; max-width: 448px; margin: 0 auto; background: var(--sheet); border-radius: 20px; padding: 16px 18px 14px; z-index: 42; box-shadow: 0 12px 30px rgba(0,0,0,.25); }
+  .tour-tip .k { font-size: 12px; color: var(--bar); font-weight: 700; letter-spacing: .08em; }
+  .tour-tip h3 { margin: 2px 0 4px; font-family: var(--kai); font-size: 19px; letter-spacing: .06em; }
+  .tour-tip p { margin: 0 0 12px; font-size: 15px; color: var(--muted); }
+  .tour-tip .acts { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .tour-tip .acts > div { display: flex; gap: 8px; }
+  @media (prefers-reduced-motion: reduce) { .tour-hole, .toast, .switch span, .switch span::after { transition: none; } .name.fresh, .loading .dot { animation: none; } }
 </style>
 </head>
 <body>
@@ -267,17 +288,41 @@ function armThen(btn, label, fn) {
 
 /* ================= 代禱牆色調 ================= */
 const THEMES = {
-  navy:  { name: '禱告藍', g1: '#4A72B8', g2: '#22407C', accent: '#F5C451', bar: '#3B63A8', pill: '#E6EDF8', tint: '#EEF2F8' },
-  dawn:  { name: '晨曦',   g1: '#D99052', g2: '#9C4A24', accent: '#FFF0C2', bar: '#B0602D', pill: '#FBEADB', tint: '#FBF3EC' },
-  olive: { name: '橄欖',   g1: '#6E9A5E', g2: '#35602F', accent: '#F3E08A', bar: '#4A7A42', pill: '#E4EFE0', tint: '#F0F5EE' },
-  plum:  { name: '葡萄紫', g1: '#8A6BB8', g2: '#4C3480', accent: '#F6CF6A', bar: '#6A4E9F', pill: '#ECE6F6', tint: '#F4F1FA' },
-  teal:  { name: '湖水',   g1: '#3E9AA3', g2: '#1C5864', accent: '#FFE08A', bar: '#257482', pill: '#DDEFF1', tint: '#EEF6F7' },
-  brick: { name: '磚紅',   g1: '#C0614F', g2: '#842F23', accent: '#FFE3A3', bar: '#A2463A', pill: '#F7E3DF', tint: '#FAF1EF' },
+  pom:   { name: '石榴紅', bar: '#A12A3C', g2: '#6F1A28', pill: '#E7C9CD' },
+  olive: { name: '橄欖金', bar: '#8A7A2E', g2: '#5E5320', pill: '#EDE4C4' },
+  leaf:  { name: '葉綠',   bar: '#4E7F4B', g2: '#2F5530', pill: '#D6E6D3' },
+  sky:   { name: '天藍',   bar: '#4F7FA3', g2: '#2E5573', pill: '#D5E3EE' },
 };
-const themeOf = w => THEMES[w && w.theme] || THEMES.navy;
-const themeVars = t => `--g1:${t.g1};--g2:${t.g2};--accent:${t.accent};--bar:${t.bar};--pill:${t.pill};--tint:${t.tint}`;
-function applyTheme(w) { const t = themeOf(w); Object.entries({ g1: t.g1, g2: t.g2, accent: t.accent, bar: t.bar, pill: t.pill, tint: t.tint }).forEach(([k, v]) => document.documentElement.style.setProperty('--' + k, v)); document.body.style.background = t.tint; }
-function resetTheme() { ['g1','g2','accent','bar','pill','tint'].forEach(k => document.documentElement.style.removeProperty('--' + k)); document.body.style.background = ''; }
+const themeOf = w => THEMES[w && w.theme] || THEMES.pom;
+const themeVars = t => `--bar:${t.bar};--g2:${t.g2};--pill:${t.pill}`;
+function applyTheme(w) { const t = themeOf(w); ['bar', 'g2', 'pill'].forEach(k => document.documentElement.style.setProperty('--' + k, t[k])); }
+function resetTheme() { ['bar', 'g2', 'pill'].forEach(k => document.documentElement.style.removeProperty('--' + k)); }
+const SITE = 'https://isaiahovercomer.github.io/line-prayer-wall/';
+
+/** 剖開的石榴（顏色跟著代禱牆色調） */
+const POM_SVG = (() => {
+  const seeds = [];
+  [[0, 1], [15, 6], [30, 12], [45, 18], [58, 23]].forEach(([r, n], ring) => {
+    for (let i = 0; i < n; i++) {
+      if (ring > 1 && (i * 3 + ring) % 8 === 2) continue; // 留白＝白色隔膜
+      const a = (i / n) * Math.PI * 2 + ring * 0.45, x = 100 + r * Math.cos(a), y = 112 + r * Math.sin(a) * 0.96;
+      const deep = (i + ring) % 3 === 0;
+      seeds.push(`<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="6.4" ry="8.6" transform="rotate(${(a * 57.3 + 90).toFixed(0)} ${x.toFixed(1)} ${y.toFixed(1)})" style="fill:var(--${deep ? 'g2' : 'bar'})"/>`
+        + `<ellipse cx="${(x - 1.8).toFixed(1)}" cy="${(y - 2.6).toFixed(1)}" rx="1.6" ry="2.4" fill="#fff" opacity=".45"/>`);
+    }
+  });
+  return `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <path d="M128 40c16-24 44-30 58-26-6 20-28 40-58 26z" fill="#8DB38A"/><path d="M128 40c18-10 34-18 52-22" stroke="#6E9A6B" stroke-width="2" fill="none"/>
+    <path d="M84 36l6-20 10 12 10-12 6 20z" style="fill:var(--g2)"/>
+    <circle cx="100" cy="112" r="82" style="fill:var(--pill);stroke:var(--bar)" stroke-width="6"/>
+    <circle cx="100" cy="112" r="71" fill="#F8EEEA"/>
+    ${seeds.join('')}
+  </svg>`;
+})();
+const pomSvg = () => POM_SVG;
+/** 圖卡上方的石榴橫幅（LINE 圖卡用同一張圖的 PNG） */
+const bannerHtml = () => `<span class="img" aria-hidden="true">${pomSvg()}<span class="ln"></span></span>`;
+const splitVerse = v => { const m = /^「(.+)」\s*(.*)$/.exec(String(v || '').trim()); return m ? { text: m[1], ref: m[2] } : { text: String(v || '').trim(), ref: '' }; };
 
 const VERSES = [
   { text: '第一要為萬人懇求、禱告、代求、祝謝。', ref: '提前 2:1' },
@@ -294,7 +339,7 @@ const splitNames = t => [...new Set(String(t || '').split(/[\n,，、;；]+/).ma
 const demo = {
   me: { userId: 'Udemo', displayName: '簡晨光', isAdmin: false },
   walls: [{
-    id: 'W1', title: '小排福音代禱牆', tag: '同心代禱', verse: verseText(VERSES[0]), desc: DEFAULT_DESC, allowAdd: true, theme: 'navy', open: true, creator: '簡晨光', created: '2026/11/18 21:30',
+    id: 'W1', title: '小區福音代禱牆', tag: '同心代禱', verse: verseText(VERSES[0]), desc: DEFAULT_DESC, allowAdd: true, theme: 'pom', open: true, creator: '簡晨光', created: '2026/11/18 21:30',
     groups: ['北溝社區排', '德福排', '讀經小排', '霧峰姊妹排', '兒童排', '青職排', '七靈社區排', '青少年排', '🏠大專週三李家排', '🏠大專週三弟兄排'],
     names: {
       '北溝社區排': ['陳淑卿', '陳淑幸'], '霧峰姊妹排': ['曾義明', '朱双娥', '曾銘弘', '康英滿'], '兒童排': ['吳禹錫', '吳禹霏', '吳子宸', '林恩予', '黃靈真', '廖竑宇'],
@@ -343,7 +388,7 @@ async function demoApi(action, d) {
       const w = find(d.wallId), [g, n] = d.entryId.split('#');
       w.names[g] = (w.names[g] || []).filter(x => x !== n); return { ok: true, wall: demoView(w) };
     }
-    case 'myData': return { ok: true, displayName: demo.me.displayName, entries: [{ wall: '小排福音代禱牆', group: '霧峰姊妹排', name: '康英滿', time: '2026/11/20' }], walls: ['小排福音代禱牆'] };
+    case 'myData': return { ok: true, displayName: demo.me.displayName, entries: [{ wall: '小區福音代禱牆', group: '霧峰姊妹排', name: '康英滿', time: '2026/11/20' }], walls: ['小區福音代禱牆'] };
     case 'deleteMyData': return { ok: true, entries: 1 };
   }
   throw new Error('預覽模式不支援：' + action);
@@ -412,26 +457,32 @@ async function wallFlow(id) {
 }
 
 function heroHtml(w) {
+  const seeds = w.list.map(g => `<span class="seed ${g.names.length ? 'f' : ''}"></span>`).join('');
   return `<section class="hero">
-    <div class="icon" aria-hidden="true">🙏</div>
-    ${w.tag ? `<p class="tag">${esc(w.tag)}</p>` : ''}
-    <h1>${esc(w.title)}</h1>
-    ${w.desc ? `<p>${esc(w.desc)}</p>` : ''}
-    ${w.verse ? `<p class="verse">${esc(w.verse)}</p>` : ''}
+      <div class="art">${pomSvg()}</div>
+      <div class="label">${w.tag ? `<span class="tag">${esc(w.tag)}</span>` : ''}<h1>${esc(w.title)}</h1></div>
+    </section>
+    ${w.desc ? `<p class="intro">${esc(w.desc)}</p>` : ''}
     <div class="stats">
       <div><b>${w.total}</b><span>位福音朋友</span></div>
       <div><b>${w.filled}</b><span>個排已填寫</span></div>
       <div><b>${w.unfilled}</b><span>個排還沒填</span></div>
     </div>
-  </section>`;
+    ${seeds ? `<div class="seeds" aria-hidden="true" title="每一顆石榴籽是一個排，紅色是已經填寫">${seeds}</div>` : ''}`;
+}
+
+function verseHtml(w) {
+  if (!w.verse) return '';
+  const v = splitVerse(w.verse);
+  return `<blockquote class="verse">${esc(v.text)}${v.ref ? `<cite>${esc(v.ref)}</cite>` : ''}</blockquote>`;
 }
 
 function listHtml(w, removable) {
   return w.list.map(g => g.names.length ? `<section class="wall-group">
       <h3><span>${esc(g.name)}</span><small>${g.names.length} 位</small></h3>
       <div class="names">${g.names.map(n => (removable(n)
-        ? `<span class="name mine ${FRESH.has(n.id) ? 'fresh' : ''}">${esc(n.name)}<button type="button" data-del="${esc(n.id)}" aria-label="刪除 ${esc(n.name)}">×</button></span>`
-        : `<span class="name ${FRESH.has(n.id) ? 'fresh' : ''}">${esc(n.name)}</span>`)).join('')}</div>
+        ? `<span class="name mine ${FRESH.has(n.id) ? 'fresh' : ''}"><span>${esc(n.name)}</span><button type="button" data-del="${esc(n.id)}" aria-label="刪除 ${esc(n.name)}">×</button></span>`
+        : `<span class="name ${FRESH.has(n.id) ? 'fresh' : ''}"><span>${esc(n.name)}</span></span>`)).join('')}</div>
     </section>` : `<section class="wall-group empty"><h3><span>${esc(g.name)}</span><small>還沒有名單</small></h3></section>`).join('');
 }
 
@@ -461,15 +512,15 @@ function drawWall() {
     ${DEMO ? `<p class="demo-note">預覽模式：目前使用範例資料。</p>` : ''}
     ${heroHtml(w)}
     ${w.open ? '' : `<p class="closed-note">這面代禱牆已經停止填寫，仍然可以看名單、一起代禱。</p>`}
-    ${w.open ? `<section class="card" aria-labelledby="fill-h">
+    ${w.open ? `<section class="card dot" aria-labelledby="fill-h">
       <h2 id="fill-h">填寫代禱名單</h2>
-      <p class="step">1. 選擇你的排</p>
+      <p class="step"><b>一</b>選擇你的排</p>
       <div class="group-pick" role="group" aria-label="選擇你的排">
         ${w.list.map(g => `<button type="button" data-pick="${esc(g.name)}" aria-pressed="${g.name === PICK}"><span>${esc(g.name)}</span>${g.names.length ? `<span class="c">${g.names.length}</span>` : ''}</button>`).join('')}
         ${w.allowAdd ? `<button type="button" class="add" id="add-group">＋ 我的排不在這裡</button>` : ''}
       </div>
       <div class="new-group" id="new-group" hidden><input class="inp" id="new-group-name" maxlength="20" placeholder="輸入排的名稱"><button class="btn small send" type="button" id="new-group-ok">加入</button></div>
-      <p class="step" style="margin-top:18px">2. 填入名字</p>
+      <p class="step" style="margin-top:18px"><b>二</b>填入名字</p>
       <div class="field" style="margin:0"><textarea id="names" aria-label="福音朋友的名字" placeholder="一行一位，或用「、」分隔&#10;例如：王小明、陳美玲"></textarea></div>
       <p class="hint">為了保護隱私，可以只寫姓氏加稱呼，例如「王同學」「林媽媽」。</p>
       <div class="switch-row" style="margin-top:16px">
@@ -482,8 +533,9 @@ function drawWall() {
       <h2 id="list-h">各排代禱名單 <small>共 ${w.total} 位</small></h2>
       <div id="wall-list">${listHtml(w, n => n.mine || w.canManage)}</div>
       ${mineCount || w.canManage ? `<p class="hint" style="margin-top:12px">${w.canManage ? '你是這面代禱牆的建立者，每個名字旁都有 ×，可以刪除。' : '你填的名字旁邊有 ×，可以自己刪除。'}</p>` : ''}
-      <button class="btn plain" style="margin-top:14px" id="repost">${ICON_SEND}把代禱牆貼到聊天室</button>
+      <button class="btn share" style="margin-top:14px" id="repost">${ICON_SEND}把代禱牆貼到聊天室</button>
     </section>
+    ${verseHtml(w)}
     <footer class="page-foot">
       <button class="link" id="fwd">轉傳給其他群組或朋友</button>
       ${w.canManage ? `<button class="link" id="manage">管理這面代禱牆</button>` : ''}
@@ -589,7 +641,7 @@ async function forwardFlow(id) {
   view(`<section class="solo">
     <div class="pv-panel">${cardHtml(wall)}</div>
     <p class="muted" style="text-align:center">把這面代禱牆轉傳給其他群組或朋友，可以一次勾選好幾個。</p>
-    <button class="btn send" id="go">${ICON_SEND}選擇群組或朋友</button>
+    <button class="btn line" id="go">${ICON_SEND}選擇群組或朋友</button>
     <button class="btn ghost" style="margin-top:10px" id="open">打開代禱牆</button>
   </section>`);
   $('go').onclick = async () => { if (await share(wall) && inClient()) liff.closeWindow(); };
@@ -599,11 +651,13 @@ async function forwardFlow(id) {
 /* ================= 群組裡的圖卡（Flex Message） ================= */
 const FLEX_LIMIT = 27000; // LINE 單張圖卡約 30KB 上限，留一點餘裕
 const byteLen = o => new TextEncoder().encode(JSON.stringify(o)).length;
+const C = { sheet: '#FBFAF2', ink: '#2E322F', muted: '#767B73', line: '#A8ACA4', rule: '#D9D8CC' };
 const pill = (text, t) => ({ type: 'box', layout: 'vertical', flex: 0, backgroundColor: t.pill, cornerRadius: 'xxl', paddingStart: '10px', paddingEnd: '10px', paddingTop: '2px', paddingBottom: '2px',
   contents: [{ type: 'text', text, size: 'xs', weight: 'bold', color: t.bar }] });
-const statBox = (n, label) => ({ type: 'box', layout: 'vertical', flex: 1, backgroundColor: '#FFFFFF26', cornerRadius: 'lg', paddingTop: '10px', paddingBottom: '10px', contents: [
-  { type: 'text', text: String(n), size: 'xxl', weight: 'bold', color: '#FFFFFF', align: 'center' },
-  { type: 'text', text: label, size: 'xs', color: '#FFFFFFE6', align: 'center' } ] });
+const seedDot = t => ({ type: 'box', layout: 'vertical', width: '9px', height: '13px', cornerRadius: '5px', backgroundColor: t.bar, contents: [] });
+const statBox = (n, label, t) => ({ type: 'box', layout: 'vertical', flex: 1, paddingTop: '8px', paddingBottom: '8px', contents: [
+  { type: 'text', text: String(n), size: 'xxl', weight: 'bold', color: t.g2, align: 'center' },
+  { type: 'text', text: label, size: 'xxs', color: C.muted, align: 'center' } ] });
 
 function buildWallFlex(w, news, opt = {}) {
   const t = themeOf(w);
@@ -613,35 +667,39 @@ function buildWallFlex(w, news, opt = {}) {
   const groupBox = g => {
     const names = g.names.map(n => n.name);
     const text = names.slice(0, perGroup).join(' · ') + (names.length > perGroup ? ` …等 ${names.length} 位` : '');
-    return { type: 'box', layout: 'vertical', backgroundColor: '#FFFFFF', cornerRadius: 'lg', paddingAll: '14px', spacing: 'sm', contents: [
+    return { type: 'box', layout: 'vertical', borderColor: C.rule, borderWidth: '1px', cornerRadius: 'lg', paddingAll: '12px', spacing: 'sm', contents: [
       { type: 'box', layout: 'horizontal', spacing: 'md', alignItems: 'center', contents: [
-        { type: 'box', layout: 'vertical', width: '4px', height: '18px', backgroundColor: t.bar, cornerRadius: '2px', contents: [] },
-        { type: 'text', text: g.name, weight: 'bold', size: 'md', color: '#1E2A44', flex: 1, wrap: true },
+        seedDot(t),
+        { type: 'text', text: g.name, weight: 'bold', size: 'md', color: t.g2, flex: 1, wrap: true },
         pill(`${names.length} 位`, t) ] },
-      { type: 'text', text, size: 'sm', color: '#4A5368', wrap: true } ] };
+      { type: 'text', text, size: 'sm', color: C.ink, wrap: true } ] };
   };
-  const body = shown.map(groupBox);
-  if (filled.length > shown.length) body.push({ type: 'text', text: `…還有 ${filled.length - shown.length} 個排，打開代禱牆看完整名單`, size: 'xs', color: '#5B667D', wrap: true, margin: 'sm' });
-  if (empty.length) body.push({ type: 'text', text: `還沒有名單：${empty.map(g => g.name).join('、')}`.slice(0, 300), size: 'xs', color: '#5B667D', wrap: true, margin: 'sm' });
-  if (!body.length) body.push({ type: 'text', text: '還沒有人填寫，第一位來為福音朋友代禱吧！', size: 'sm', color: '#5B667D', wrap: true, align: 'center' });
+  const list = shown.map(groupBox);
+  if (filled.length > shown.length) list.push({ type: 'text', text: `…還有 ${filled.length - shown.length} 個排，打開代禱牆看完整名單`, size: 'xs', color: C.muted, wrap: true, margin: 'sm' });
+  if (empty.length) list.push({ type: 'text', text: `還沒有名單：${empty.map(g => g.name).join('、')}`.slice(0, 300), size: 'xs', color: C.muted, wrap: true, margin: 'sm' });
+  if (!list.length) list.push({ type: 'text', text: '還沒有人填寫，第一位來為福音朋友代禱吧！', size: 'sm', color: C.muted, wrap: true, align: 'center' });
 
-  const header = [];
-  header.push({ type: 'text', text: `🙏 ${w.tag || '同心代禱'}`, color: t.accent, weight: 'bold', size: 'sm' });
-  header.push({ type: 'text', text: w.title, color: '#FFFFFF', weight: 'bold', size: 'xxl', wrap: true, margin: 'sm' });
-  if (w.verse) header.push({ type: 'text', text: w.verse, color: '#FFFFFFD9', size: 'xs', wrap: true, margin: 'sm' });
-  header.push({ type: 'box', layout: 'horizontal', spacing: 'sm', margin: 'lg', contents: [statBox(w.total, '位福音朋友'), statBox(w.filled, '個排已填'), statBox(w.unfilled, '個排未填')] });
+  const head = [];
+  if (w.tag) head.push({ type: 'box', layout: 'horizontal', contents: [{ type: 'box', layout: 'vertical', flex: 0, borderColor: t.bar, borderWidth: '1px', cornerRadius: 'xxl', paddingStart: '9px', paddingEnd: '9px',
+    contents: [{ type: 'text', text: w.tag, size: 'xs', color: t.bar }] }] });
+  head.push({ type: 'text', text: w.title, color: t.g2, weight: 'bold', size: 'xxl', wrap: true, margin: 'sm' });
+  if (w.verse) head.push({ type: 'text', text: w.verse, color: C.muted, size: 'xs', wrap: true, margin: 'sm' });
+  head.push({ type: 'box', layout: 'horizontal', margin: 'lg', borderColor: C.line, borderWidth: '1px', cornerRadius: 'lg', contents: [
+    statBox(w.total, '位福音朋友', t), { type: 'separator', color: C.line }, statBox(w.filled, '個排已填', t), { type: 'separator', color: C.line }, statBox(w.unfilled, '個排未填', t)] });
 
   const flex = {
     type: 'flex',
     altText: `🙏 ${w.title}：${news ? news + '，' : ''}共 ${w.total} 位福音朋友，${w.filled} 個排已填`.slice(0, 400),
     contents: {
       type: 'bubble', size: 'mega',
-      styles: { body: { backgroundColor: t.tint }, footer: { backgroundColor: '#FFFFFF' } },
-      header: { type: 'box', layout: 'vertical', paddingAll: '22px', background: { type: 'linearGradient', angle: '150deg', startColor: t.g1, endColor: t.g2 }, contents: header },
-      body: { type: 'box', layout: 'vertical', paddingAll: '14px', spacing: 'md', contents: body },
-      footer: { type: 'box', layout: 'vertical', paddingAll: '14px', paddingBottom: '6px', contents: [
+      styles: { body: { backgroundColor: C.sheet }, footer: { backgroundColor: C.sheet } },
+      hero: { type: 'image', url: `${SITE}img/hero-${w.theme in THEMES ? w.theme : 'pom'}.png`, size: 'full', aspectRatio: '20:9', aspectMode: 'cover', action: { type: 'uri', uri: wallUrl(w.id) } },
+      body: { type: 'box', layout: 'vertical', paddingAll: '18px', spacing: 'md', contents: [
+        { type: 'box', layout: 'vertical', contents: head },
+        { type: 'box', layout: 'vertical', spacing: 'sm', margin: 'lg', contents: list } ] },
+      footer: { type: 'box', layout: 'vertical', paddingAll: '14px', paddingTop: '0px', paddingBottom: '6px', contents: [
         { type: 'button', style: 'primary', color: t.bar, height: 'sm', action: { type: 'uri', label: w.open === false ? '打開代禱牆' : '📝 我也要填代禱名單', uri: wallUrl(w.id) } },
-        { type: 'button', style: 'link', height: 'sm', color: '#5B667D', margin: 'sm', action: { type: 'uri', label: '轉傳給其他群組或朋友', uri: shareUrl(w.id) } } ] },
+        { type: 'button', style: 'link', height: 'sm', color: C.muted, margin: 'sm', action: { type: 'uri', label: '轉傳給其他群組或朋友', uri: shareUrl(w.id) } } ] },
     },
   };
   if (byteLen(flex) <= FLEX_LIMIT) return flex;
@@ -657,7 +715,8 @@ function cardHtml(w) {
   const t = themeOf(w);
   const filled = w.list.filter(g => g.names.length), empty = w.list.filter(g => !g.names.length);
   return `<div class="lc" style="${themeVars(t)}">
-    <div class="h"><div class="tg">🙏 ${esc(w.tag || '同心代禱')}</div><div class="ti">${esc(w.title || '代禱牆名稱')}</div>${w.verse ? `<div class="vs">${esc(w.verse)}</div>` : ''}
+    ${bannerHtml()}
+    <div class="h">${w.tag ? `<span class="tg">${esc(w.tag)}</span>` : ''}<div class="ti">${esc(w.title || '代禱牆名稱')}</div>${w.verse ? `<div class="vs">${esc(w.verse)}</div>` : ''}
       <div class="st"><div><b>${w.total}</b><span>位福音朋友</span></div><div><b>${w.filled}</b><span>個排已填</span></div><div><b>${w.unfilled}</b><span>個排未填</span></div></div></div>
     <div class="b">
       ${filled.map(g => `<div class="g"><div class="r"><i></i><span>${esc(g.name)}</span><em>${g.names.length} 位</em></div><p>${g.names.map(n => esc(n.name)).join(' · ')}</p></div>`).join('')}
@@ -671,7 +730,7 @@ function cardHtml(w) {
 /* ================= 建立平台 ================= */
 let ME = null, WALLS = [], TAB = 'new', ROUTE = { view: 'tabs' };
 const DRAFT_KEY = 'pw.draft';
-const blankDraft = () => ({ title: '', tag: '同心代禱', verse: verseText(VERSES[0]), desc: DEFAULT_DESC, groups: [{ name: '', from: '' }], allowAdd: true, theme: 'navy' });
+const blankDraft = () => ({ title: '', tag: '同心代禱', verse: verseText(VERSES[0]), desc: DEFAULT_DESC, groups: [{ name: '', from: '' }], allowAdd: true, theme: 'pom' });
 let draft = blankDraft();
 let editDraft = null;
 
@@ -709,7 +768,7 @@ function render() {
   if (ROUTE.view === 'detail') return renderDetail(ROUTE.id);
   if (ROUTE.view === 'edit') return renderEdit(ROUTE.id);
   view(`
-    <header class="top"><a class="brand" href="./" id="home"><img class="logo" src="icons/icon.svg" alt="" width="44" height="44"><div><p class="sub">LINE 代禱牆</p><h1>建立代禱牆圖卡</h1></div></a><button class="help" id="help" type="button" aria-label="使用教學">?</button></header>
+    <header class="top"><a class="brand" href="./" id="home"><span class="logo">${pomSvg()}</span><div><h1>建立代禱牆圖卡</h1><p class="sub">LINE 代禱牆・以小排為單位同心代禱</p></div></a><button class="help" id="help" type="button" aria-label="使用教學">?</button></header>
     ${DEMO ? `<p class="demo-note">預覽模式：目前使用範例資料。</p>` : ''}
     <nav class="tabs" role="tablist">
       <button role="tab" aria-selected="${TAB === 'new'}" data-tab="new">新代禱牆</button>
@@ -717,7 +776,7 @@ function render() {
     </nav>
     <div id="panel"></div>
     <footer class="page-foot">${isStandalone() ? '' : '<button class="link" id="install-link">安裝到手機桌面</button>'}<button class="link" onclick="myDataFlow()">我的個人資料</button></footer>
-    ${TAB === 'new' ? `<div class="dock"><div class="inner"><button class="btn send" id="send">${ICON_SEND}建立並發送到 LINE 群組</button></div></div>` : ''}`);
+    ${TAB === 'new' ? `<div class="dock"><div class="inner"><button class="btn send" id="send">${ICON_SEND}建立並傳到 LINE 群組</button></div></div>` : ''}`);
   document.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { TAB = b.dataset.tab; render(); });
   $('help').onclick = () => startTour(TOUR_STEPS);
   $('home').onclick = e => { e.preventDefault(); TAB = 'new'; go({ view: 'tabs' }); };
@@ -738,7 +797,7 @@ function wallForm(d, base) {
   return `
     <section class="pv-panel" aria-label="圖卡預覽"><div class="pv-label"><span class="t">圖卡預覽</span><small>群組裡看到的樣子</small></div><div id="pv">${cardHtml(draftWall(d, base))}</div></section>
     <section class="card">
-      <label class="field" id="f-title"><span>代禱牆名稱</span><input id="w-title" maxlength="40" value="${esc(d.title)}" placeholder="例如：小排福音代禱牆"></label>
+      <label class="field" id="f-title"><span>代禱牆名稱</span><input id="w-title" maxlength="40" value="${esc(d.title)}" placeholder="例如：小區福音代禱牆"></label>
       <label class="field"><span>標語<em>圖卡最上面的小字</em></span><input id="w-tag" maxlength="16" value="${esc(d.tag)}" placeholder="同心代禱"></label>
       <label class="field"><span>經文<em>可以留白</em></span><textarea id="w-verse" maxlength="120" style="min-height:64px">${esc(d.verse)}</textarea>
         <div class="presets">${VERSES.map((v, i) => `<button type="button" data-verse="${i}">${esc(v.ref)}</button>`).join('')}<button type="button" data-verse="-1">清除</button></div></label>
@@ -761,7 +820,7 @@ function wallForm(d, base) {
     </section>
     <section class="card" id="f-theme">
       <h2>圖卡色調</h2>
-      <div class="swatches" role="group" aria-label="圖卡色調">${Object.entries(THEMES).map(([k, t]) => `<button type="button" data-theme="${k}" aria-pressed="${d.theme === k}"><i style="background:linear-gradient(150deg,${t.g1},${t.g2})"></i>${t.name}</button>`).join('')}</div>
+      <div class="swatches" role="group" aria-label="圖卡色調">${Object.entries(THEMES).map(([k, t]) => `<button type="button" data-theme="${k}" aria-pressed="${d.theme === k}"><i style="background:${t.bar}"></i>${t.name}</button>`).join('')}</div>
     </section>`;
 }
 
@@ -842,11 +901,11 @@ async function createAndSend() {
     draft = blankDraft(); try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
     TAB = 'sent'; go({ view: 'detail', id: wall.id });
     await share(wall);
-  } catch (e) { toast(e.message); btn.disabled = false; btn.innerHTML = `${ICON_SEND}建立並發送到 LINE 群組`; }
+  } catch (e) { toast(e.message); btn.disabled = false; btn.innerHTML = `${ICON_SEND}建立並傳到 LINE 群組`; }
 }
 
 function renderSent() {
-  if (!WALLS.length) { $('panel').innerHTML = `<div class="empty-box"><div style="font-size:40px">🙏</div><p>還沒有建立代禱牆。</p><button class="btn send small" id="to-new">建立第一面代禱牆</button></div>`; $('to-new').onclick = () => { TAB = 'new'; render(); }; return; }
+  if (!WALLS.length) { $('panel').innerHTML = `<div class="empty-box"><div style="width:72px;margin:0 auto">${pomSvg()}</div><p>還沒有建立代禱牆。</p><button class="btn send small" id="to-new">建立第一面代禱牆</button></div>`; $('to-new').onclick = () => { TAB = 'new'; render(); }; return; }
   $('panel').innerHTML = WALLS.map(w => `<button class="wall-item" data-open="${esc(w.id)}" style="${themeVars(themeOf(w))}">
       <b>${esc(w.title)}</b>
       <span class="meta"><span class="state ${w.open ? '' : 'off'}">${w.open ? '填寫中' : '已停止'}</span><span>${w.total} 位福音朋友</span><span>${w.filled} 排已填・${w.unfilled} 排未填</span></span>
@@ -878,14 +937,14 @@ function drawDetail(w) {
   view(`
     <div class="subbar"><button class="back" id="back">‹ 返回</button><h1>${esc(w.title)}</h1><span></span></div>
     <section class="pv-panel"><div class="pv-label"><span class="t">目前的圖卡</span><small>${w.open ? '填寫中' : '已停止填寫'}</small></div>${cardHtml(w)}</section>
-    <button class="btn send" id="d-share" style="margin-top:12px">${ICON_SEND}發送到 LINE 群組</button>
+    <button class="btn line" id="d-share">${ICON_SEND}傳到 LINE 群組</button>
     <div class="btn-grid">
-      <button class="btn ghost" id="d-open">打開填寫頁</button>
-      <button class="btn ghost" id="d-edit">編輯內容與排</button>
-      <button class="btn ghost" id="d-copy">複製文字名單</button>
+      <button class="btn" id="d-open">打開填寫頁</button>
+      <button class="btn" id="d-edit">編輯內容與排</button>
+      <button class="btn code" id="d-copy">複製文字名單</button>
       <button class="btn ghost" id="d-toggle">${w.open ? '停止填寫' : '重新開放填寫'}</button>
     </div>
-    <section class="card" style="margin-top:18px">
+    <section class="card dot" style="margin-top:18px">
       <h2>各排代禱名單 <small>共 ${w.total} 位</small></h2>
       <div id="d-list">${listHtml(w, () => true)}</div>
       ${w.total ? '<p class="hint" style="margin-top:12px">名字旁的 × 可以刪除，按兩下確認。</p>' : ''}
@@ -973,7 +1032,7 @@ function installFlow() {
     ? `<ol class="install-steps"><li>用 <b>Safari</b> 開啟這個頁面</li><li>點下方的「分享」按鈕</li><li>往下滑，點「<b>加入主畫面</b>」</li><li>按右上角「新增」</li></ol>`
     : `<ol class="install-steps"><li>點上面的「安裝到手機桌面」</li><li>如果沒有反應：點瀏覽器右上角「⋮」選單</li><li>選「<b>安裝應用程式</b>」或「<b>加到主畫面</b>」</li></ol>`;
   view(`<section class="solo"><div class="msg-card">
-    <img src="icons/icon-192.png" alt="" width="88" height="88" style="border-radius:20px">
+    <img src="icons/icon-192.png" alt="" width="88" height="88" style="border-radius:22px">
     <h1>代禱牆</h1>
     <p class="muted">把「建立代禱牆圖卡」平台放到手機桌面，像 App 一樣一點就開。</p>
     ${isStandalone() ? '<p class="posted">已經安裝好了，從桌面的圖示打開即可。</p>' : `<button class="btn send" id="do-install" ${isIOS() ? 'hidden' : ''}>安裝到手機桌面</button>${steps}`}
@@ -996,7 +1055,7 @@ if ('serviceWorker' in navigator && location.protocol === 'https:') addEventList
 const TOUR_KEY = 'pw.tour';
 const TOUR_VERSION = 1;
 const TOUR_STEPS = [
-  { sel: '#f-title', title: '1. 取一個名字', text: '例如「小排福音代禱牆」。標語和經文會出現在圖卡最上面，可以改也可以留白。' },
+  { sel: '#f-title', title: '1. 取一個名字', text: '例如「小區福音代禱牆」，再以小區下面的各小排為單位填名單。標語和經文會出現在圖卡最上面，可以改也可以留白。' },
   { sel: '#f-groups', title: '2. 設定排的清單', text: '成員打開代禱牆時，先選自己的排再填名字。名單很長可以用「一次貼上多個」。' },
   { sel: '#f-allow', title: '3. 讓成員自己加排', text: '打開後，排不在清單上的人可以自己新增，不用來問你。' },
   { sel: '#f-theme', title: '4. 挑一個色調', text: '上面的預覽會跟著變，就是群組裡看到的樣子。' },
@@ -1016,7 +1075,7 @@ function startTour(steps) {
   TOUR = { steps, i: 0 };
   document.body.insertAdjacentHTML('beforeend', `<div class="tour-mask" id="tour-mask"></div><div class="tour-hole" id="tour-hole"></div>
     <div class="tour-tip" id="tour-tip" role="dialog" aria-modal="true" aria-labelledby="tour-h"><div class="k" id="tour-k"></div><h3 id="tour-h"></h3><p id="tour-p"></p>
-    <div class="acts"><button class="link" id="tour-skip">略過</button><div><button class="btn small ghost" id="tour-prev">上一步</button> <button class="btn small" id="tour-next">下一步</button></div></div></div>`);
+    <div class="acts"><button class="link" id="tour-skip">略過</button><div><button class="btn small ghost" id="tour-prev">上一步</button><button class="btn small send" id="tour-next">下一步</button></div></div></div>`);
   $('tour-skip').onclick = () => endTour();
   $('tour-mask').onclick = () => endTour();
   $('tour-prev').onclick = () => tourGo(TOUR.i - 1);
