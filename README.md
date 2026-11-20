@@ -1,0 +1,34 @@
+# LINE代禱牆建立平台
+
+在 LINE 群組發一張「代禱牆」圖卡，大家依自己的排填寫正在代禱的福音朋友，最新名單可以一鍵貼回群組。
+
+- **建立者**：平台上填名稱、標語、經文、排的清單、色調 →「建立並發送到 LINE 群組」→ 選群組。
+- **成員**：按圖卡上的「我也要填代禱名單」→ 選自己的排 → 填名字 → 送出；可選擇把最新的代禱牆圖卡貼回聊天室。自己填的名字可以自己刪除。
+- **管理**：「已建立」裡可再次發送、編輯內容與排（改名會把名單一起搬過去）、停止填寫、複製文字名單、刪除名字或整面牆。
+
+技術架構與「LINE簡易活動登記建立平台」相同：GitHub Pages（`index.html`）＋ LIFF ＋ Google Apps Script（`Code.gs`）＋ Google 試算表。
+
+## 預覽
+
+- 建立平台：`index.html?demo&notour`
+- 成員填寫頁：`index.html?demo=wall`
+
+## 設定
+
+1. **試算表與後端**：新建 Google 試算表「代禱牆」→ 擴充功能 → Apps Script → 貼上 `Code.gs` → 執行 `setup` → 部署為網頁應用程式（執行身分：我；存取權：所有人）。
+2. **LIFF**：LINE Developers → Provider「CITC」→ LINE Login channel `2012412693` → LIFF → Add：Size **Full**、Endpoint `https://isaiahovercomer.github.io/line-prayer-wall/`、Scopes **openid、profile、chat_message.write**、Share target picker **ON**。
+3. **填回設定**：`index.html` 最上面的 `LIFF_ID`、`GAS_URL`。
+4. **管理員**（選用）：把 LINE userId 加進試算表「發布者」工作表，就能看到並管理所有人建立的代禱牆。
+
+## 試算表
+
+| 工作表 | 內容 |
+|---|---|
+| 代禱牆 | 每面牆的名稱、標語、經文、說明、排（JSON）、是否允許成員新增排、色調、開放、建立者 |
+| 代禱名單 | 每一個名字：排、名字、填寫者 LINE 名稱與 userId |
+| 發布者 | 管理員 userId |
+| 登入（隱藏） | 60 天通行證 |
+
+## 個資
+
+只記錄填寫者的 LINE 名稱與 userId，以及填入的名字。填寫頁提醒可以只寫姓氏加稱呼；每個人可以在「我的個人資料」查看並刪除自己填過的名字。

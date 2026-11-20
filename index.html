@@ -1,0 +1,1060 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2D4F8E">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="icon" href="icons/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" sizes="180x180">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="代禱牆">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>LINE代禱牆建立平台</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://script.google.com" crossorigin>
+<link rel="preconnect" href="https://script.googleusercontent.com" crossorigin>
+<link rel="preconnect" href="https://api.line.me" crossorigin>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+  :root {
+    /* 平台配色：禱告藍（與活動登記的鼠尾草綠、其他平台區分） */
+    --bg: #EEF2F8;          /* 頁面底色 */
+    --bg-2: #E3E9F3;        /* 柔和襯底 */
+    --paper: #FFFFFF;
+    --ink: #1E2A44;         /* 主要文字 */
+    --ink-2: #5B667D;       /* 次要文字 */
+    --rule: #DCE3EE;        /* 分隔、邊框 */
+    --brand: #2D4F8E;       /* 主要按鈕（白字對比達 AA） */
+    --brand-dark: #23407A;
+    --brand-soft: #E6EDF8;
+    --gold: #F2C14E;
+    --on-brand: #F7F9FD;
+    --stamp: #B03A2E;       /* 刪除 */
+    --ok: #2E7D4F;
+    --shadow: 0 1px 2px rgba(30, 42, 68, .05), 0 8px 24px rgba(30, 42, 68, .08);
+    --sans: "Noto Sans TC", -apple-system, "PingFang TC", "Microsoft JhengHei", sans-serif;
+    /* 代禱牆色調（每面牆可以不同，預設禱告藍） */
+    --g1: #4A72B8; --g2: #22407C; --accent: #F5C451; --bar: #3B63A8; --pill: #E6EDF8; --tint: #EEF2F8;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 16px; line-height: 1.6; -webkit-text-size-adjust: 100%; }
+  button, input, textarea { font: inherit; color: inherit; }
+  :focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
+  [hidden] { display: none !important; }
+  #app { max-width: 480px; margin: 0 auto; padding: 0 16px calc(120px + env(safe-area-inset-bottom)); }
+  .muted { color: var(--ink-2); }
+  .small { font-size: 13px; }
+
+  /* ---------- 平台頂部 ---------- */
+  header.top { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 0 -16px; padding: calc(20px + env(safe-area-inset-top)) 16px 18px; background: linear-gradient(135deg, #3E66AE, #22407C); color: #fff; }
+  header.top .brand { display: flex; align-items: center; gap: 12px; color: inherit; text-decoration: none; border-radius: 12px; }
+  header.top .logo { width: 44px; height: 44px; flex: none; border-radius: 11px; box-shadow: 0 2px 8px rgba(0,0,0,.18); }
+  header.top h1 { font-weight: 900; font-size: 22px; letter-spacing: .04em; margin: 0; }
+  header.top .sub { font-size: 12px; color: #FFE7A8; letter-spacing: .12em; margin: 0; }
+  .help { flex: none; width: 36px; height: 36px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,.6); background: transparent; color: #fff; font-weight: 700; cursor: pointer; }
+  .demo-note { background: #FFF4D6; color: #7A5A12; font-size: 13px; padding: 8px 12px; border-radius: 8px; margin: 10px 0 4px; }
+
+  .tabs { display: flex; gap: 22px; border-bottom: 2px solid var(--rule); margin: 14px 0 20px; }
+  .tabs button { background: none; border: 0; padding: 10px 0; font-size: 16px; font-weight: 500; color: var(--ink-2); border-bottom: 3px solid transparent; margin-bottom: -2px; cursor: pointer; }
+  .tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--brand); font-weight: 700; }
+  .tabs .n { font-size: 13px; color: var(--ink-2); margin-left: 4px; }
+  .subbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 16px 0 14px; }
+  .back { background: none; border: 0; padding: 6px 0; font-size: 16px; color: var(--ink-2); cursor: pointer; }
+  .subbar h1 { font-size: 17px; margin: 0; }
+
+  /* ---------- 卡片、表單 ---------- */
+  .card { background: var(--paper); border-radius: 18px; box-shadow: var(--shadow); padding: 18px 18px 20px; margin: 0 0 16px; }
+  .card > h2 { font-size: 17px; margin: 0 0 14px; display: flex; justify-content: space-between; align-items: baseline; }
+  .card > h2 small { font-size: 13px; font-weight: 400; color: var(--ink-2); }
+  .step { font-size: 15px; font-weight: 700; margin: 4px 0 10px; }
+  .field { display: block; margin-bottom: 16px; }
+  .field > span { display: block; font-size: 14px; font-weight: 500; color: var(--ink); margin-bottom: 6px; }
+  .field > span em { font-style: normal; font-weight: 400; color: var(--ink-2); font-size: 13px; margin-left: 6px; }
+  .field input, .field textarea, .inp { width: 100%; background: var(--paper); border: 1.5px solid var(--rule); border-radius: 12px; padding: 11px 14px; font-size: 16px; min-height: 48px; }
+  .field textarea, textarea.inp { min-height: 96px; resize: vertical; line-height: 1.6; }
+  .field input:focus, .field textarea:focus, .inp:focus { border-color: var(--brand); outline: none; box-shadow: 0 0 0 3px var(--brand-soft); }
+  .hint { color: var(--ink-2); font-size: 13px; margin: 6px 2px 0; }
+  .presets { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .presets button { background: var(--brand-soft); border: 0; border-radius: 999px; padding: 4px 12px; font-size: 13px; color: var(--brand); cursor: pointer; }
+
+  .btn { display: block; width: 100%; border: 0; border-radius: 14px; padding: 15px; font-size: 17px; font-weight: 700; cursor: pointer; text-align: center; text-decoration: none; }
+  .btn.send { background: var(--bar); color: #fff; box-shadow: 0 6px 16px -8px var(--g2); }
+  .btn.send:active { filter: brightness(.92); }
+  .btn.plain { background: var(--paper); color: var(--bar); border: 1.5px solid var(--bar); }
+  .btn.ghost { background: var(--paper); color: var(--ink); border: 1.5px solid var(--rule); }
+  .btn.danger { background: transparent; color: var(--stamp); border: 1.5px solid rgba(176,58,46,.35); }
+  .btn.danger.armed { background: var(--stamp); color: #fff; border-color: var(--stamp); }
+  .btn.small { display: inline-block; width: auto; padding: 8px 14px; font-size: 14px; border-radius: 10px; }
+  .btn:disabled { opacity: .55; cursor: default; }
+  .btn svg { width: 18px; height: 18px; vertical-align: -3px; margin-right: 6px; }
+  .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+  .btn-grid .btn { padding: 12px 8px; font-size: 15px; }
+  .dock { position: fixed; left: 0; right: 0; bottom: 0; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: linear-gradient(to top, var(--tint) 70%, transparent); z-index: 5; }
+  .dock .inner { max-width: 480px; margin: 0 auto; }
+
+  /* 開關 */
+  .switch-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 4px 0; }
+  .switch-row b { display: block; font-size: 15px; }
+  .switch-row small { display: block; color: var(--ink-2); font-size: 13px; }
+  .switch { position: relative; flex: none; width: 52px; height: 30px; }
+  .switch input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; z-index: 1; }
+  .switch span { position: absolute; inset: 0; border-radius: 999px; background: #C9D1DE; transition: background .2s; }
+  .switch span::after { content: ""; position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25); transition: transform .2s; }
+  .switch input:checked + span { background: #2FB55A; }
+  .switch input:checked + span::after { transform: translateX(22px); }
+  .switch input:focus-visible + span { outline: 3px solid var(--brand); outline-offset: 2px; }
+
+  /* ---------- 代禱牆頁首（成員頁） ---------- */
+  .hero { margin: 16px 0; border-radius: 20px; padding: 26px 20px 18px; color: #fff; text-align: center; background: linear-gradient(150deg, var(--g1), var(--g2)); box-shadow: 0 10px 26px -14px var(--g2); }
+  .hero .icon { font-size: 34px; line-height: 1; }
+  .hero .tag { color: var(--accent); font-weight: 700; font-size: 14px; letter-spacing: .1em; margin: 8px 0 2px; }
+  .hero h1 { font-size: 24px; font-weight: 900; margin: 0 0 6px; letter-spacing: .03em; }
+  .hero p { margin: 0 auto; font-size: 14px; opacity: .92; max-width: 22em; }
+  .hero .verse { font-size: 13px; opacity: .85; margin-top: 6px; }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 16px; background: rgba(255,255,255,.14); border-radius: 14px; }
+  .stats div { padding: 10px 4px; }
+  .stats div + div { border-left: 1px solid rgba(255,255,255,.22); }
+  .stats b { display: block; font-size: 28px; font-weight: 900; line-height: 1.15; }
+  .stats span { font-size: 12px; opacity: .9; }
+  .closed-note { background: #FFF4D6; color: #7A5A12; border-radius: 12px; padding: 10px 14px; font-size: 14px; margin: 0 0 16px; }
+
+  /* 選排 */
+  .group-pick { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .group-pick button { display: flex; align-items: center; justify-content: space-between; gap: 6px; text-align: left; background: var(--tint); border: 1.5px solid transparent; border-radius: 12px; padding: 10px 12px; min-height: 48px; font-size: 15px; cursor: pointer; line-height: 1.35; }
+  .group-pick button .c { flex: none; font-size: 12px; font-weight: 700; color: var(--bar); background: var(--pill); border-radius: 999px; padding: 0 8px; }
+  .group-pick button[aria-pressed="true"] { background: var(--paper); border-color: var(--bar); color: var(--bar); font-weight: 700; box-shadow: 0 0 0 3px var(--pill); }
+  .group-pick button.add { justify-content: center; border: 1.5px dashed var(--ink-2); background: transparent; color: var(--ink-2); }
+  .new-group { display: flex; gap: 8px; margin-top: 10px; }
+  .new-group .inp { min-height: 44px; }
+
+  /* 各排名單 */
+  .wall-group { padding: 12px 0; border-top: 1px solid var(--rule); }
+  .wall-group:first-of-type { border-top: 0; padding-top: 0; }
+  .wall-group h3 { display: flex; justify-content: space-between; align-items: baseline; margin: 0 0 8px; font-size: 15px; color: var(--bar); }
+  .wall-group h3 small { color: var(--ink-2); font-weight: 400; font-size: 13px; }
+  .wall-group.empty h3 { color: var(--ink); font-weight: 500; margin: 0; }
+  .names { display: flex; flex-wrap: wrap; gap: 6px; }
+  .name { display: inline-flex; align-items: center; gap: 2px; background: var(--tint); border-radius: 999px; padding: 4px 12px; font-size: 15px; }
+  .name.mine { background: var(--pill); color: var(--bar); font-weight: 500; padding-right: 4px; }
+  .name.fresh { animation: pop .6s ease; }
+  @keyframes pop { 0% { transform: scale(.7); opacity: 0; } 70% { transform: scale(1.06); } 100% { transform: scale(1); opacity: 1; } }
+  .name button { border: 0; background: transparent; color: inherit; width: 26px; height: 26px; border-radius: 50%; font-size: 16px; line-height: 1; cursor: pointer; opacity: .75; }
+  .name button:hover { background: rgba(0,0,0,.06); opacity: 1; }
+  .posted { color: var(--ok); font-size: 14px; margin: 10px 0 0; }
+  .posted.warn { color: var(--stamp); }
+  .page-foot { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px 18px; margin: 22px 0 0; }
+  .link { background: none; border: 0; color: var(--ink-2); font-size: 14px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; padding: 6px 0; }
+
+  /* ---------- 圖卡預覽（模擬群組裡的 LINE 圖卡） ---------- */
+  .pv-panel { background: var(--bg-2); border: 1.5px dashed #A9B7CF; border-radius: 20px; padding: 12px 12px 16px; margin-bottom: 8px; }
+  .pv-label { display: flex; align-items: baseline; gap: 10px; margin: 0 2px 10px; }
+  .pv-label .t { background: var(--brand); color: #fff; font-size: 12px; font-weight: 700; padding: 2px 10px; border-radius: 999px; letter-spacing: .06em; }
+  .pv-label small { color: var(--ink-2); font-size: 12px; }
+  .lc { border-radius: 16px; overflow: hidden; background: var(--tint); box-shadow: 0 2px 10px rgba(30,42,68,.12); max-width: 340px; margin: 0 auto; font-size: 13px; }
+  .lc .h { background: linear-gradient(150deg, var(--g1), var(--g2)); color: #fff; padding: 18px 18px 16px; }
+  .lc .h .tg { color: var(--accent); font-weight: 700; font-size: 13px; }
+  .lc .h .ti { font-size: 21px; font-weight: 900; line-height: 1.3; margin: 2px 0 4px; word-break: break-word; }
+  .lc .h .vs { font-size: 11px; opacity: .85; }
+  .lc .h .st { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 12px; }
+  .lc .h .st div { background: rgba(255,255,255,.15); border-radius: 10px; text-align: center; padding: 6px 2px; }
+  .lc .h .st b { display: block; font-size: 22px; line-height: 1.2; }
+  .lc .h .st span { font-size: 11px; opacity: .9; }
+  .lc .b { padding: 10px; display: grid; gap: 8px; }
+  .lc .g { background: #fff; border-radius: 12px; padding: 10px 12px; }
+  .lc .g .r { display: flex; align-items: center; gap: 8px; font-weight: 700; }
+  .lc .g .r i { width: 4px; height: 16px; border-radius: 2px; background: var(--bar); flex: none; }
+  .lc .g .r span { flex: 1; }
+  .lc .g .r em { font-style: normal; font-size: 11px; color: var(--bar); background: var(--pill); border-radius: 999px; padding: 0 8px; }
+  .lc .g p { margin: 4px 0 0; color: var(--ink-2); word-break: break-word; }
+  .lc .none { color: var(--ink-2); font-size: 12px; padding: 0 4px; }
+  .lc .f { background: #fff; padding: 10px 12px 8px; text-align: center; }
+  .lc .f .pb { background: var(--bar); color: #fff; font-weight: 700; border-radius: 8px; padding: 8px; }
+  .lc .f .lk { color: var(--ink-2); font-size: 12px; padding-top: 6px; }
+
+  /* ---------- 建立表單 ---------- */
+  .group-rows { display: grid; gap: 8px; }
+  .group-row { display: flex; gap: 8px; align-items: center; }
+  .group-row .inp { min-height: 44px; padding: 8px 12px; }
+  .group-row .n { flex: none; font-size: 12px; color: var(--ink-2); min-width: 3em; text-align: right; }
+  .icon-btn { flex: none; width: 40px; height: 40px; border-radius: 10px; border: 1.5px solid var(--rule); background: var(--paper); color: var(--ink-2); font-size: 18px; cursor: pointer; }
+  .icon-btn.armed { background: var(--stamp); border-color: var(--stamp); color: #fff; }
+  .row-acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .row-acts .btn.small { background: var(--brand-soft); color: var(--brand); }
+  .swatches { display: flex; flex-wrap: wrap; gap: 10px; }
+  .swatches button { width: 64px; border: 0; background: none; padding: 0; cursor: pointer; text-align: center; font-size: 12px; color: var(--ink-2); }
+  .swatches i { display: block; height: 40px; border-radius: 12px; margin-bottom: 4px; border: 3px solid transparent; }
+  .swatches button[aria-pressed="true"] i { border-color: var(--paper); box-shadow: 0 0 0 2.5px var(--ink); }
+  .swatches button[aria-pressed="true"] { color: var(--ink); font-weight: 700; }
+
+  /* 已建立列表 */
+  .wall-item { display: block; width: 100%; text-align: left; border: 0; background: var(--paper); border-radius: 16px; box-shadow: var(--shadow); padding: 14px 16px 14px 20px; margin-bottom: 12px; cursor: pointer; position: relative; overflow: hidden; }
+  .wall-item::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: linear-gradient(var(--g1), var(--g2)); }
+  .wall-item b { display: block; font-size: 17px; }
+  .wall-item .meta { font-size: 13px; color: var(--ink-2); display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 2px; }
+  .state { display: inline-block; font-size: 12px; font-weight: 700; border-radius: 999px; padding: 0 8px; background: #E2F3E8; color: var(--ok); }
+  .state.off { background: #F1E3E1; color: var(--stamp); }
+  .empty-box { text-align: center; padding: 40px 10px; color: var(--ink-2); }
+
+  .loading { display: flex; justify-content: center; gap: 8px; padding: 80px 0; }
+  .loading .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--brand); animation: blink 1s infinite ease-in-out; }
+  .loading .dot:nth-child(2) { animation-delay: .15s; } .loading .dot:nth-child(3) { animation-delay: .3s; }
+  @keyframes blink { 0%, 80%, 100% { opacity: .25; transform: scale(.8); } 40% { opacity: 1; transform: scale(1); } }
+  .toast { position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom)); transform: translate(-50%, 20px); background: var(--ink); color: #fff; padding: 11px 18px; border-radius: 12px; font-size: 15px; max-width: calc(100% - 32px); opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; z-index: 30; }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+  .solo { padding-top: 30px; }
+  .msg-card { background: var(--paper); border-radius: 18px; box-shadow: var(--shadow); padding: 26px 22px; text-align: center; }
+  .msg-card h1 { font-size: 20px; margin: 6px 0 8px; }
+  .install-steps { text-align: left; padding-left: 1.4em; }
+  .install-steps li { margin: 6px 0; }
+  .mylist { list-style: none; padding: 0; margin: 10px 0; text-align: left; }
+  .mylist li { padding: 8px 0; border-top: 1px solid var(--rule); font-size: 15px; }
+
+  /* ---------- 使用教學 ---------- */
+  .tour-mask { position: fixed; inset: 0; z-index: 40; }
+  .tour-hole { position: fixed; border-radius: 14px; box-shadow: 0 0 0 9999px rgba(18, 26, 44, .62); transition: all .25s; pointer-events: none; z-index: 41; }
+  .tour-tip { position: fixed; left: 16px; right: 16px; max-width: 448px; margin: 0 auto; background: var(--paper); border-radius: 16px; padding: 16px 18px 14px; z-index: 42; box-shadow: 0 12px 30px rgba(0,0,0,.25); }
+  .tour-tip .k { font-size: 12px; color: var(--brand); font-weight: 700; letter-spacing: .08em; }
+  .tour-tip h3 { margin: 2px 0 4px; font-size: 17px; }
+  .tour-tip p { margin: 0 0 12px; font-size: 15px; color: var(--ink-2); }
+  .tour-tip .acts { display: flex; justify-content: space-between; align-items: center; }
+  .tour-tip .acts .btn.small { background: var(--brand); color: #fff; }
+  @media (prefers-reduced-motion: reduce) { .tour-hole, .toast, .switch span, .switch span::after { transition: none; } .name.fresh { animation: none; } }
+</style>
+</head>
+<body>
+<main id="app"></main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script>
+/* ================= 設定 ================= */
+const LIFF_ID = '請填LIFF ID';
+const GAS_URL = '請填Apps Script網址';
+
+const PARAMS = new URLSearchParams(location.search);
+// 還沒設定好，或網址有 ?demo：用範例資料預覽
+const DEMO = LIFF_ID.startsWith('請填') || PARAMS.has('demo');
+
+const $app = document.getElementById('app');
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+const view = html => { $app.innerHTML = html; window.scrollTo(0, 0); };
+const loading = () => `<div class="loading" role="status" aria-label="載入中"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>`;
+const wallUrl = id => `https://liff.line.me/${LIFF_ID}?wall=${encodeURIComponent(id)}`;
+const shareUrl = id => `https://liff.line.me/${LIFF_ID}?share=${encodeURIComponent(id)}`;
+const inClient = () => !DEMO && typeof liff !== 'undefined' && liff.isInClient && liff.isInClient();
+const ICON_SEND = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/></svg>';
+
+let toastTimer;
+function toast(msg) {
+  const t = $('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+/** 按兩下才執行（刪除等動作） */
+function armThen(btn, label, fn) {
+  if (!btn.classList.contains('armed')) {
+    const old = btn.innerHTML;
+    btn.classList.add('armed'); btn.textContent = label;
+    setTimeout(() => { if (btn.isConnected && !btn.disabled && btn.classList.contains('armed')) { btn.classList.remove('armed'); btn.innerHTML = old; } }, 4000);
+    return;
+  }
+  btn.classList.remove('armed'); fn();
+}
+
+/* ================= 代禱牆色調 ================= */
+const THEMES = {
+  navy:  { name: '禱告藍', g1: '#4A72B8', g2: '#22407C', accent: '#F5C451', bar: '#3B63A8', pill: '#E6EDF8', tint: '#EEF2F8' },
+  dawn:  { name: '晨曦',   g1: '#D99052', g2: '#9C4A24', accent: '#FFF0C2', bar: '#B0602D', pill: '#FBEADB', tint: '#FBF3EC' },
+  olive: { name: '橄欖',   g1: '#6E9A5E', g2: '#35602F', accent: '#F3E08A', bar: '#4A7A42', pill: '#E4EFE0', tint: '#F0F5EE' },
+  plum:  { name: '葡萄紫', g1: '#8A6BB8', g2: '#4C3480', accent: '#F6CF6A', bar: '#6A4E9F', pill: '#ECE6F6', tint: '#F4F1FA' },
+  teal:  { name: '湖水',   g1: '#3E9AA3', g2: '#1C5864', accent: '#FFE08A', bar: '#257482', pill: '#DDEFF1', tint: '#EEF6F7' },
+  brick: { name: '磚紅',   g1: '#C0614F', g2: '#842F23', accent: '#FFE3A3', bar: '#A2463A', pill: '#F7E3DF', tint: '#FAF1EF' },
+};
+const themeOf = w => THEMES[w && w.theme] || THEMES.navy;
+const themeVars = t => `--g1:${t.g1};--g2:${t.g2};--accent:${t.accent};--bar:${t.bar};--pill:${t.pill};--tint:${t.tint}`;
+function applyTheme(w) { const t = themeOf(w); Object.entries({ g1: t.g1, g2: t.g2, accent: t.accent, bar: t.bar, pill: t.pill, tint: t.tint }).forEach(([k, v]) => document.documentElement.style.setProperty('--' + k, v)); document.body.style.background = t.tint; }
+function resetTheme() { ['g1','g2','accent','bar','pill','tint'].forEach(k => document.documentElement.style.removeProperty('--' + k)); document.body.style.background = ''; }
+
+const VERSES = [
+  { text: '第一要為萬人懇求、禱告、代求、祝謝。', ref: '提前 2:1' },
+  { text: '祂願意萬人得救，並且完全認識真理。', ref: '提前 2:4' },
+  { text: '義人祈求所發的能力，是大有功效的。', ref: '雅 5:16' },
+];
+const verseText = v => `「${v.text}」${v.ref}`;
+const DEFAULT_DESC = '寫下你正在為他禱告的福音朋友，一起同心代禱。';
+
+/* 名字：一行一位，或用頓號、逗號分隔 */
+const splitNames = t => [...new Set(String(t || '').split(/[\n,，、;；]+/).map(s => s.replace(/\s+/g, ' ').trim()).filter(Boolean))];
+
+/* ================= 預覽模式的範例資料 ================= */
+const demo = {
+  me: { userId: 'Udemo', displayName: '簡晨光', isAdmin: false },
+  walls: [{
+    id: 'W1', title: '小排福音代禱牆', tag: '同心代禱', verse: verseText(VERSES[0]), desc: DEFAULT_DESC, allowAdd: true, theme: 'navy', open: true, creator: '簡晨光', created: '2026/11/18 21:30',
+    groups: ['北溝社區排', '德福排', '讀經小排', '霧峰姊妹排', '兒童排', '青職排', '七靈社區排', '青少年排', '🏠大專週三李家排', '🏠大專週三弟兄排'],
+    names: {
+      '北溝社區排': ['陳淑卿', '陳淑幸'], '霧峰姊妹排': ['曾義明', '朱双娥', '曾銘弘', '康英滿'], '兒童排': ['吳禹錫', '吳禹霏', '吳子宸', '林恩予', '黃靈真', '廖竑宇'],
+      '青職排': ['寶淑'], '七靈社區排': ['張淑富'], '青少年排': ['林俊昌', '林俊星', '何佳玲', '何佳政', '林嘉雄', '謝賢學', '謝漢澄', '陳姵瑀', '林雪芬', '邱巧恩', '林子芸'],
+      '🏠大專週三李家排': ['奎翰', '黃尚鈞', '黃湘庭', '邱繼宥', '張澔文', '徐楷喬', '余方鈞'], '🏠大專週三弟兄排': ['張志強', '李其鳳', '高立倫', '林鎧辰', '吳宗穎', '林英展'],
+    },
+    mine: { '霧峰姊妹排': ['康英滿'] },
+  }],
+};
+let demoSeq = 100;
+function demoView(w) {
+  const list = w.groups.concat(Object.keys(w.names).filter(g => !w.groups.includes(g))).map(g => ({ name: g, names: (w.names[g] || []).map((n, i) => ({ id: `${g}#${n}`, name: n, mine: ((w.mine || {})[g] || []).includes(n) })) }));
+  const total = list.reduce((s, g) => s + g.names.length, 0), filled = list.filter(g => g.names.length).length;
+  return { id: w.id, title: w.title, tag: w.tag, verse: w.verse, desc: w.desc, groups: w.groups.slice(), allowAdd: w.allowAdd, theme: w.theme, open: w.open, creator: w.creator, created: w.created, list, total, filled, unfilled: list.length - filled, canManage: true, mine: true };
+}
+async function demoApi(action, d) {
+  await new Promise(r => setTimeout(r, 250));
+  const find = id => { const w = demo.walls.find(x => x.id === id); if (!w) throw new Error('找不到這面代禱牆'); return w; };
+  switch (action) {
+    case 'me': return { ok: true, ...demo.me };
+    case 'session': return { ok: true, token: 'demo', expires: Date.now() + 864e5 };
+    case 'listWalls': return { ok: true, walls: demo.walls.map(demoView).reverse() };
+    case 'wall': return { ok: true, wall: demoView(find(d.wallId)) };
+    case 'createWall': {
+      const w = { ...d.wall, id: 'W' + (++demoSeq), groups: (d.wall.groups || []).map(g => g.name || g), open: true, creator: demo.me.displayName, created: '剛剛', names: {}, mine: {} };
+      demo.walls.push(w); return { ok: true, wall: demoView(w) };
+    }
+    case 'updateWall': {
+      const w = find(d.wallId), names = {};
+      (d.wall.groups || []).forEach(g => { const from = g.from || g.name; if (w.names[from]) names[g.name] = w.names[from]; });
+      Object.assign(w, { ...d.wall, groups: d.wall.groups.map(g => g.name), names });
+      return { ok: true, wall: demoView(w) };
+    }
+    case 'setOpen': { const w = find(d.wallId); w.open = d.open; return { ok: true, wall: demoView(w) }; }
+    case 'deleteWall': demo.walls = demo.walls.filter(x => x.id !== d.wallId); return { ok: true, removed: 0 };
+    case 'addNames': {
+      const w = find(d.wallId);
+      if (!w.open) throw new Error('這面代禱牆已經停止填寫');
+      if (!w.groups.includes(d.group)) { if (!w.allowAdd) throw new Error('沒有這個排'); w.groups.push(d.group); }
+      const cur = w.names[d.group] = w.names[d.group] || [];
+      const added = d.names.filter(n => !cur.includes(n)), skipped = d.names.filter(n => cur.includes(n));
+      cur.push(...added); (w.mine[d.group] = w.mine[d.group] || []).push(...added);
+      return { ok: true, wall: demoView(w), group: d.group, added, skipped };
+    }
+    case 'removeName': {
+      const w = find(d.wallId), [g, n] = d.entryId.split('#');
+      w.names[g] = (w.names[g] || []).filter(x => x !== n); return { ok: true, wall: demoView(w) };
+    }
+    case 'myData': return { ok: true, displayName: demo.me.displayName, entries: [{ wall: '小排福音代禱牆', group: '霧峰姊妹排', name: '康英滿', time: '2026/11/20' }], walls: ['小排福音代禱牆'] };
+    case 'deleteMyData': return { ok: true, entries: 1 };
+  }
+  throw new Error('預覽模式不支援：' + action);
+}
+
+/* ================= 登入與後端 ================= */
+const SESSION_KEY = 'pw.session';
+const getSession = () => { try { const s = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null'); return s && s.expires > Date.now() + 60000 ? s : null; } catch (e) { return null; } };
+const setSession = s => { try { s ? localStorage.setItem(SESSION_KEY, JSON.stringify({ token: s.token, expires: s.expires })) : localStorage.removeItem(SESSION_KEY); } catch (e) {} };
+const CACHE_OK = !DEMO;
+const cacheGet = k => { if (!CACHE_OK) return null; try { return JSON.parse(localStorage.getItem('pw.c.' + k) || 'null'); } catch (e) { return null; } };
+const cacheSet = (k, v) => { if (!CACHE_OK) return; try { localStorage.setItem('pw.c.' + k, JSON.stringify(v)); } catch (e) {} };
+
+async function api(action, data = {}) {
+  if (DEMO) return demoApi(action, data);
+  const body = { action, ...data };
+  const s = action === 'session' ? null : getSession();
+  if (s) body.session = s.token; else body.idToken = liff.getIDToken();
+  const r = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) });
+  const j = await r.json();
+  if (!j.ok) {
+    if (j.error === 'SESSION_EXPIRED') {
+      setSession(null);
+      if (liff.isLoggedIn()) return api(action, data);
+      liff.login({ redirectUri: location.href }); throw new Error('登入已過期，正在重新登入');
+    }
+    if (j.error === 'TOKEN_EXPIRED') { liff.logout(); liff.login({ redirectUri: location.href }); throw new Error('登入已過期，正在重新登入'); }
+    throw new Error(j.error);
+  }
+  return j;
+}
+
+/* ================= 入口 ================= */
+async function main() {
+  try {
+    if (PARAMS.has('install')) return installFlow();
+    if (!DEMO) {
+      await liff.init({ liffId: LIFF_ID });
+      if (!liff.isLoggedIn() && !getSession()) { liff.login({ redirectUri: location.href }); return; }
+      if (liff.isLoggedIn() && !getSession()) { try { setSession(await api('session')); } catch (e) {} }
+    }
+    const wallId = PARAMS.get('wall') || (DEMO && PARAMS.get('demo') === 'wall' ? 'W1' : '');
+    const shareId = PARAMS.get('share');
+    if (PARAMS.has('mydata')) await myDataFlow();
+    else if (shareId) await forwardFlow(shareId);
+    else if (wallId) await wallFlow(wallId);
+    else await platformFlow();
+  } catch (e) {
+    view(`<section class="solo"><div class="msg-card"><div style="font-size:34px">🙏</div><h1>無法開啟</h1><p>${esc(e.message)}</p><p class="muted small">請關閉後從 LINE 重新開啟一次。</p></div></section>`);
+  }
+}
+
+/* ================= 成員：代禱牆頁 ================= */
+let WALL = null, PICK = '', FRESH = new Set();
+
+async function wallFlow(id) {
+  const cached = cacheGet('wall.' + id);
+  if (cached) { WALL = cached; drawWall(); }
+  else view(loading());
+  try {
+    const { wall } = await api('wall', { wallId: id });
+    const typed = $('names') ? $('names').value : '';
+    WALL = wall; cacheSet('wall.' + id, wall); drawWall();
+    if (typed && $('names')) $('names').value = typed;
+  } catch (e) { if (cached) toast(e.message); else throw e; }
+}
+
+function heroHtml(w) {
+  return `<section class="hero">
+    <div class="icon" aria-hidden="true">🙏</div>
+    ${w.tag ? `<p class="tag">${esc(w.tag)}</p>` : ''}
+    <h1>${esc(w.title)}</h1>
+    ${w.desc ? `<p>${esc(w.desc)}</p>` : ''}
+    ${w.verse ? `<p class="verse">${esc(w.verse)}</p>` : ''}
+    <div class="stats">
+      <div><b>${w.total}</b><span>位福音朋友</span></div>
+      <div><b>${w.filled}</b><span>個排已填寫</span></div>
+      <div><b>${w.unfilled}</b><span>個排還沒填</span></div>
+    </div>
+  </section>`;
+}
+
+function listHtml(w, removable) {
+  return w.list.map(g => g.names.length ? `<section class="wall-group">
+      <h3><span>${esc(g.name)}</span><small>${g.names.length} 位</small></h3>
+      <div class="names">${g.names.map(n => (removable(n)
+        ? `<span class="name mine ${FRESH.has(n.id) ? 'fresh' : ''}">${esc(n.name)}<button type="button" data-del="${esc(n.id)}" aria-label="刪除 ${esc(n.name)}">×</button></span>`
+        : `<span class="name ${FRESH.has(n.id) ? 'fresh' : ''}">${esc(n.name)}</span>`)).join('')}</div>
+    </section>` : `<section class="wall-group empty"><h3><span>${esc(g.name)}</span><small>還沒有名單</small></h3></section>`).join('');
+}
+
+function bindRemove(scope, wallId, after) {
+  scope.querySelectorAll('[data-del]').forEach(b => b.onclick = () => armThen(b, '刪除？', async () => {
+    b.disabled = true;
+    try { const r = await api('removeName', { wallId, entryId: b.dataset.del }); after(r.wall); toast('已刪除'); }
+    catch (e) { toast(e.message); b.disabled = false; }
+  }));
+}
+
+function canPost() {
+  if (DEMO) return true;
+  const ctx = inClient() ? liff.getContext() : null;
+  return !!ctx && ['group', 'room', 'utou'].includes(ctx.type);
+}
+
+function drawWall() {
+  const w = WALL;
+  applyTheme(w);
+  document.title = w.title;
+  if (PICK && !w.list.some(g => g.name === PICK)) PICK = '';
+  const postable = canPost();
+  let autoPost = true; try { autoPost = localStorage.getItem('pw.autopost') !== '0'; } catch (e) {}
+  const mineCount = w.list.reduce((s, g) => s + g.names.filter(n => n.mine).length, 0);
+  view(`
+    ${DEMO ? `<p class="demo-note">預覽模式：目前使用範例資料。</p>` : ''}
+    ${heroHtml(w)}
+    ${w.open ? '' : `<p class="closed-note">這面代禱牆已經停止填寫，仍然可以看名單、一起代禱。</p>`}
+    ${w.open ? `<section class="card" aria-labelledby="fill-h">
+      <h2 id="fill-h">填寫代禱名單</h2>
+      <p class="step">1. 選擇你的排</p>
+      <div class="group-pick" role="group" aria-label="選擇你的排">
+        ${w.list.map(g => `<button type="button" data-pick="${esc(g.name)}" aria-pressed="${g.name === PICK}"><span>${esc(g.name)}</span>${g.names.length ? `<span class="c">${g.names.length}</span>` : ''}</button>`).join('')}
+        ${w.allowAdd ? `<button type="button" class="add" id="add-group">＋ 我的排不在這裡</button>` : ''}
+      </div>
+      <div class="new-group" id="new-group" hidden><input class="inp" id="new-group-name" maxlength="20" placeholder="輸入排的名稱"><button class="btn small send" type="button" id="new-group-ok">加入</button></div>
+      <p class="step" style="margin-top:18px">2. 填入名字</p>
+      <div class="field" style="margin:0"><textarea id="names" aria-label="福音朋友的名字" placeholder="一行一位，或用「、」分隔&#10;例如：王小明、陳美玲"></textarea></div>
+      <p class="hint">為了保護隱私，可以只寫姓氏加稱呼，例如「王同學」「林媽媽」。</p>
+      <div class="switch-row" style="margin-top:16px">
+        <div><b>送出後貼到聊天室</b><small>${postable ? '把最新的代禱牆圖卡貼回群組' : '從群組裡的圖卡打開時才能貼回聊天室'}</small></div>
+        <label class="switch"><input type="checkbox" id="autopost" ${postable && autoPost ? 'checked' : ''} ${postable ? '' : 'disabled'} aria-label="送出後貼到聊天室"><span></span></label>
+      </div>
+      <p class="posted" id="posted" hidden></p>
+    </section>` : ''}
+    <section class="card" aria-labelledby="list-h">
+      <h2 id="list-h">各排代禱名單 <small>共 ${w.total} 位</small></h2>
+      <div id="wall-list">${listHtml(w, n => n.mine || w.canManage)}</div>
+      ${mineCount || w.canManage ? `<p class="hint" style="margin-top:12px">${w.canManage ? '你是這面代禱牆的建立者，每個名字旁都有 ×，可以刪除。' : '你填的名字旁邊有 ×，可以自己刪除。'}</p>` : ''}
+      <button class="btn plain" style="margin-top:14px" id="repost">${ICON_SEND}把代禱牆貼到聊天室</button>
+    </section>
+    <footer class="page-foot">
+      <button class="link" id="fwd">轉傳給其他群組或朋友</button>
+      ${w.canManage ? `<button class="link" id="manage">管理這面代禱牆</button>` : ''}
+      <button class="link" onclick="myDataFlow()">我的個人資料</button>
+    </footer>
+    ${w.open ? `<div class="dock"><div class="inner"><button class="btn send" id="submit">${ICON_SEND}送出代禱名單</button></div></div>` : ''}`);
+  FRESH.clear();
+  window.scrollTo(0, SCROLL_KEEP); SCROLL_KEEP = 0;
+
+  document.querySelectorAll('[data-pick]').forEach(b => b.onclick = () => {
+    PICK = b.dataset.pick;
+    document.querySelectorAll('[data-pick]').forEach(x => x.setAttribute('aria-pressed', x === b));
+    if ($('new-group')) $('new-group').hidden = true;
+  });
+  if ($('add-group')) {
+    $('add-group').onclick = () => { $('new-group').hidden = false; $('new-group-name').focus(); };
+    const addG = () => {
+      const name = $('new-group-name').value.replace(/\s+/g, ' ').trim().slice(0, 20);
+      if (!name) return toast('請輸入排的名稱');
+      if (!w.list.some(g => g.name === name)) w.list.push({ name, names: [] });
+      PICK = name; keepTyped(drawWall);
+      toast(`已選擇「${name}」，填好名字送出後就會加入`);
+    };
+    $('new-group-ok').onclick = addG;
+    $('new-group-name').onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); addG(); } };
+  }
+  if ($('autopost')) $('autopost').onchange = e => { try { localStorage.setItem('pw.autopost', e.target.checked ? '1' : '0'); } catch (x) {} };
+  bindRemove($('wall-list'), w.id, wall => { WALL = wall; cacheSet('wall.' + wall.id, wall); keepTyped(drawWall); });
+  $('repost').onclick = async () => { const b = $('repost'); b.disabled = true; await postWall(w); b.disabled = false; };
+  $('fwd').onclick = () => share(w);
+  if ($('manage')) $('manage').onclick = () => { location.href = `${location.pathname}?manage=${encodeURIComponent(w.id)}${DEMO ? '&demo' : ''}`; };
+  if ($('submit')) $('submit').onclick = submitNames;
+}
+
+let SCROLL_KEEP = 0;
+/** 重畫時保留捲動位置與還沒送出的名字 */
+function keepTyped(fn) {
+  const typed = $('names') ? $('names').value : '';
+  SCROLL_KEEP = window.scrollY;
+  fn();
+  if (typed && $('names')) $('names').value = typed;
+}
+
+async function submitNames() {
+  const btn = $('submit');
+  const names = splitNames($('names').value);
+  if (!PICK) { toast('請先選擇你的排'); document.querySelector('.group-pick').scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
+  if (!names.length) { toast('請填入至少一位福音朋友的名字'); $('names').focus(); return; }
+  if (names.length > 30) { toast('一次最多填 30 位，請分次送出'); return; }
+  btn.disabled = true; btn.textContent = '送出中…';
+  const auto = $('autopost') && $('autopost').checked;
+  try {
+    const r = await api('addNames', { wallId: WALL.id, group: PICK, names });
+    WALL = r.wall; cacheSet('wall.' + WALL.id, WALL);
+    const g = WALL.list.find(x => x.name === r.group);
+    if (g) g.names.filter(n => r.added.includes(n.name)).forEach(n => FRESH.add(n.id));
+    SCROLL_KEEP = 0; drawWall();
+    const say = r.added.length ? `已為${r.group}加入 ${r.added.length} 位${r.skipped.length ? `（${r.skipped.join('、')} 已經在名單上）` : ''}` : `${r.skipped.join('、')} 已經在名單上了`;
+    toast(say);
+    if (auto && r.added.length) await postWall(WALL, `${r.group} 加入了 ${r.added.length} 位`);
+    const list = $('list-h'); if (list) setTimeout(() => list.scrollIntoView({ behavior: 'smooth', block: 'start' }), 300);
+  } catch (e) {
+    toast(e.message); btn.disabled = false; btn.innerHTML = `${ICON_SEND}送出代禱名單`;
+  }
+}
+
+/** 以使用者名義在原本的聊天室貼出最新的代禱牆圖卡 */
+async function postWall(w, news) {
+  const note = $('posted');
+  const say = (t, warn) => { if (note) { note.hidden = false; note.textContent = t; note.classList.toggle('warn', !!warn); } else toast(t); };
+  if (DEMO) { say('預覽模式：正式版會在群組貼出最新的代禱牆圖卡'); return true; }
+  if (!canPost()) { say('要從群組裡的圖卡打開，才能貼回聊天室。也可以用「轉傳給其他群組或朋友」。', true); return false; }
+  try {
+    if (liff.permission) {
+      const p = await liff.permission.query('chat_message.write').catch(() => null);
+      if (p && p.state === 'prompt') await liff.permission.requestAll().catch(() => {});
+    }
+    await liff.sendMessages([buildWallFlex(w, news)]);
+    say('已把最新的代禱牆貼到聊天室');
+    return true;
+  } catch (e) {
+    say(`沒有貼到聊天室（${e.code ? e.code + '：' : ''}${e.message}）。名單已經送出。`, true);
+    return false;
+  }
+}
+
+/* ================= 轉傳 ================= */
+async function share(w) {
+  if (DEMO) { toast('預覽模式：正式版會在這裡跳出群組選單'); return false; }
+  if (!liff.isLoggedIn()) { toast('發送到群組前需要登入 LINE 一次'); setTimeout(() => liff.login({ redirectUri: location.href }), 600); return false; }
+  if (!liff.isApiAvailable('shareTargetPicker')) { toast('無法開啟群組選單，請確認 LIFF 已開啟 Share target picker'); return false; }
+  try {
+    const res = await liff.shareTargetPicker([buildWallFlex(w)], { isMultiple: true });
+    toast(res ? '已發送' : '已取消發送');
+    return !!res;
+  } catch (e) { toast('發送失敗：' + e.message); return false; }
+}
+
+async function forwardFlow(id) {
+  view(loading());
+  const { wall } = await api('wall', { wallId: id });
+  applyTheme(wall);
+  view(`<section class="solo">
+    <div class="pv-panel">${cardHtml(wall)}</div>
+    <p class="muted" style="text-align:center">把這面代禱牆轉傳給其他群組或朋友，可以一次勾選好幾個。</p>
+    <button class="btn send" id="go">${ICON_SEND}選擇群組或朋友</button>
+    <button class="btn ghost" style="margin-top:10px" id="open">打開代禱牆</button>
+  </section>`);
+  $('go').onclick = async () => { if (await share(wall) && inClient()) liff.closeWindow(); };
+  $('open').onclick = () => { location.href = `${location.pathname}?wall=${encodeURIComponent(id)}`; };
+}
+
+/* ================= 群組裡的圖卡（Flex Message） ================= */
+const FLEX_LIMIT = 27000; // LINE 單張圖卡約 30KB 上限，留一點餘裕
+const byteLen = o => new TextEncoder().encode(JSON.stringify(o)).length;
+const pill = (text, t) => ({ type: 'box', layout: 'vertical', flex: 0, backgroundColor: t.pill, cornerRadius: 'xxl', paddingStart: '10px', paddingEnd: '10px', paddingTop: '2px', paddingBottom: '2px',
+  contents: [{ type: 'text', text, size: 'xs', weight: 'bold', color: t.bar }] });
+const statBox = (n, label) => ({ type: 'box', layout: 'vertical', flex: 1, backgroundColor: '#FFFFFF26', cornerRadius: 'lg', paddingTop: '10px', paddingBottom: '10px', contents: [
+  { type: 'text', text: String(n), size: 'xxl', weight: 'bold', color: '#FFFFFF', align: 'center' },
+  { type: 'text', text: label, size: 'xs', color: '#FFFFFFE6', align: 'center' } ] });
+
+function buildWallFlex(w, news, opt = {}) {
+  const t = themeOf(w);
+  const perGroup = opt.perGroup || 40, maxGroups = opt.maxGroups || 40;
+  const filled = w.list.filter(g => g.names.length), empty = w.list.filter(g => !g.names.length);
+  const shown = filled.slice(0, maxGroups);
+  const groupBox = g => {
+    const names = g.names.map(n => n.name);
+    const text = names.slice(0, perGroup).join(' · ') + (names.length > perGroup ? ` …等 ${names.length} 位` : '');
+    return { type: 'box', layout: 'vertical', backgroundColor: '#FFFFFF', cornerRadius: 'lg', paddingAll: '14px', spacing: 'sm', contents: [
+      { type: 'box', layout: 'horizontal', spacing: 'md', alignItems: 'center', contents: [
+        { type: 'box', layout: 'vertical', width: '4px', height: '18px', backgroundColor: t.bar, cornerRadius: '2px', contents: [] },
+        { type: 'text', text: g.name, weight: 'bold', size: 'md', color: '#1E2A44', flex: 1, wrap: true },
+        pill(`${names.length} 位`, t) ] },
+      { type: 'text', text, size: 'sm', color: '#4A5368', wrap: true } ] };
+  };
+  const body = shown.map(groupBox);
+  if (filled.length > shown.length) body.push({ type: 'text', text: `…還有 ${filled.length - shown.length} 個排，打開代禱牆看完整名單`, size: 'xs', color: '#5B667D', wrap: true, margin: 'sm' });
+  if (empty.length) body.push({ type: 'text', text: `還沒有名單：${empty.map(g => g.name).join('、')}`.slice(0, 300), size: 'xs', color: '#5B667D', wrap: true, margin: 'sm' });
+  if (!body.length) body.push({ type: 'text', text: '還沒有人填寫，第一位來為福音朋友代禱吧！', size: 'sm', color: '#5B667D', wrap: true, align: 'center' });
+
+  const header = [];
+  header.push({ type: 'text', text: `🙏 ${w.tag || '同心代禱'}`, color: t.accent, weight: 'bold', size: 'sm' });
+  header.push({ type: 'text', text: w.title, color: '#FFFFFF', weight: 'bold', size: 'xxl', wrap: true, margin: 'sm' });
+  if (w.verse) header.push({ type: 'text', text: w.verse, color: '#FFFFFFD9', size: 'xs', wrap: true, margin: 'sm' });
+  header.push({ type: 'box', layout: 'horizontal', spacing: 'sm', margin: 'lg', contents: [statBox(w.total, '位福音朋友'), statBox(w.filled, '個排已填'), statBox(w.unfilled, '個排未填')] });
+
+  const flex = {
+    type: 'flex',
+    altText: `🙏 ${w.title}：${news ? news + '，' : ''}共 ${w.total} 位福音朋友，${w.filled} 個排已填`.slice(0, 400),
+    contents: {
+      type: 'bubble', size: 'mega',
+      styles: { body: { backgroundColor: t.tint }, footer: { backgroundColor: '#FFFFFF' } },
+      header: { type: 'box', layout: 'vertical', paddingAll: '22px', background: { type: 'linearGradient', angle: '150deg', startColor: t.g1, endColor: t.g2 }, contents: header },
+      body: { type: 'box', layout: 'vertical', paddingAll: '14px', spacing: 'md', contents: body },
+      footer: { type: 'box', layout: 'vertical', paddingAll: '14px', paddingBottom: '6px', contents: [
+        { type: 'button', style: 'primary', color: t.bar, height: 'sm', action: { type: 'uri', label: w.open === false ? '打開代禱牆' : '📝 我也要填代禱名單', uri: wallUrl(w.id) } },
+        { type: 'button', style: 'link', height: 'sm', color: '#5B667D', margin: 'sm', action: { type: 'uri', label: '轉傳給其他群組或朋友', uri: shareUrl(w.id) } } ] },
+    },
+  };
+  if (byteLen(flex) <= FLEX_LIMIT) return flex;
+  // 太大就逐步縮小：每排少列幾個名字，再不夠就少列幾個排
+  if (perGroup > 12) return buildWallFlex(w, news, { perGroup: 12, maxGroups });
+  if (perGroup > 5) return buildWallFlex(w, news, { perGroup: 5, maxGroups });
+  if (maxGroups > 8) return buildWallFlex(w, news, { perGroup, maxGroups: Math.max(8, Math.floor(maxGroups * 0.7)) });
+  return flex;
+}
+
+/** 網頁上的圖卡預覽，盡量長得跟 LINE 裡一樣 */
+function cardHtml(w) {
+  const t = themeOf(w);
+  const filled = w.list.filter(g => g.names.length), empty = w.list.filter(g => !g.names.length);
+  return `<div class="lc" style="${themeVars(t)}">
+    <div class="h"><div class="tg">🙏 ${esc(w.tag || '同心代禱')}</div><div class="ti">${esc(w.title || '代禱牆名稱')}</div>${w.verse ? `<div class="vs">${esc(w.verse)}</div>` : ''}
+      <div class="st"><div><b>${w.total}</b><span>位福音朋友</span></div><div><b>${w.filled}</b><span>個排已填</span></div><div><b>${w.unfilled}</b><span>個排未填</span></div></div></div>
+    <div class="b">
+      ${filled.map(g => `<div class="g"><div class="r"><i></i><span>${esc(g.name)}</span><em>${g.names.length} 位</em></div><p>${g.names.map(n => esc(n.name)).join(' · ')}</p></div>`).join('')}
+      ${empty.length ? `<div class="none">還沒有名單：${esc(empty.map(g => g.name).join('、'))}</div>` : ''}
+      ${!filled.length && !empty.length ? '<div class="none">還沒有設定排</div>' : ''}
+    </div>
+    <div class="f"><div class="pb">${w.open === false ? '打開代禱牆' : '📝 我也要填代禱名單'}</div><div class="lk">轉傳給其他群組或朋友</div></div>
+  </div>`;
+}
+
+/* ================= 建立平台 ================= */
+let ME = null, WALLS = [], TAB = 'new', ROUTE = { view: 'tabs' };
+const DRAFT_KEY = 'pw.draft';
+const blankDraft = () => ({ title: '', tag: '同心代禱', verse: verseText(VERSES[0]), desc: DEFAULT_DESC, groups: [{ name: '', from: '' }], allowAdd: true, theme: 'navy' });
+let draft = blankDraft();
+let editDraft = null;
+
+async function platformFlow() {
+  resetTheme();
+  try { const saved = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null'); if (saved && saved.groups) draft = { ...blankDraft(), ...saved }; } catch (e) {}
+  const cached = cacheGet('platform');
+  const boot = Promise.all([api('me'), api('listWalls')]);
+  const manageId = PARAMS.get('manage');
+  const first = () => {
+    if (manageId && WALLS.some(w => w.id === manageId)) { TAB = 'sent'; go({ view: 'detail', id: manageId }); }
+    else { render(); if (!PARAMS.has('notour')) maybeStartTour(); }
+  };
+  if (cached && cached.me) {
+    ME = cached.me; WALLS = cached.walls || []; first();
+    boot.then(([me, r]) => { ME = me; WALLS = r.walls; cacheSet('platform', { me: ME, walls: WALLS }); softRefresh(); }).catch(e => toast(e.message));
+    return;
+  }
+  view(loading());
+  const [me, r] = await boot;
+  ME = me; WALLS = r.walls; cacheSet('platform', { me: ME, walls: WALLS });
+  first();
+}
+
+function softRefresh() {
+  const n = document.querySelector('[data-tab=sent] .n'); if (n) n.textContent = WALLS.length;
+  if (ROUTE.view === 'tabs' && TAB === 'sent') renderSent();
+}
+
+const saveDraft = () => { try { localStorage.setItem(DRAFT_KEY, JSON.stringify(draft)); } catch (e) {} };
+function go(route) { ROUTE = route; render(); }
+
+function render() {
+  resetTheme();
+  if (ROUTE.view === 'detail') return renderDetail(ROUTE.id);
+  if (ROUTE.view === 'edit') return renderEdit(ROUTE.id);
+  view(`
+    <header class="top"><a class="brand" href="./" id="home"><img class="logo" src="icons/icon.svg" alt="" width="44" height="44"><div><p class="sub">LINE 代禱牆</p><h1>建立代禱牆圖卡</h1></div></a><button class="help" id="help" type="button" aria-label="使用教學">?</button></header>
+    ${DEMO ? `<p class="demo-note">預覽模式：目前使用範例資料。</p>` : ''}
+    <nav class="tabs" role="tablist">
+      <button role="tab" aria-selected="${TAB === 'new'}" data-tab="new">新代禱牆</button>
+      <button role="tab" aria-selected="${TAB === 'sent'}" data-tab="sent">已建立<span class="n">${WALLS.length}</span></button>
+    </nav>
+    <div id="panel"></div>
+    <footer class="page-foot">${isStandalone() ? '' : '<button class="link" id="install-link">安裝到手機桌面</button>'}<button class="link" onclick="myDataFlow()">我的個人資料</button></footer>
+    ${TAB === 'new' ? `<div class="dock"><div class="inner"><button class="btn send" id="send">${ICON_SEND}建立並發送到 LINE 群組</button></div></div>` : ''}`);
+  document.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { TAB = b.dataset.tab; render(); });
+  $('help').onclick = () => startTour(TOUR_STEPS);
+  $('home').onclick = e => { e.preventDefault(); TAB = 'new'; go({ view: 'tabs' }); };
+  if ($('install-link')) $('install-link').onclick = startInstall;
+  if (TAB === 'new') renderCompose(); else renderSent();
+}
+
+/** 草稿 → 預覽用的代禱牆（還沒有名單） */
+function draftWall(d, base) {
+  const groups = d.groups.map(g => g.name.trim()).filter(Boolean);
+  const old = {}; (base ? base.list : []).forEach(g => { old[g.name] = g.names; });
+  const list = d.groups.filter(g => g.name.trim()).map(g => ({ name: g.name.trim(), names: old[g.from || g.name.trim()] || [] }));
+  const filled = list.filter(g => g.names.length).length;
+  return { ...d, id: base ? base.id : 'preview', groups, list, total: list.reduce((s, g) => s + g.names.length, 0), filled, unfilled: list.length - filled, open: base ? base.open : true };
+}
+
+function wallForm(d, base) {
+  return `
+    <section class="pv-panel" aria-label="圖卡預覽"><div class="pv-label"><span class="t">圖卡預覽</span><small>群組裡看到的樣子</small></div><div id="pv">${cardHtml(draftWall(d, base))}</div></section>
+    <section class="card">
+      <label class="field" id="f-title"><span>代禱牆名稱</span><input id="w-title" maxlength="40" value="${esc(d.title)}" placeholder="例如：小排福音代禱牆"></label>
+      <label class="field"><span>標語<em>圖卡最上面的小字</em></span><input id="w-tag" maxlength="16" value="${esc(d.tag)}" placeholder="同心代禱"></label>
+      <label class="field"><span>經文<em>可以留白</em></span><textarea id="w-verse" maxlength="120" style="min-height:64px">${esc(d.verse)}</textarea>
+        <div class="presets">${VERSES.map((v, i) => `<button type="button" data-verse="${i}">${esc(v.ref)}</button>`).join('')}<button type="button" data-verse="-1">清除</button></div></label>
+      <label class="field" style="margin-bottom:0"><span>填寫頁的說明</span><textarea id="w-desc" maxlength="300" style="min-height:64px">${esc(d.desc)}</textarea></label>
+    </section>
+    <section class="card" id="f-groups">
+      <h2>排的清單 <small>成員從這裡選自己的排</small></h2>
+      <div class="group-rows" id="group-rows"></div>
+      <div class="row-acts">
+        <button class="btn small" type="button" id="g-add">＋ 新增一個排</button>
+        <button class="btn small" type="button" id="g-bulk">一次貼上多個</button>
+        <button class="btn small" type="button" id="g-home" title="在選到的排名前面加上 🏠">🏠 家中排</button>
+      </div>
+      <div id="bulk-box" hidden style="margin-top:10px"><textarea class="inp" id="bulk" placeholder="一行一個排，例如：&#10;北溝社區排&#10;霧峰姊妹排&#10;🏠大專週三弟兄排"></textarea><button class="btn small send" type="button" id="bulk-ok" style="margin-top:8px">加入清單</button></div>
+      <p class="hint">在家裡聚的排，可以先點排名欄位，再按「🏠 家中排」加上小房子。</p>
+      <div class="switch-row" id="f-allow" style="margin-top:16px;padding-top:14px;border-top:1px solid var(--rule)">
+        <div><b>允許成員自己新增排</b><small>成員的排不在清單上時，可以自己加進來</small></div>
+        <label class="switch"><input type="checkbox" id="w-allow" ${d.allowAdd ? 'checked' : ''} aria-label="允許成員自己新增排"><span></span></label>
+      </div>
+    </section>
+    <section class="card" id="f-theme">
+      <h2>圖卡色調</h2>
+      <div class="swatches" role="group" aria-label="圖卡色調">${Object.entries(THEMES).map(([k, t]) => `<button type="button" data-theme="${k}" aria-pressed="${d.theme === k}"><i style="background:linear-gradient(150deg,${t.g1},${t.g2})"></i>${t.name}</button>`).join('')}</div>
+    </section>`;
+}
+
+let lastGroupInput = null;
+function bindWallForm(d, base, onChange) {
+  const pv = () => { $('pv').innerHTML = cardHtml(draftWall(d, base)); onChange && onChange(); };
+  const counts = {}; (base ? base.list : []).forEach(g => { counts[g.name] = g.names.length; });
+  const drawRows = focusLast => {
+    $('group-rows').innerHTML = d.groups.map((g, i) => {
+      const n = counts[g.from || ''] || 0;
+      return `<div class="group-row"><input class="inp" data-g="${i}" maxlength="20" value="${esc(g.name)}" placeholder="排的名稱" aria-label="第 ${i + 1} 個排">${n ? `<span class="n">${n} 位</span>` : ''}<button class="icon-btn" type="button" data-gdel="${i}" aria-label="移除這個排">×</button></div>`;
+    }).join('');
+    document.querySelectorAll('[data-g]').forEach(inp => {
+      inp.oninput = () => { d.groups[+inp.dataset.g].name = inp.value; pv(); };
+      inp.onfocus = () => { lastGroupInput = inp; };
+      inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); d.groups.splice(+inp.dataset.g + 1, 0, { name: '', from: '' }); drawRows(); const nx = document.querySelector(`[data-g="${+inp.dataset.g + 1}"]`); nx && nx.focus(); } };
+    });
+    document.querySelectorAll('[data-gdel]').forEach(b => b.onclick = () => {
+      const i = +b.dataset.gdel, g = d.groups[i], n = counts[g.from || ''] || 0;
+      const remove = () => { d.groups.splice(i, 1); if (!d.groups.length) d.groups.push({ name: '', from: '' }); drawRows(); pv(); };
+      if (!n) return remove();
+      if (!b.classList.contains('armed')) toast(`這個排有 ${n} 位，儲存後名單會一起刪除。再按一次 × 確定移除`);
+      armThen(b, '!', remove);
+    });
+    if (focusLast) { const all = document.querySelectorAll('[data-g]'); all[all.length - 1].focus(); }
+  };
+  drawRows();
+  $('w-title').oninput = e => { d.title = e.target.value; pv(); };
+  $('w-tag').oninput = e => { d.tag = e.target.value; pv(); };
+  $('w-verse').oninput = e => { d.verse = e.target.value; pv(); };
+  $('w-desc').oninput = e => { d.desc = e.target.value; onChange && onChange(); };
+  document.querySelectorAll('[data-verse]').forEach(b => b.onclick = () => { const i = +b.dataset.verse; d.verse = i < 0 ? '' : verseText(VERSES[i]); $('w-verse').value = d.verse; pv(); });
+  $('g-add').onclick = () => { d.groups.push({ name: '', from: '' }); drawRows(true); };
+  $('g-bulk').onclick = () => { $('bulk-box').hidden = !$('bulk-box').hidden; if (!$('bulk-box').hidden) $('bulk').focus(); };
+  $('bulk-ok').onclick = () => {
+    const add = String($('bulk').value).split(/\n+/).map(s => s.replace(/\s+/g, ' ').trim()).filter(Boolean);
+    if (!add.length) return toast('請輸入排的名稱，一行一個');
+    d.groups = d.groups.filter(g => g.name.trim() || g.from);
+    add.forEach(name => { if (!d.groups.some(g => g.name.trim() === name)) d.groups.push({ name, from: '' }); });
+    $('bulk').value = ''; $('bulk-box').hidden = true; drawRows(); pv(); toast(`已加入 ${add.length} 個排`);
+  };
+  $('g-home').onmousedown = e => e.preventDefault(); // 不要讓輸入框失去焦點
+  $('g-home').onclick = () => {
+    const inp = lastGroupInput && lastGroupInput.isConnected ? lastGroupInput : null;
+    if (!inp) return toast('請先點一下要加上 🏠 的排名');
+    const g = d.groups[+inp.dataset.g];
+    g.name = g.name.startsWith('🏠') ? g.name.replace(/^🏠\s*/, '') : '🏠' + g.name;
+    inp.value = g.name; inp.focus(); pv();
+  };
+  $('w-allow').onchange = e => { d.allowAdd = e.target.checked; onChange && onChange(); };
+  document.querySelectorAll('[data-theme]').forEach(b => b.onclick = () => { d.theme = b.dataset.theme; document.querySelectorAll('[data-theme]').forEach(x => x.setAttribute('aria-pressed', x === b)); pv(); });
+}
+
+const toPayload = d => ({ title: d.title.trim(), tag: d.tag.trim(), verse: d.verse.trim(), desc: d.desc.trim(), allowAdd: d.allowAdd, theme: d.theme,
+  groups: d.groups.map(g => ({ name: g.name.replace(/\s+/g, ' ').trim(), from: g.from || '' })).filter(g => g.name) });
+function formProblem(d) {
+  const p = toPayload(d);
+  if (!p.title) return ['請填寫代禱牆名稱', 'w-title'];
+  if (!p.groups.length && !p.allowAdd) return ['請至少設定一個排，或開放成員自己新增排', 'group-rows'];
+  const names = p.groups.map(g => g.name), dup = names.find((n, i) => names.indexOf(n) !== i);
+  if (dup) return [`「${dup}」重複了`, 'group-rows'];
+  return null;
+}
+
+function renderCompose() {
+  $('panel').innerHTML = wallForm(draft);
+  bindWallForm(draft, null, saveDraft);
+  $('send').onclick = createAndSend;
+}
+
+async function createAndSend() {
+  const bad = formProblem(draft);
+  if (bad) { toast(bad[0]); const el = $(bad[1]); el && el.scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
+  const btn = $('send'); btn.disabled = true; btn.textContent = '建立中…';
+  try {
+    const { wall } = await api('createWall', { wall: toPayload(draft) });
+    WALLS.unshift({ ...wall, mine: true }); cacheSet('platform', { me: ME, walls: WALLS });
+    draft = blankDraft(); try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
+    TAB = 'sent'; go({ view: 'detail', id: wall.id });
+    await share(wall);
+  } catch (e) { toast(e.message); btn.disabled = false; btn.innerHTML = `${ICON_SEND}建立並發送到 LINE 群組`; }
+}
+
+function renderSent() {
+  if (!WALLS.length) { $('panel').innerHTML = `<div class="empty-box"><div style="font-size:40px">🙏</div><p>還沒有建立代禱牆。</p><button class="btn send small" id="to-new">建立第一面代禱牆</button></div>`; $('to-new').onclick = () => { TAB = 'new'; render(); }; return; }
+  $('panel').innerHTML = WALLS.map(w => `<button class="wall-item" data-open="${esc(w.id)}" style="${themeVars(themeOf(w))}">
+      <b>${esc(w.title)}</b>
+      <span class="meta"><span class="state ${w.open ? '' : 'off'}">${w.open ? '填寫中' : '已停止'}</span><span>${w.total} 位福音朋友</span><span>${w.filled} 排已填・${w.unfilled} 排未填</span></span>
+      <span class="meta"><span>${esc(w.created)}${ME.isAdmin && !w.mine ? `・${esc(w.creator)}` : ''}</span></span>
+    </button>`).join('');
+  document.querySelectorAll('[data-open]').forEach(b => b.onclick = () => go({ view: 'detail', id: b.dataset.open }));
+}
+
+/* ---------- 代禱牆管理頁 ---------- */
+async function renderDetail(id) {
+  let w = WALLS.find(x => x.id === id);
+  const draw = () => drawDetail(w);
+  if (w) draw(); else view(loading());
+  try {
+    const r = await api('wall', { wallId: id });
+    w = r.wall; const i = WALLS.findIndex(x => x.id === id); if (i >= 0) WALLS[i] = { ...WALLS[i], ...w };
+    if (ROUTE.view === 'detail' && ROUTE.id === id) { const y = window.scrollY; draw(); window.scrollTo(0, y); }
+  } catch (e) { if (!w) { toast(e.message); go({ view: 'tabs' }); } }
+}
+
+function textList(w) {
+  return [`🙏 ${w.title}`, `共 ${w.total} 位福音朋友，${w.filled} 個排已填`, '']
+    .concat(w.list.filter(g => g.names.length).map(g => `【${g.name}】${g.names.length} 位\n${g.names.map(n => n.name).join('、')}`))
+    .concat(w.list.some(g => !g.names.length) ? ['', `還沒有名單：${w.list.filter(g => !g.names.length).map(g => g.name).join('、')}`] : []).join('\n');
+}
+
+function drawDetail(w) {
+  applyTheme(w);
+  view(`
+    <div class="subbar"><button class="back" id="back">‹ 返回</button><h1>${esc(w.title)}</h1><span></span></div>
+    <section class="pv-panel"><div class="pv-label"><span class="t">目前的圖卡</span><small>${w.open ? '填寫中' : '已停止填寫'}</small></div>${cardHtml(w)}</section>
+    <button class="btn send" id="d-share" style="margin-top:12px">${ICON_SEND}發送到 LINE 群組</button>
+    <div class="btn-grid">
+      <button class="btn ghost" id="d-open">打開填寫頁</button>
+      <button class="btn ghost" id="d-edit">編輯內容與排</button>
+      <button class="btn ghost" id="d-copy">複製文字名單</button>
+      <button class="btn ghost" id="d-toggle">${w.open ? '停止填寫' : '重新開放填寫'}</button>
+    </div>
+    <section class="card" style="margin-top:18px">
+      <h2>各排代禱名單 <small>共 ${w.total} 位</small></h2>
+      <div id="d-list">${listHtml(w, () => true)}</div>
+      ${w.total ? '<p class="hint" style="margin-top:12px">名字旁的 × 可以刪除，按兩下確認。</p>' : ''}
+    </section>
+    <button class="btn danger" id="d-del">刪除這面代禱牆</button>
+    <p class="hint" style="text-align:center">刪除後名單也會一起刪除，群組裡的舊圖卡會打不開。</p>`);
+  $('back').onclick = () => { if (PARAMS.has('manage')) history.replaceState(null, '', location.pathname + (DEMO ? '?demo' : '')); TAB = 'sent'; go({ view: 'tabs' }); };
+  $('d-share').onclick = () => share(w);
+  $('d-open').onclick = () => { location.href = `${location.pathname}?wall=${encodeURIComponent(w.id)}${DEMO ? '&demo' : ''}`; };
+  $('d-edit').onclick = () => go({ view: 'edit', id: w.id });
+  $('d-copy').onclick = () => navigator.clipboard.writeText(textList(w)).then(() => toast('已複製，可以貼到記事本或聊天室'), () => toast('無法複製'));
+  $('d-toggle').onclick = async () => {
+    const b = $('d-toggle'); b.disabled = true;
+    try { const r = await api('setOpen', { wallId: w.id, open: !w.open }); updateLocal(r.wall); toast(r.wall.open ? '已重新開放填寫' : '已停止填寫'); drawDetail(r.wall); }
+    catch (e) { toast(e.message); b.disabled = false; }
+  };
+  bindRemove($('d-list'), w.id, wall => { updateLocal(wall); const y = window.scrollY; drawDetail(wall); window.scrollTo(0, y); });
+  $('d-del').onclick = () => armThen($('d-del'), '確定刪除？再按一次', async () => {
+    $('d-del').disabled = true;
+    try { await api('deleteWall', { wallId: w.id }); WALLS = WALLS.filter(x => x.id !== w.id); cacheSet('platform', { me: ME, walls: WALLS }); toast('已刪除'); TAB = 'sent'; go({ view: 'tabs' }); }
+    catch (e) { toast(e.message); $('d-del').disabled = false; }
+  });
+}
+
+function updateLocal(wall) {
+  const i = WALLS.findIndex(x => x.id === wall.id);
+  if (i >= 0) WALLS[i] = { ...WALLS[i], ...wall }; else WALLS.unshift(wall);
+  cacheSet('platform', { me: ME, walls: WALLS });
+}
+
+function renderEdit(id) {
+  const w = WALLS.find(x => x.id === id);
+  if (!w) return go({ view: 'tabs' });
+  editDraft = { title: w.title, tag: w.tag, verse: w.verse, desc: w.desc, allowAdd: w.allowAdd, theme: w.theme,
+    groups: w.list.map(g => ({ name: g.name, from: g.name })) };
+  if (!editDraft.groups.length) editDraft.groups.push({ name: '', from: '' });
+  view(`<div class="subbar"><button class="back" id="back">‹ 取消</button><h1>編輯代禱牆</h1><span></span></div>
+    ${wallForm(editDraft, w)}
+    <div class="dock"><div class="inner"><button class="btn send" id="save">儲存</button></div></div>`);
+  bindWallForm(editDraft, w);
+  $('back').onclick = () => go({ view: 'detail', id });
+  $('save').onclick = async () => {
+    const bad = formProblem(editDraft);
+    if (bad) return toast(bad[0]);
+    const btn = $('save'); btn.disabled = true; btn.textContent = '儲存中…';
+    try { const r = await api('updateWall', { wallId: id, wall: toPayload(editDraft) }); updateLocal(r.wall); toast('已儲存。要讓群組看到新內容，請再發送一次圖卡'); go({ view: 'detail', id }); }
+    catch (e) { toast(e.message); btn.disabled = false; btn.textContent = '儲存'; }
+  };
+}
+
+/* ================= 我的個人資料 ================= */
+async function myDataFlow() {
+  resetTheme();
+  view(loading());
+  const d = await api('myData');
+  const back = `<button class="btn ghost" style="margin-top:12px" onclick="location.href=location.pathname${DEMO ? "+'?demo'" : ''}">回到平台</button>`;
+  view(`<section class="solo"><div class="msg-card" style="text-align:left">
+      <h1>我的個人資料</h1>
+      <p class="muted small">系統只記錄你的 LINE 名稱、LINE 內部識別碼，以及你填過的名字。</p>
+      <p><b>LINE 名稱：</b>${esc(d.displayName)}</p>
+      <p style="margin-bottom:0"><b>我填過的名字（${d.entries.length}）</b></p>
+      ${d.entries.length ? `<ul class="mylist">${d.entries.map(e => `<li>${esc(e.name)}<br><span class="muted small">${esc(e.wall)}・${esc(e.group)}・${esc(e.time)}</span></li>`).join('')}</ul>` : '<p class="muted">沒有。</p>'}
+      ${d.walls.length ? `<p class="muted small">你建立了 ${d.walls.length} 面代禱牆（${esc(d.walls.join('、'))}），請在平台「已建立」裡管理或刪除。</p>` : ''}
+      <button class="btn danger" id="del-me" style="margin-top:10px">刪除我填過的名字與登入紀錄</button>
+    </div>${back}</section>`);
+  $('del-me').onclick = () => armThen($('del-me'), '確定刪除？再按一次', async () => {
+    $('del-me').disabled = true;
+    try { const r = await api('deleteMyData'); setSession(null); view(`<section class="solo"><div class="msg-card"><div style="font-size:34px">✓</div><h1>已刪除</h1><p>已移除你填過的 ${r.entries} 個名字和登入紀錄。</p></div>${back}</section>`); }
+    catch (e) { toast(e.message); $('del-me').disabled = false; }
+  });
+}
+
+/* ================= 安裝到手機桌面（PWA） ================= */
+let installPrompt = null;
+addEventListener('beforeinstallprompt', e => { e.preventDefault(); installPrompt = e; });
+const isStandalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+function startInstall() {
+  if (inClient()) { liff.openWindow({ url: `${location.origin}${location.pathname}?install=1`, external: true }); return; }
+  installFlow();
+}
+function installFlow() {
+  document.title = '安裝「代禱牆」';
+  const steps = isIOS()
+    ? `<ol class="install-steps"><li>用 <b>Safari</b> 開啟這個頁面</li><li>點下方的「分享」按鈕</li><li>往下滑，點「<b>加入主畫面</b>」</li><li>按右上角「新增」</li></ol>`
+    : `<ol class="install-steps"><li>點上面的「安裝到手機桌面」</li><li>如果沒有反應：點瀏覽器右上角「⋮」選單</li><li>選「<b>安裝應用程式</b>」或「<b>加到主畫面</b>」</li></ol>`;
+  view(`<section class="solo"><div class="msg-card">
+    <img src="icons/icon-192.png" alt="" width="88" height="88" style="border-radius:20px">
+    <h1>代禱牆</h1>
+    <p class="muted">把「建立代禱牆圖卡」平台放到手機桌面，像 App 一樣一點就開。</p>
+    ${isStandalone() ? '<p class="posted">已經安裝好了，從桌面的圖示打開即可。</p>' : `<button class="btn send" id="do-install" ${isIOS() ? 'hidden' : ''}>安裝到手機桌面</button>${steps}`}
+    <p class="muted small">第一次從桌面打開時，會請你用 LINE 帳號登入一次。</p>
+    <button class="btn ghost" id="go-platform" style="margin-top:10px">前往平台</button>
+  </div></section>`);
+  const btn = $('do-install');
+  if (btn) btn.onclick = async () => {
+    if (!installPrompt) { toast('請依照下面的步驟，從瀏覽器選單安裝'); return; }
+    installPrompt.prompt();
+    const r = await installPrompt.userChoice.catch(() => null);
+    installPrompt = null;
+    toast(r && r.outcome === 'accepted' ? '安裝完成，可以從桌面打開了' : '已取消安裝');
+  };
+  $('go-platform').onclick = () => { location.href = `${location.origin}${location.pathname}?pwa=1`; };
+}
+if ('serviceWorker' in navigator && location.protocol === 'https:') addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+
+/* ================= 使用教學（第一次使用時出現；新功能用 since 標記） ================= */
+const TOUR_KEY = 'pw.tour';
+const TOUR_VERSION = 1;
+const TOUR_STEPS = [
+  { sel: '#f-title', title: '1. 取一個名字', text: '例如「小排福音代禱牆」。標語和經文會出現在圖卡最上面，可以改也可以留白。' },
+  { sel: '#f-groups', title: '2. 設定排的清單', text: '成員打開代禱牆時，先選自己的排再填名字。名單很長可以用「一次貼上多個」。' },
+  { sel: '#f-allow', title: '3. 讓成員自己加排', text: '打開後，排不在清單上的人可以自己新增，不用來問你。' },
+  { sel: '#f-theme', title: '4. 挑一個色調', text: '上面的預覽會跟著變，就是群組裡看到的樣子。' },
+  { sel: '#send', title: '5. 發送到群組', text: '選好群組就發出去。大家填完名字，可以選擇把最新的代禱牆貼回群組。之後在「已建立」裡管理名單。' },
+];
+const tourSeen = () => { try { return parseInt(localStorage.getItem(TOUR_KEY) || '0', 10) || 0; } catch (e) { return TOUR_VERSION; } };
+function maybeStartTour() {
+  const seen = tourSeen();
+  if (seen >= TOUR_VERSION || TAB !== 'new') return;
+  const steps = seen ? TOUR_STEPS.filter(s => (s.since || 1) > seen) : TOUR_STEPS;
+  if (steps.length) setTimeout(() => startTour(steps), 500);
+}
+let TOUR = null;
+function startTour(steps) {
+  if (TAB !== 'new' || ROUTE.view !== 'tabs') { TAB = 'new'; go({ view: 'tabs' }); }
+  endTour(true);
+  TOUR = { steps, i: 0 };
+  document.body.insertAdjacentHTML('beforeend', `<div class="tour-mask" id="tour-mask"></div><div class="tour-hole" id="tour-hole"></div>
+    <div class="tour-tip" id="tour-tip" role="dialog" aria-modal="true" aria-labelledby="tour-h"><div class="k" id="tour-k"></div><h3 id="tour-h"></h3><p id="tour-p"></p>
+    <div class="acts"><button class="link" id="tour-skip">略過</button><div><button class="btn small ghost" id="tour-prev">上一步</button> <button class="btn small" id="tour-next">下一步</button></div></div></div>`);
+  $('tour-skip').onclick = () => endTour();
+  $('tour-mask').onclick = () => endTour();
+  $('tour-prev').onclick = () => tourGo(TOUR.i - 1);
+  $('tour-next').onclick = () => TOUR.i >= TOUR.steps.length - 1 ? endTour() : tourGo(TOUR.i + 1);
+  addEventListener('keydown', tourKey);
+  tourGo(0);
+}
+function tourKey(e) { if (TOUR && e.key === 'Escape') endTour(); }
+function tourGo(i) {
+  if (!TOUR || i < 0) return;
+  TOUR.i = i;
+  const s = TOUR.steps[i], el = document.querySelector(s.sel);
+  $('tour-k').textContent = `使用教學 ${i + 1}／${TOUR.steps.length}`;
+  $('tour-h').textContent = s.title; $('tour-p').textContent = s.text;
+  $('tour-prev').hidden = i === 0;
+  $('tour-next').textContent = i === TOUR.steps.length - 1 ? '開始使用' : '下一步';
+  if (el && !el.closest('.dock')) el.scrollIntoView({ block: 'center', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  setTimeout(placeTour, 350);
+  $('tour-next').focus();
+}
+function placeTour() {
+  if (!TOUR) return;
+  const el = document.querySelector(TOUR.steps[TOUR.i].sel), hole = $('tour-hole'), tip = $('tour-tip');
+  if (!el) { hole.style.cssText = 'left:50%;top:50%;width:0;height:0'; tip.style.top = '30%'; return; }
+  const r = el.getBoundingClientRect(), pad = 6;
+  Object.assign(hole.style, { left: r.left - pad + 'px', top: r.top - pad + 'px', width: r.width + pad * 2 + 'px', height: r.height + pad * 2 + 'px' });
+  const below = r.bottom + 16, th = tip.offsetHeight;
+  tip.style.top = (below + th < innerHeight - 10 ? below : Math.max(10, r.top - th - 16)) + 'px';
+}
+addEventListener('resize', placeTour);
+function endTour(silent) {
+  ['tour-mask', 'tour-hole', 'tour-tip'].forEach(id => { const el = $(id); el && el.remove(); });
+  removeEventListener('keydown', tourKey);
+  if (TOUR && !silent) { try { localStorage.setItem(TOUR_KEY, String(TOUR_VERSION)); } catch (e) {} window.scrollTo({ top: 0, behavior: 'smooth' }); }
+  TOUR = null;
+}
+
+main();
+</script>
+</body>
+</html>
