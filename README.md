@@ -13,6 +13,13 @@
 - 建立平台：`index.html?demo&notour`
 - 成員填寫頁：`index.html?demo=wall`
 
+## 目前的設定
+
+- 網站：https://isaiahovercomer.github.io/line-prayer-wall/
+- 入口（LIFF）：https://liff.line.me/2012412693-LFVpYPMf
+- 試算表「代禱牆」：https://docs.google.com/spreadsheets/d/1VFTybOGvUi2nela3RJkbXl44PN1IMbQaRmUoHRW75cU/edit
+- Apps Script「代禱牆後端」：https://script.google.com/home/projects/1g-qxKDvIzmuaRLDnfbktSXgve3HMUKJEoO0onObBpc9WHZar4-ss2Vjh/edit
+
 ## 設定
 
 1. **試算表與後端**：新建 Google 試算表「代禱牆」→ 擴充功能 → Apps Script → 貼上 `Code.gs` → 執行 `setup` → 部署為網頁應用程式（執行身分：我；存取權：所有人）。
