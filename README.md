@@ -26,7 +26,7 @@
 
 ## 目前的設定
 
-- 網站：https://isaiahovercomer.github.io/line-prayer-wall/
+- 網站：https://praywall.pages.dev/（Cloudflare Pages，連到這個 repo 的 main，推上去就自動部署；舊的 GitHub Pages 網址仍可用）
 - 入口（LIFF）：https://liff.line.me/2012412693-LFVpYPMf
 - 試算表「代禱牆」：https://docs.google.com/spreadsheets/d/1VFTybOGvUi2nela3RJkbXl44PN1IMbQaRmUoHRW75cU/edit
 - Apps Script「代禱牆後端」：https://script.google.com/home/projects/1g-qxKDvIzmuaRLDnfbktSXgve3HMUKJEoO0onObBpc9WHZar4-ss2Vjh/edit
@@ -34,7 +34,7 @@
 ## 設定
 
 1. **試算表與後端**：新建 Google 試算表「代禱牆」→ 擴充功能 → Apps Script → 貼上 `Code.gs` → 執行 `setup` → 部署為網頁應用程式（執行身分：我；存取權：所有人）。
-2. **LIFF**：LINE Developers → Provider「CITC」→ LINE Login channel `2012412693` → LIFF → Add：Size **Full**、Endpoint `https://isaiahovercomer.github.io/line-prayer-wall/`、Scopes **openid、profile、chat_message.write**、Share target picker **ON**。
+2. **LIFF**：LINE Developers → Provider「CITC」→ LINE Login channel `2012412693` → LIFF → Add：Size **Full**、Endpoint `https://praywall.pages.dev/`、Scopes **openid、profile、chat_message.write**、Share target picker **ON**。
 3. **填回設定**：`index.html` 最上面的 `LIFF_ID`、`GAS_URL`。
 4. **管理員**（選用）：把 LINE userId 加進試算表「發布者」工作表，就能看到並管理所有人建立的代禱牆。
 
