@@ -185,8 +185,14 @@
   .cell, .cell-in { appearance: none; border: 0; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); background: transparent; color: var(--ink); font: inherit; font-family: var(--kai); font-size: 1.15rem; min-height: 54px; padding: 8px 10px 8px 30px; text-align: left; position: relative; width: 100%; border-radius: 0; display: flex; align-items: center; gap: 6px; }
   .grid > :nth-child(2n) { border-right: 0; }
   .grid > :nth-last-child(-n+2) { border-bottom: 0; }
-  .cell { cursor: pointer; }
-  .cell > span:first-child { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+  .cell { padding: 0 4px 0 0; }
+  .cell .mk { flex: 1; min-width: 0; align-self: stretch; display: flex; align-items: center; gap: 6px; border: 0; background: transparent; font: inherit; color: inherit; text-align: left; padding: 8px 4px 8px 30px; cursor: pointer; }
+  .cell .mk > span:first-child { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+  .cell .lt { flex: none; width: 38px; height: 38px; border: 0; border-radius: 50%; background: transparent; color: var(--olive-ink); cursor: pointer; display: grid; place-items: center; }
+  .cell .lt svg { width: 20px; height: 20px; }
+  .cell .lt:hover, .cell .lt:active { background: rgba(182,163,89,.16); color: var(--bar); }
+  .cell.done .lt { color: var(--muted); }
+  .cell.empty-cell::before { border-style: dashed; opacity: .5; }
   .cell::before { content: ""; position: absolute; left: 11px; top: 50%; width: 10px; height: 14px; margin-top: -7px; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; border: 1.5px solid var(--line); }
   .cell.done::before { background: var(--bar); border-color: var(--bar); }
   .cell.done { color: var(--muted); }
@@ -334,6 +340,10 @@ const loading = () => `<div class="loading" role="status" aria-label="載入中"
 const wallUrl = id => `https://liff.line.me/${LIFF_ID}?wall=${encodeURIComponent(id)}`;
 const shareUrl = id => `https://liff.line.me/${LIFF_ID}?share=${encodeURIComponent(id)}`;
 const inClient = () => !DEMO && typeof liff !== 'undefined' && liff.isInClient && liff.isInClient();
+const ICON_LETTER = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5.5" width="18" height="13" rx="2"/><path d="m3.5 7 8.5 6 8.5-6"/></svg>';
+/** 寫信：用「流通神聖的愛圖卡」平台的信紙，收信人先填好，寫完存下就能傳到他的 LINE */
+const LETTER_LIFF = '2012412693-IhnpCNtr';
+const letterUrl = name => `https://liff.line.me/${LETTER_LIFF}?act=PRAYCARD&to=${encodeURIComponent(name)}&from=praycard`;
 const ICON_SEND = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/></svg>';
 
 let toastTimer;
@@ -913,8 +923,8 @@ function renderCard() {
     const slots = d.names.slice(); while (slots.length < 12 || slots.length % 2) slots.push('');
     body = `<div class="seeds" aria-hidden="true">${d.names.map(n => `<span class="seed ${marked.has(n) ? 'f' : ''}"></span>`).join('')}</div>
       <p class="count">${d.names.length ? `已代禱 ${marked.size}／${d.names.length}` : '這一天還沒有名字'}</p>
-      <div class="grid">${slots.map(n => n ? `<button class="cell ${marked.has(n) ? 'done' : ''}" data-mark="${esc(n)}" aria-pressed="${marked.has(n)}"><span>${esc(n)}</span>${ON_WALL[n] ? `<span class="wb" title="已放上：${esc(ON_WALL[n].join('、'))}">牆</span>` : ''}</button>` : `<button class="cell" disabled aria-hidden="true"></button>`).join('')}</div>
-      ${d.names.length ? `<p class="hint">點名字標記今天已經為他禱告。標「牆」的已經放上團體代禱牆。</p>` : `<p class="empty">這一天的名單是空的，點「編輯名單」加入名字。</p>`}
+      <div class="grid">${slots.map(n => n ? `<div class="cell ${marked.has(n) ? 'done' : ''}"><button class="mk" data-mark="${esc(n)}" aria-pressed="${marked.has(n)}"><span>${esc(n)}</span>${ON_WALL[n] ? `<span class="wb" title="已放上：${esc(ON_WALL[n].join('、'))}">牆</span>` : ''}</button><button class="lt" data-letter="${esc(n)}" aria-label="寫信給 ${esc(n)}" title="寫信給 ${esc(n)}">${ICON_LETTER}</button></div>` : `<div class="cell empty-cell" aria-hidden="true"></div>`).join('')}</div>
+      ${d.names.length ? `<p class="hint">點名字標記今天已經為他禱告；點信封寫一封「流通神聖的愛」的信給他，存好後可以傳到他的 LINE。標「牆」的已經放上團體代禱牆。</p>` : `<p class="empty">這一天的名單是空的，點「編輯名單」加入名字。</p>`}
       <div class="actions">
         <button class="btn edit" id="card-edit">編輯名單</button>
         <button class="btn send" id="card-towall">放上代禱牆</button>
@@ -945,6 +955,10 @@ function bindCard() {
     $('imp-ok').onclick = async () => { const r = mergeCard(CARD, PENDING_IMPORT); PENDING_IMPORT = null; renderCard(); await persistCard(r.card, r.added ? `已匯入 ${r.added} 個名字` : '這些名字都已經在名單裡了'); renderCard(); };
     $('imp-no').onclick = () => { PENDING_IMPORT = null; renderCard(); };
   }
+  document.querySelectorAll('[data-letter]').forEach(b => b.onclick = () => {
+    if (DEMO) return toast(`預覽模式：正式版會打開寫給「${b.dataset.letter}」的信紙`);
+    location.href = letterUrl(b.dataset.letter);
+  });
   document.querySelectorAll('[data-mark]').forEach(b => b.onclick = () => {
     const n = b.dataset.mark, set = new Set(MARKS[sel] || []);
     set.has(n) ? set.delete(n) : set.add(n);
@@ -1420,7 +1434,7 @@ const TOUR_STEPS = [
 ];
 const CARD_TOUR = [
   { sel: '.days', title: '1. 一週七天', text: '每天為一類人禱告：主日家人、週一親戚、週二好友……今天會有一個小金點。' },
-  { sel: '.pcard .grid', title: '2. 點名字代禱', text: '為誰禱告過就點一下，石榴籽會變紅。每天重新開始。' },
+  { sel: '.pcard .grid', title: '2. 點名字代禱', text: '為誰禱告過就點一下，石榴籽會變紅，每天重新開始。名字旁的信封可以寫一封信給他，存好後傳到他的 LINE。' },
   { sel: '#card-edit', title: '3. 編輯名單', text: '加名字、改類別都在這裡。也可以「貼上名字」，或用名單代碼和金香壇代禱卡互通。' },
   { sel: '#card-towall', title: '4. 放上代禱牆', text: '挑幾位福音朋友放上小區、小排的團體代禱牆，大家一起同心代禱。在代禱牆填的名字，也可以同時加回你的代禱卡。' },
 ];
