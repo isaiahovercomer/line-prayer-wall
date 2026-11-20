@@ -471,7 +471,7 @@ const themeOf = w => THEMES[w && w.theme] || THEMES.pom;
 const themeVars = t => `--bar:${t.bar};--g2:${t.g2};--pill:${t.pill}`;
 function applyTheme(w) { const t = themeOf(w); ['bar', 'g2', 'pill'].forEach(k => document.documentElement.style.setProperty('--' + k, t[k])); }
 function resetTheme() { ['bar', 'g2', 'pill'].forEach(k => document.documentElement.style.removeProperty('--' + k)); }
-const SITE = 'https://isaiahovercomer.github.io/line-prayer-wall/';
+const SITE = /^https:/.test(location.protocol) ? new URL('.', location.href).href.split('?')[0] : 'https://isaiahovercomer.github.io/line-prayer-wall/'; // 圖卡橫幅圖片跟著目前網址（GitHub Pages 或 Cloudflare Pages 都可以）
 
 /** 剖開的石榴（顏色跟著代禱牆色調） */
 const POM_SVG = (() => {
