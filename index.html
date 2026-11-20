@@ -165,6 +165,73 @@
   .page-foot { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px 18px; margin: 22px 0 0; }
   .link { background: none; border: 0; color: var(--muted); font-size: 14px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; padding: 6px 0; }
 
+  /* ---------- 個人代禱卡（同金香壇代禱卡） ---------- */
+  .days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 16px; }
+  .day { appearance: none; border: 1px solid var(--line); background: transparent; color: var(--ink); border-radius: 12px; padding: 6px 0 5px; font: inherit; cursor: pointer; display: flex; flex-direction: column; align-items: center; position: relative; min-height: 52px; }
+  .day .wd { font-family: var(--kai); font-size: .95rem; line-height: 1.3; }
+  .day .ct { font-size: .66rem; color: var(--muted); line-height: 1.3; white-space: nowrap; }
+  .day.today::after { content: ""; position: absolute; top: -4px; right: -3px; width: 9px; height: 9px; border-radius: 50%; background: var(--olive); border: 2px solid var(--paper); }
+  .day.on { background: var(--bar); border-color: var(--bar); color: #fff; }
+  .day.on .ct { color: rgba(255,255,255,.85); }
+  .pcard { background: var(--sheet); border: 1.5px solid var(--line); border-radius: 26px; padding: 22px 18px 18px; position: relative; overflow: hidden; }
+  .pcard::before { content: ""; position: absolute; right: -26px; top: -26px; width: 96px; height: 96px; border-radius: 50%; background: var(--bar); opacity: .12; }
+  .pcard .head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; position: relative; }
+  .pcard .head .wd { font-size: .95rem; color: var(--muted); letter-spacing: .08em; }
+  .pcard .head .tag { font-size: .75rem; color: var(--bar); border: 1px solid var(--bar); border-radius: 999px; padding: 0 8px; }
+  .pcard .head h2 { font-family: var(--kai); font-weight: 700; font-size: 2.6rem; line-height: 1.1; margin: 4px 0 0; width: 100%; letter-spacing: .14em; color: var(--g2); }
+  .pcard .seeds { margin: 14px 0 4px; min-height: 14px; }
+  .count { margin: 0 0 14px; color: var(--muted); font-size: .85rem; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; border: 1.5px solid var(--line); border-radius: 18px; overflow: hidden; }
+  .cell, .cell-in { appearance: none; border: 0; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); background: transparent; color: var(--ink); font: inherit; font-family: var(--kai); font-size: 1.15rem; min-height: 54px; padding: 8px 10px 8px 30px; text-align: left; position: relative; width: 100%; border-radius: 0; display: flex; align-items: center; gap: 6px; }
+  .grid > :nth-child(2n) { border-right: 0; }
+  .grid > :nth-last-child(-n+2) { border-bottom: 0; }
+  .cell { cursor: pointer; }
+  .cell > span:first-child { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+  .cell::before { content: ""; position: absolute; left: 11px; top: 50%; width: 10px; height: 14px; margin-top: -7px; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; border: 1.5px solid var(--line); }
+  .cell.done::before { background: var(--bar); border-color: var(--bar); }
+  .cell.done { color: var(--muted); }
+  .cell:disabled { cursor: default; }
+  .cell:disabled::before { border-style: dashed; opacity: .5; }
+  .cell-in { background: var(--paper); outline: none; padding-left: 12px; }
+  .cell-in:focus { background: #fff; box-shadow: inset 0 0 0 2px var(--pill); }
+  .cell-in::placeholder { color: var(--line); }
+  .wb { flex: none; font-family: var(--sans); font-size: 11px; color: var(--olive-ink); border: 1px solid var(--olive); border-radius: 999px; padding: 0 6px; line-height: 1.5; }
+  .empty { margin: 14px 2px 0; color: var(--muted); font-size: .9rem; }
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; position: relative; }
+  .actions .btn { width: auto; flex: 0 0 auto; padding: 10px 18px; min-height: 44px; font-size: .95rem; font-weight: 500; }
+  .actions .btn.send, .actions .btn.line { font-weight: 700; }
+  .actions.tools { margin-top: 8px; }
+  .actions.tools .btn { font-size: .85rem; padding: 7px 13px; min-height: 38px; }
+  .btn.edit { border-color: var(--bar); color: var(--bar); }
+  .cat-edit { margin: 12px 0 10px; }
+  .cat-edit input { font-family: var(--kai); font-size: 18px; }
+  .paste { margin-top: 14px; border: 1px dashed var(--olive); border-radius: 16px; padding: 12px 14px; }
+  .paste-title { font-weight: 700; margin: 0 0 4px; color: var(--olive-ink); }
+  .paste-sub { margin: 0 0 8px; color: var(--muted); font-size: .85rem; line-height: 1.55; }
+  .paste textarea { min-height: 140px; }
+  .paste-day { margin: 12px 0 6px; font-weight: 700; color: var(--g2); font-size: .95rem; font-family: var(--kai); letter-spacing: .06em; }
+  .import-note { background: var(--sheet); border: 1.5px dashed var(--olive); border-radius: 18px; padding: 12px 14px; margin-bottom: 14px; }
+  .import-note p { margin: 0; font-size: 14px; }
+  .import-note .actions { margin-top: 10px; }
+  .pick-names { display: flex; flex-wrap: wrap; gap: 8px; }
+  .pick-names button { border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 6px 14px; font-family: var(--kai); font-size: 16px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+  .pick-names button small { font-family: var(--sans); font-size: 10px; color: var(--olive-ink); }
+  .pick-names button[aria-pressed="true"] { background: var(--bar); border-color: var(--bar); color: #fff; }
+  .pick-names button[aria-pressed="true"] small { color: rgba(255,255,255,.85); }
+  .wall-pick { display: grid; gap: 8px; }
+  .wall-pick button { text-align: left; border: 1px solid var(--line); background: transparent; border-radius: 16px; padding: 10px 14px 10px 34px; cursor: pointer; position: relative; }
+  .wall-pick button::before { content: ""; position: absolute; left: 13px; top: 15px; width: 10px; height: 14px; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; border: 1.5px solid var(--bar); }
+  .wall-pick button b { display: block; font-family: var(--kai); font-size: 17px; color: var(--g2); }
+  .wall-pick button span { font-size: 12px; color: var(--muted); }
+  .wall-pick button[aria-pressed="true"] { border-color: var(--bar); box-shadow: 0 0 0 2px var(--pill); }
+  .wall-pick button[aria-pressed="true"]::before { background: var(--bar); }
+  h2.sec { font-family: var(--kai); font-size: 1.2rem; letter-spacing: .08em; color: var(--g2); margin: 6px 0 10px; display: flex; align-items: baseline; gap: 8px; }
+  h2.sec small { font-family: var(--sans); font-size: 12px; color: var(--muted); }
+  .sec-empty { margin: -4px 4px 18px; }
+  .day-pick { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .day-pick button { border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 4px 12px; font-family: var(--kai); font-size: 15px; cursor: pointer; }
+  .day-pick button[aria-pressed="true"] { background: var(--bar); border-color: var(--bar); color: #fff; }
+
   /* ---------- 圖卡預覽（模擬群組裡的 LINE 圖卡） ---------- */
   .pv-panel { background: rgba(182,163,89,.1); border: 1.5px dashed var(--olive); border-radius: 26px; padding: 12px 12px 16px; margin-bottom: 14px; }
   .pv-label { display: flex; align-items: baseline; gap: 10px; margin: 0 4px 10px; }
@@ -349,6 +416,10 @@ const demo = {
     mine: { '霧峰姊妹排': ['康英滿'] },
   }],
 };
+demo.card = { days: [
+  { cat: '家人', names: ['爸爸', '媽媽', '小弟'] }, { cat: '親戚', names: ['二舅', '表姊'] }, { cat: '好友', names: ['王同學', '林媽媽', '阿哲'] },
+  { cat: '同事(學)', names: ['陳美玲', '小恩'] }, { cat: '鄰居', names: ['李阿姨', '張伯伯'] }, { cat: '聖徒', names: ['陳弟兄', '王姊妹'] }, { cat: '馬路', names: ['便利商店店員'] } ] };
+demo.onWall = { '康英滿': ['小區福音代禱牆'] };
 let demoSeq = 100;
 function demoView(w) {
   const list = w.groups.concat(Object.keys(w.names).filter(g => !w.groups.includes(g))).map(g => ({ name: g, names: (w.names[g] || []).map((n, i) => ({ id: `${g}#${n}`, name: n, mine: ((w.mine || {})[g] || []).includes(n) })) }));
@@ -382,12 +453,16 @@ async function demoApi(action, d) {
       const cur = w.names[d.group] = w.names[d.group] || [];
       const added = d.names.filter(n => !cur.includes(n)), skipped = d.names.filter(n => cur.includes(n));
       cur.push(...added); (w.mine[d.group] = w.mine[d.group] || []).push(...added);
-      return { ok: true, wall: demoView(w), group: d.group, added, skipped };
+      const res = { ok: true, wall: demoView(w), group: d.group, added, skipped };
+      if (d.cardDay !== undefined && d.cardDay !== null) { const day = demo.card.days[d.cardDay]; const a = d.names.filter(n => !day.names.includes(n)); day.names.push(...a); res.cardAdded = { day: d.cardDay, cat: day.cat, added: a }; }
+      return res;
     }
     case 'removeName': {
       const w = find(d.wallId), [g, n] = d.entryId.split('#');
       w.names[g] = (w.names[g] || []).filter(x => x !== n); return { ok: true, wall: demoView(w) };
     }
+    case 'getCard': return { ok: true, card: JSON.parse(JSON.stringify(demo.card)), onWall: demo.onWall, walls: demo.walls.map(demoView) };
+    case 'saveCard': demo.card = JSON.parse(JSON.stringify(d.card)); return { ok: true, card: d.card };
     case 'myData': return { ok: true, displayName: demo.me.displayName, entries: [{ wall: '小區福音代禱牆', group: '霧峰姊妹排', name: '康英滿', time: '2026/11/20' }], walls: ['小區福音代禱牆'] };
     case 'deleteMyData': return { ok: true, entries: 1 };
   }
@@ -508,6 +583,8 @@ function drawWall() {
   const postable = canPost();
   let autoPost = true; try { autoPost = localStorage.getItem('pw.autopost') !== '0'; } catch (e) {}
   const mineCount = w.list.reduce((s, g) => s + g.names.filter(n => n.mine).length, 0);
+  let toCard = true, cardDay = 2;
+  try { toCard = localStorage.getItem('pw.tocard') !== '0'; const v = localStorage.getItem('pw.cardday'); if (v !== null) cardDay = +v; } catch (e) {}
   view(`
     ${DEMO ? `<p class="demo-note">預覽模式：目前使用範例資料。</p>` : ''}
     ${heroHtml(w)}
@@ -527,6 +604,11 @@ function drawWall() {
         <div><b>送出後貼到聊天室</b><small>${postable ? '把最新的代禱牆圖卡貼回群組' : '從群組裡的圖卡打開時才能貼回聊天室'}</small></div>
         <label class="switch"><input type="checkbox" id="autopost" ${postable && autoPost ? 'checked' : ''} ${postable ? '' : 'disabled'} aria-label="送出後貼到聊天室"><span></span></label>
       </div>
+      <div class="switch-row" style="margin-top:12px;padding-top:12px;border-top:1px dashed var(--rule)">
+        <div><b>同時加入我的代禱卡</b><small>每天為他們禱告；名字只有你看得到</small></div>
+        <label class="switch"><input type="checkbox" id="tocard" ${toCard ? 'checked' : ''} aria-label="同時加入我的代禱卡"><span></span></label>
+      </div>
+      <div class="day-pick" id="card-day" role="group" aria-label="放在代禱卡的哪一天" ${toCard ? '' : 'hidden'}>${cardCats().map((c, i) => `<button type="button" data-cd="${i}" aria-pressed="${i === cardDay}">${dayLabel(i)}・${esc(c)}</button>`).join('')}</div>
       <p class="posted" id="posted" hidden></p>
     </section>` : ''}
     <section class="card" aria-labelledby="list-h">
@@ -537,6 +619,7 @@ function drawWall() {
     </section>
     ${verseHtml(w)}
     <footer class="page-foot">
+      <button class="link" id="mycard">我的代禱卡</button>
       <button class="link" id="fwd">轉傳給其他群組或朋友</button>
       ${w.canManage ? `<button class="link" id="manage">管理這面代禱牆</button>` : ''}
       <button class="link" onclick="myDataFlow()">我的個人資料</button>
@@ -566,6 +649,11 @@ function drawWall() {
   bindRemove($('wall-list'), w.id, wall => { WALL = wall; cacheSet('wall.' + wall.id, wall); keepTyped(drawWall); });
   $('repost').onclick = async () => { const b = $('repost'); b.disabled = true; await postWall(w); b.disabled = false; };
   $('fwd').onclick = () => share(w);
+  $('mycard').onclick = () => { location.href = `${location.pathname}?tab=card${DEMO ? '&demo' : ''}`; };
+  if ($('tocard')) {
+    $('tocard').onchange = e => { $('card-day').hidden = !e.target.checked; try { localStorage.setItem('pw.tocard', e.target.checked ? '1' : '0'); } catch (x) {} };
+    document.querySelectorAll('[data-cd]').forEach(b => b.onclick = () => { document.querySelectorAll('[data-cd]').forEach(x => x.setAttribute('aria-pressed', x === b)); try { localStorage.setItem('pw.cardday', b.dataset.cd); } catch (x) {} });
+  }
   if ($('manage')) $('manage').onclick = () => { location.href = `${location.pathname}?manage=${encodeURIComponent(w.id)}${DEMO ? '&demo' : ''}`; };
   if ($('submit')) $('submit').onclick = submitNames;
 }
@@ -588,13 +676,16 @@ async function submitNames() {
   btn.disabled = true; btn.textContent = '送出中…';
   const auto = $('autopost') && $('autopost').checked;
   try {
-    const r = await api('addNames', { wallId: WALL.id, group: PICK, names });
+    const cdBtn = document.querySelector('[data-cd][aria-pressed="true"]');
+    const cardDay = $('tocard') && $('tocard').checked && cdBtn ? +cdBtn.dataset.cd : null;
+    const r = await api('addNames', { wallId: WALL.id, group: PICK, names, cardDay });
+    if (r.cardAdded) { try { localStorage.removeItem('pw.c.card'); } catch (e) {} }
     WALL = r.wall; cacheSet('wall.' + WALL.id, WALL);
     const g = WALL.list.find(x => x.name === r.group);
     if (g) g.names.filter(n => r.added.includes(n.name)).forEach(n => FRESH.add(n.id));
     SCROLL_KEEP = 0; drawWall();
     const say = r.added.length ? `已為${r.group}加入 ${r.added.length} 位${r.skipped.length ? `（${r.skipped.join('、')} 已經在名單上）` : ''}` : `${r.skipped.join('、')} 已經在名單上了`;
-    toast(say);
+    toast(say + (r.cardAdded && r.cardAdded.added.length ? `，也放進你代禱卡的「${r.cardAdded.cat}」` : ''));
     if (auto && r.added.length) await postWall(WALL, `${r.group} 加入了 ${r.added.length} 位`);
     const list = $('list-h'); if (list) setTimeout(() => list.scrollIntoView({ behavior: 'smooth', block: 'start' }), 300);
   } catch (e) {
@@ -699,7 +790,9 @@ function buildWallFlex(w, news, opt = {}) {
         { type: 'box', layout: 'vertical', spacing: 'sm', margin: 'lg', contents: list } ] },
       footer: { type: 'box', layout: 'vertical', paddingAll: '14px', paddingTop: '0px', paddingBottom: '6px', contents: [
         { type: 'button', style: 'primary', color: t.bar, height: 'sm', action: { type: 'uri', label: w.open === false ? '打開代禱牆' : '📝 我也要填代禱名單', uri: wallUrl(w.id) } },
-        { type: 'button', style: 'link', height: 'sm', color: C.muted, margin: 'sm', action: { type: 'uri', label: '轉傳給其他群組或朋友', uri: shareUrl(w.id) } } ] },
+        { type: 'box', layout: 'horizontal', margin: 'sm', contents: [
+          { type: 'button', style: 'link', height: 'sm', color: t.bar, flex: 1, action: { type: 'uri', label: '我的代禱卡', uri: `https://liff.line.me/${LIFF_ID}?tab=card` } },
+          { type: 'button', style: 'link', height: 'sm', color: C.muted, flex: 1, action: { type: 'uri', label: '轉傳', uri: shareUrl(w.id) } } ] } ] },
     },
   };
   if (byteLen(flex) <= FLEX_LIMIT) return flex;
@@ -723,12 +816,276 @@ function cardHtml(w) {
       ${empty.length ? `<div class="none">還沒有名單：${esc(empty.map(g => g.name).join('、'))}</div>` : ''}
       ${!filled.length && !empty.length ? '<div class="none">還沒有設定排</div>' : ''}
     </div>
-    <div class="f"><div class="pb">${w.open === false ? '打開代禱牆' : '📝 我也要填代禱名單'}</div><div class="lk">轉傳給其他群組或朋友</div></div>
+    <div class="f"><div class="pb">${w.open === false ? '打開代禱牆' : '📝 我也要填代禱名單'}</div><div class="lk"><span style="color:var(--bar)">我的代禱卡</span>　　轉傳</div></div>
   </div>`;
 }
 
+/* ================= 個人代禱卡（延續金香壇代禱卡：一週七天、每天一個類別） ================= */
+const WD = ['日', '一', '二', '三', '四', '五', '六'];
+const dayLabel = i => i === 0 ? '主日' : '週' + WD[i];
+const CARD_CATS = ['家人', '親戚', '好友', '同事(學)', '鄰居', '聖徒', '馬路'];
+const CARD_VERSE = { text: '至於我，斷不停止為你們禱告，免得我得罪耶和華…', ref: '撒母耳記上十二章23節' };
+const blankCard = () => ({ days: CARD_CATS.map(cat => ({ cat, names: [] })) });
+const cardCats = () => (CARD || cacheGet('card') || blankCard()).days.map(d => d.cat);
+let CARD = null, ON_WALL = {}, JOINED = [], CARD_SEL = new Date().getDay(), CARD_MODE = 'view', CARD_DRAFT = null, PASTE_TEXT = '', PASTE_PARSED = null;
+let PENDING_IMPORT = null;
+const todayKey = () => { const d = new Date(); return `pw.marks.${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`; };
+let MARKS = {}; try { MARKS = JSON.parse(localStorage.getItem(todayKey()) || '{}') || {}; } catch (e) {}
+const saveMarks = () => { try { localStorage.setItem(todayKey(), JSON.stringify(MARKS)); } catch (e) {} };
+
+/* 名單代碼：和金香壇代禱卡的「GIA1.」代碼互通 */
+const b64e = str => { const b = new TextEncoder().encode(str); let o = ''; b.forEach(x => o += String.fromCharCode(x)); return btoa(o).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); };
+const b64d = str => { str = str.replace(/-/g, '+').replace(/_/g, '/'); while (str.length % 4) str += '='; const o = atob(str), b = new Uint8Array(o.length); for (let i = 0; i < o.length; i++) b[i] = o.charCodeAt(i); return new TextDecoder().decode(b); };
+const encodeList = c => 'GIA1.' + b64e(JSON.stringify({ days: c.days.map(d => ({ cat: d.cat, names: d.names.concat(Array(Math.max(0, 12 - d.names.length)).fill('')) })) }));
+function decodeList(txt) {
+  txt = String(txt || '').trim();
+  const m = /[#&?]n=([A-Za-z0-9_-]+)/.exec(txt) || /[?&]import=GIA1\.([A-Za-z0-9_-]+)/.exec(txt);
+  const c = m ? m[1] : txt.replace(/^[\s\S]*GIA1\./, '').replace(/[^A-Za-z0-9_-]/g, '');
+  if (!c) return null;
+  try { const d = JSON.parse(b64d(c)); return d && Array.isArray(d.days) && d.days.length === 7 ? d : null; } catch (e) { return null; }
+}
+function mergeCard(cur, inc) {
+  const out = JSON.parse(JSON.stringify(cur)); let added = 0;
+  for (let i = 0; i < 7; i++) {
+    const have = new Set(out.days[i].names);
+    ((inc.days[i] || {}).names || []).forEach(n => { n = String(n || '').trim(); if (!n || have.has(n)) return; have.add(n); out.days[i].names.push(n); added++; });
+  }
+  return { card: out, added };
+}
+/* 貼上一段文字（例如照片辨識出來的），遇到「週三」「家人」等標題就分到那一天 */
+const CATIDX = { '家人': 0, '親戚': 1, '好友': 2, '同事': 3, '鄰居': 4, '聖徒': 5, '馬路': 6 }, DAYCH = { '日': 0, '天': 0, '一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6 };
+function parsePasted(txt, defDay) {
+  const days = {}; let cur = defDay;
+  const dayRe = /^(主日|[週周]\s*[一二三四五六]|星期[一二三四五六日天]|禮拜[一二三四五六日天])/, catRe = /(家人|親戚|好友|同事|鄰居|聖徒|馬路)/;
+  String(txt || '').replace(/\r/g, '').split('\n').forEach(line => {
+    let l = line.trim(); if (!l) return;
+    const m = dayRe.exec(l), c = catRe.exec(l);
+    if (m || c) {
+      if (m) { const w = m[1].replace(/\s/g, ''); cur = w === '主日' ? 0 : DAYCH[w.slice(-1)]; } else cur = CATIDX[c[1]];
+      l = l.replace(dayRe, '').replace(/^[\s\-－–—:：]*/, '').replace(/^(同事\s*[（(]\s*學\s*[)）]|家人|親戚|好友|同事|鄰居|聖徒|馬路)[\s\-－–—:：]*/, '').trim();
+      if (!l) return;
+    }
+    l.split(/[\s,，、;；／/|｜•·・]+/).forEach(t => {
+      t = t.replace(/^[\d０-９]+[\.．、)）]?\s*/, '').replace(/[.。,，;；:：!！?？()（）\[\]「」『』"'“”…]/g, '').trim();
+      if (!t || /^[\d０-９]+$/.test(t) || t.length > 20) return;
+      const arr = days[cur] = days[cur] || []; if (!arr.includes(t)) arr.push(t);
+    });
+  });
+  return days;
+}
+function cardText(i) {
+  const d = CARD.days[i];
+  return `金香壇代禱｜${dayLabel(i)}－${d.cat}\n${d.names.length ? d.names.map((n, k) => `${k + 1}. ${n}`).join('\n') : '（尚無名單）'}\n\n撒上十二23「${CARD_VERSE.text}」\n\n我的代禱卡：https://liff.line.me/${LIFF_ID}?tab=card`;
+}
+async function persistCard(card, msg) {
+  CARD = card; cacheSet('card', CARD);
+  try { const r = await api('saveCard', { card }); CARD = r.card; cacheSet('card', CARD); if (msg) toast(msg); }
+  catch (e) { toast('儲存失敗：' + e.message); }
+}
+
+function renderCard() {
+  if (!CARD) { $('panel').innerHTML = loading(); return; }
+  const today = new Date().getDay(), sel = CARD_SEL, d = CARD.days[sel];
+  const marked = new Set((MARKS[sel] || []).filter(n => d.names.includes(n)));
+  const dayNav = `<nav class="days" role="tablist" aria-label="選擇代禱日">${CARD.days.map((x, i) => `<button role="tab" aria-selected="${i === sel}" class="day ${i === sel ? 'on' : ''} ${i === today ? 'today' : ''}" data-day="${i}"><span class="wd">${i === 0 ? '主日' : WD[i]}</span><span class="ct">${esc(x.cat)}</span></button>`).join('')}</nav>`;
+  const pend = PENDING_IMPORT ? `<div class="import-note"><p><b>收到一份代禱卡名單</b>（${PENDING_IMPORT.days.reduce((s, x) => s + x.names.filter(n => String(n).trim()).length, 0)} 個名字），要合併到你的代禱卡嗎？原有的名字不會被刪掉。</p><div class="actions"><button class="btn small send" id="imp-ok">合併</button><button class="btn small ghost" id="imp-no">略過</button></div></div>` : '';
+  let body = '';
+  if (CARD_MODE === 'edit') {
+    const n = CARD_DRAFT.names;
+    body = `<label class="field cat-edit"><span>這一天的類別</span><input id="cat-in" maxlength="8" value="${esc(CARD_DRAFT.cat)}"></label>
+      <div class="grid">${n.map((x, i) => `<input class="cell-in" data-ci="${i}" maxlength="20" value="${esc(x)}" placeholder="名字或暱稱" aria-label="第 ${i + 1} 格">`).join('')}</div>
+      <p class="hint">清空格子就是刪除。名字只有你自己看得到，放上代禱牆時才會讓別人看到。</p>
+      <div class="actions"><button class="btn small" id="cell-add">＋ 新增格子</button><button class="btn small send" id="edit-save">儲存並更新</button><button class="btn small ghost" id="edit-cancel">取消</button></div>`;
+  } else if (CARD_MODE === 'paste') {
+    const p = PASTE_PARSED;
+    body = `<div class="paste"><p class="paste-title">貼上名字</p>
+      <p class="paste-sub">把照片辨識出來的文字或聊天記錄整段貼進來，名字之間用空格、換行或逗號隔開都可以。若文字裡有「主日」「週三」或「家人」「鄰居」等標題，會自動分到對應的那一天。</p>
+      ${p ? Object.keys(p).sort().map(k => `<p class="paste-day">${dayLabel(+k)}－${esc(CARD.days[k].cat)}（${p[k].length}）</p><div class="names">${p[k].map(x => `<span class="name"><span>${esc(x)}</span></span>`).join('')}</div>`).join('') : `<textarea class="inp" id="paste-in" placeholder="例如：陳弟兄 王姊妹 小恩">${esc(PASTE_TEXT)}</textarea>`}
+      <div class="actions">${p ? `<button class="btn small send" id="paste-add">加入名單</button><button class="btn small ghost" id="paste-back">回去修改</button>` : `<button class="btn small send" id="paste-parse">整理成名字</button><button class="btn small ghost" id="paste-cancel">取消</button>`}</div></div>`;
+  } else if (CARD_MODE === 'code') {
+    const code = encodeList(CARD);
+    body = `<div class="paste code"><p class="paste-title">名單代碼</p>
+      <p class="paste-sub">和「金香壇代禱卡」的名單代碼互通。把同伴傳來的代碼（GIA1. 開頭）貼在這裡，會合併到你的代禱卡，不會刪掉原有的名字。</p>
+      <textarea class="inp" id="code-in" placeholder="GIA1.…"></textarea>
+      <div class="actions"><button class="btn small send" id="code-import">匯入名單</button><button class="btn small" id="code-copy">複製我的名單代碼</button><button class="btn small" id="code-link">複製含名單的連結</button><button class="btn small ghost" id="code-close">收起</button></div>
+      <p class="hint">你的代碼有 ${code.length} 個字，只會複製，不會公開。</p></div>`;
+  } else {
+    const slots = d.names.slice(); while (slots.length < 12 || slots.length % 2) slots.push('');
+    body = `<div class="seeds" aria-hidden="true">${d.names.map(n => `<span class="seed ${marked.has(n) ? 'f' : ''}"></span>`).join('')}</div>
+      <p class="count">${d.names.length ? `已代禱 ${marked.size}／${d.names.length}` : '這一天還沒有名字'}</p>
+      <div class="grid">${slots.map(n => n ? `<button class="cell ${marked.has(n) ? 'done' : ''}" data-mark="${esc(n)}" aria-pressed="${marked.has(n)}"><span>${esc(n)}</span>${ON_WALL[n] ? `<span class="wb" title="已放上：${esc(ON_WALL[n].join('、'))}">牆</span>` : ''}</button>` : `<button class="cell" disabled aria-hidden="true"></button>`).join('')}</div>
+      ${d.names.length ? `<p class="hint">點名字標記今天已經為他禱告。標「牆」的已經放上團體代禱牆。</p>` : `<p class="empty">這一天的名單是空的，點「編輯名單」加入名字。</p>`}
+      <div class="actions">
+        <button class="btn edit" id="card-edit">編輯名單</button>
+        <button class="btn send" id="card-towall">放上代禱牆</button>
+        <button class="btn line" id="card-line">傳到 LINE</button>
+      </div>
+      <div class="actions tools">
+        <button class="btn code" id="card-copy">複製名單</button>
+        <button class="btn code" id="card-paste">貼上名字</button>
+        <button class="btn code" id="card-code">名單代碼</button>
+      </div>`;
+  }
+  $('panel').innerHTML = `${pend}${dayNav}
+    <section class="pcard">
+      <div class="head"><span class="wd">${dayLabel(sel)}</span>${sel === today ? '<span class="tag">今天</span>' : ''}<h2>${esc(d.cat)}</h2></div>
+      ${body}
+    </section>
+    <blockquote class="verse">${esc(CARD_VERSE.text)}<cite>${esc(CARD_VERSE.ref)}</cite></blockquote>`;
+  bindCard();
+}
+
+function bindCard() {
+  const sel = CARD_SEL, d = CARD.days[sel];
+  document.querySelectorAll('[data-day]').forEach(b => b.onclick = () => {
+    if (CARD_MODE === 'edit') return toast('請先儲存或取消編輯');
+    CARD_SEL = +b.dataset.day; CARD_MODE = 'view'; PASTE_PARSED = null; renderCard();
+  });
+  if ($('imp-ok')) {
+    $('imp-ok').onclick = async () => { const r = mergeCard(CARD, PENDING_IMPORT); PENDING_IMPORT = null; renderCard(); await persistCard(r.card, r.added ? `已匯入 ${r.added} 個名字` : '這些名字都已經在名單裡了'); renderCard(); };
+    $('imp-no').onclick = () => { PENDING_IMPORT = null; renderCard(); };
+  }
+  document.querySelectorAll('[data-mark]').forEach(b => b.onclick = () => {
+    const n = b.dataset.mark, set = new Set(MARKS[sel] || []);
+    set.has(n) ? set.delete(n) : set.add(n);
+    MARKS[sel] = [...set]; saveMarks(); renderCard();
+  });
+  const on = (id, fn) => { const el = $(id); if (el) el.onclick = fn; };
+  on('card-edit', () => { CARD_MODE = 'edit'; const n = d.names.slice(); while (n.length < 12 || n.length % 2) n.push(''); CARD_DRAFT = { cat: d.cat, names: n }; renderCard(); });
+  on('cell-add', () => { readDraft(); CARD_DRAFT.names.push('', ''); renderCard(); const all = document.querySelectorAll('[data-ci]'); all[all.length - 2].focus(); });
+  on('edit-cancel', () => { CARD_MODE = 'view'; renderCard(); });
+  on('edit-save', async () => {
+    readDraft();
+    const card = JSON.parse(JSON.stringify(CARD)), seen = new Set();
+    card.days[sel] = { cat: CARD_DRAFT.cat.trim() || CARD_CATS[sel], names: CARD_DRAFT.names.map(x => x.replace(/\s+/g, ' ').trim()).filter(x => x && !seen.has(x) && seen.add(x)) };
+    CARD_MODE = 'view'; renderCard(); await persistCard(card, '已儲存'); renderCard();
+  });
+  on('card-paste', () => { CARD_MODE = 'paste'; PASTE_PARSED = null; renderCard(); $('paste-in').focus(); });
+  on('paste-cancel', () => { CARD_MODE = 'view'; PASTE_TEXT = ''; renderCard(); });
+  on('paste-parse', () => {
+    PASTE_TEXT = $('paste-in').value;
+    const p = parsePasted(PASTE_TEXT, sel);
+    if (!Object.keys(p).length) return toast('沒有找到名字，請先把文字貼進來');
+    PASTE_PARSED = p; renderCard();
+  });
+  on('paste-back', () => { PASTE_PARSED = null; renderCard(); });
+  on('paste-add', async () => {
+    const inc = blankCard(); Object.keys(PASTE_PARSED).forEach(k => { inc.days[k].names = PASTE_PARSED[k]; });
+    const r = mergeCard(CARD, inc); CARD_MODE = 'view'; PASTE_PARSED = null; PASTE_TEXT = ''; renderCard();
+    await persistCard(r.card, r.added ? `已加入 ${r.added} 個名字` : '名單裡的名字都已經有了，沒有新增'); renderCard();
+  });
+  on('card-code', () => { CARD_MODE = 'code'; renderCard(); });
+  on('code-close', () => { CARD_MODE = 'view'; renderCard(); });
+  on('code-copy', () => copyText(encodeList(CARD), '已複製名單代碼，貼到 LINE 給同伴'));
+  on('code-link', () => copyText(`https://liff.line.me/${LIFF_ID}?tab=card&import=${encodeList(CARD)}`, '已複製連結，同伴打開就能匯入這份名單'));
+  on('code-import', async () => {
+    const inc = decodeList($('code-in').value);
+    if (!inc) return toast('看不懂這段代碼，請確認是「名單代碼」（GIA1. 開頭）');
+    const r = mergeCard(CARD, inc); CARD_MODE = 'view'; renderCard();
+    await persistCard(r.card, r.added ? `已匯入 ${r.added} 個名字` : '這些名字都已經在名單裡了'); renderCard();
+  });
+  on('card-copy', () => copyText(cardText(sel), '已複製，可以貼到 LINE'));
+  on('card-line', () => shareText(cardText(sel)));
+  on('card-towall', () => { TOWALL = { picked: new Set(), wallId: '', group: '' }; go({ view: 'towall' }); });
+}
+function readDraft() {
+  if ($('cat-in')) CARD_DRAFT.cat = $('cat-in').value;
+  document.querySelectorAll('[data-ci]').forEach(i => { CARD_DRAFT.names[+i.dataset.ci] = i.value; });
+}
+function copyText(text, done) { navigator.clipboard.writeText(text).then(() => toast(done), () => toast('無法複製，請長按文字自行複製')); }
+async function shareText(text) {
+  if (DEMO) return toast('預覽模式：正式版會跳出 LINE 的選擇畫面');
+  if (!liff.isApiAvailable('shareTargetPicker')) return copyText(text, '已複製，可以貼到 LINE');
+  try { const r = await liff.shareTargetPicker([{ type: 'text', text: text.slice(0, 4900) }], { isMultiple: true }); toast(r ? '已傳到 LINE' : '已取消'); }
+  catch (e) { toast('傳送失敗：' + e.message); }
+}
+
+/* ---------- 從代禱卡放上團體代禱牆 ---------- */
+let TOWALL = { picked: new Set(), wallId: '', group: '' };
+function renderToWall() {
+  const open = JOINED.filter(w => w.open);
+  const cardNames = CARD.days.map((d, i) => ({ i, d })).filter(x => x.d.names.length);
+  const order = cardNames.sort((a, b) => (a.i === CARD_SEL ? -1 : b.i === CARD_SEL ? 1 : a.i - b.i));
+  const w = open.find(x => x.id === TOWALL.wallId);
+  view(`<div class="subbar"><button class="back" id="back">‹ 代禱卡</button><h1>放上代禱牆</h1><span></span></div>
+    ${!open.length ? `<section class="card dot"><h2>還沒有可以放的代禱牆</h2>
+        <p class="muted">從群組裡的代禱牆圖卡打開一次，那面代禱牆就會出現在這裡。也可以自己建立一面，再發到群組。</p>
+        <button class="btn send" id="to-create">建立代禱牆</button></section>` : `
+    <section class="card dot">
+      <h2>選名字 <small>已選 ${TOWALL.picked.size}</small></h2>
+      ${cardNames.length ? order.map(({ i, d }) => `<p class="paste-day">${dayLabel(i)}－${esc(d.cat)}</p>
+        <div class="pick-names">${d.names.map(n => `<button type="button" data-pk="${esc(n)}" aria-pressed="${TOWALL.picked.has(n)}">${esc(n)}${ON_WALL[n] ? '<small>牆</small>' : ''}</button>`).join('')}</div>`).join('') : '<p class="muted">代禱卡還沒有名字，先回去編輯名單。</p>'}
+      <p class="hint">放上代禱牆的名字，同一面牆的人都看得到。可以只寫姓氏加稱呼。</p>
+    </section>
+    <section class="card">
+      <h2>選代禱牆</h2>
+      <div class="wall-pick">${open.map(x => `<button type="button" data-wp="${esc(x.id)}" aria-pressed="${x.id === TOWALL.wallId}" style="${themeVars(themeOf(x))}"><b>${esc(x.title)}</b><span>${x.total} 位福音朋友・${x.list.length} 個排</span></button>`).join('')}</div>
+      ${w ? `<p class="step" style="margin-top:16px"><b>排</b>選擇你的排</p>
+        <div class="group-pick">${w.list.map(g => `<button type="button" data-gp="${esc(g.name)}" aria-pressed="${g.name === TOWALL.group}"><span>${esc(g.name)}</span>${g.names.length ? `<span class="c">${g.names.length}</span>` : ''}</button>`).join('')}</div>` : ''}
+    </section>
+    <div class="dock"><div class="inner"><button class="btn send" id="tw-go">${ICON_SEND}放上代禱牆</button></div></div>`}`);
+  $('back').onclick = () => { TAB = 'card'; go({ view: 'tabs' }); };
+  if ($('to-create')) { $('to-create').onclick = () => { TAB = 'new'; go({ view: 'tabs' }); }; return; }
+  document.querySelectorAll('[data-pk]').forEach(b => b.onclick = () => {
+    const n = b.dataset.pk; TOWALL.picked.has(n) ? TOWALL.picked.delete(n) : TOWALL.picked.add(n);
+    b.setAttribute('aria-pressed', TOWALL.picked.has(n));
+    document.querySelector('.card h2 small').textContent = `已選 ${TOWALL.picked.size}`;
+  });
+  document.querySelectorAll('[data-wp]').forEach(b => b.onclick = () => { TOWALL.wallId = b.dataset.wp; TOWALL.group = ''; const y = scrollY; renderToWall(); scrollTo(0, y); });
+  document.querySelectorAll('[data-gp]').forEach(b => b.onclick = () => { TOWALL.group = b.dataset.gp; document.querySelectorAll('[data-gp]').forEach(x => x.setAttribute('aria-pressed', x === b)); });
+  $('tw-go').onclick = async () => {
+    if (!TOWALL.picked.size) return toast('請先選名字');
+    if (!TOWALL.wallId) return toast('請選一面代禱牆');
+    if (!TOWALL.group) return toast('請選擇你的排');
+    const btn = $('tw-go'); btn.disabled = true; btn.textContent = '放上中…';
+    try {
+      const r = await api('addNames', { wallId: TOWALL.wallId, group: TOWALL.group, names: [...TOWALL.picked] });
+      const i = JOINED.findIndex(x => x.id === r.wall.id); if (i >= 0) JOINED[i] = { ...JOINED[i], ...r.wall };
+      [...TOWALL.picked].forEach(n => { (ON_WALL[n] = ON_WALL[n] || []).includes(r.wall.title) || ON_WALL[n].push(r.wall.title); });
+      cacheSet('cardx', { onWall: ON_WALL, walls: JOINED });
+      renderToWallDone(r);
+    } catch (e) { toast(e.message); btn.disabled = false; btn.innerHTML = `${ICON_SEND}放上代禱牆`; }
+  };
+}
+function renderToWallDone(r) {
+  applyTheme(r.wall);
+  view(`<section class="solo"><div class="msg-card">
+      <div style="width:80px;margin:0 auto">${pomSvg()}</div>
+      <h1>已放上代禱牆</h1>
+      <p>${r.added.length ? `已為「${esc(r.group)}」加入 ${r.added.length} 位：${esc(r.added.join('、'))}` : ''}${r.skipped.length ? `<br><span class="muted small">${esc(r.skipped.join('、'))} 已經在名單上</span>` : ''}</p>
+      <p class="muted small">${esc(r.wall.title)}：共 ${r.wall.total} 位福音朋友</p>
+    </div>
+    <div class="pv-panel" style="margin-top:14px">${cardHtml(r.wall)}</div>
+    <button class="btn line" id="dn-share">${ICON_SEND}把代禱牆傳到 LINE 群組</button>
+    <div class="btn-grid"><button class="btn" id="dn-open">打開代禱牆</button><button class="btn ghost" id="dn-back">回到代禱卡</button></div>
+  </section>`);
+  $('dn-share').onclick = () => share(r.wall);
+  $('dn-open').onclick = () => { location.href = `${location.pathname}?wall=${encodeURIComponent(r.wall.id)}${DEMO ? '&demo' : ''}`; };
+  $('dn-back').onclick = () => { TAB = 'card'; go({ view: 'tabs' }); };
+}
+
+/* ---------- 代禱牆分頁：我參與的＋我建立的 ---------- */
+function renderWallsTab() {
+  const created = new Set(WALLS.map(w => w.id));
+  const joined = JOINED.filter(w => !created.has(w.id));
+  const item = (w, attr) => `<button class="wall-item" ${attr}="${esc(w.id)}" style="${themeVars(themeOf(w))}">
+      <b>${esc(w.title)}</b>
+      <span class="meta"><span class="state ${w.open ? '' : 'off'}">${w.open ? '填寫中' : '已停止'}</span><span>${w.total} 位福音朋友</span><span>${w.filled} 排已填・${w.unfilled} 排未填</span></span>
+      ${attr === 'data-open' ? `<span class="meta"><span>${esc(w.created)}${ME.isAdmin && !w.mine ? `・${esc(w.creator)}` : ''}</span></span>` : ''}
+    </button>`;
+  $('panel').innerHTML = `
+    <h2 class="sec">我參與的代禱牆 <small>${joined.length}</small></h2>
+    ${joined.length ? joined.map(w => item(w, 'data-visit')).join('') : '<p class="muted small sec-empty">從群組裡的代禱牆圖卡打開過，就會出現在這裡。</p>'}
+    <h2 class="sec">我建立的代禱牆 <small>${WALLS.length}</small></h2>
+    ${WALLS.length ? WALLS.map(w => item(w, 'data-open')).join('') : '<p class="muted small sec-empty">還沒有建立代禱牆。</p>'}
+    <button class="btn" id="to-new" style="margin-top:6px">＋ 建立新的代禱牆</button>`;
+  document.querySelectorAll('[data-open]').forEach(b => b.onclick = () => go({ view: 'detail', id: b.dataset.open }));
+  document.querySelectorAll('[data-visit]').forEach(b => b.onclick = () => { location.href = `${location.pathname}?wall=${encodeURIComponent(b.dataset.visit)}${DEMO ? '&demo' : ''}`; });
+  $('to-new').onclick = () => { TAB = 'new'; render(); };
+}
+
 /* ================= 建立平台 ================= */
-let ME = null, WALLS = [], TAB = 'new', ROUTE = { view: 'tabs' };
+let ME = null, WALLS = [], TAB = ['card', 'walls', 'new'].includes(PARAMS.get('tab')) ? PARAMS.get('tab') : 'card', ROUTE = { view: 'tabs' };
 const DRAFT_KEY = 'pw.draft';
 const blankDraft = () => ({ title: '', tag: '同心代禱', verse: verseText(VERSES[0]), desc: DEFAULT_DESC, groups: [{ name: '', from: '' }], allowAdd: true, theme: 'pom' });
 let draft = blankDraft();
@@ -737,27 +1094,32 @@ let editDraft = null;
 async function platformFlow() {
   resetTheme();
   try { const saved = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null'); if (saved && saved.groups) draft = { ...blankDraft(), ...saved }; } catch (e) {}
-  const cached = cacheGet('platform');
-  const boot = Promise.all([api('me'), api('listWalls')]);
+  const imp = PARAMS.get('import') || (/[#&]n=/.test(location.hash) ? location.hash : '');
+  if (imp) { PENDING_IMPORT = decodeList(imp); if (PENDING_IMPORT) TAB = 'card'; }
+  const cached = cacheGet('platform'), cachedCard = cacheGet('card'), cx = cacheGet('cardx');
+  const boot = Promise.all([api('me'), api('listWalls'), api('getCard')]);
   const manageId = PARAMS.get('manage');
+  const apply = ([me, r, c]) => { ME = me; WALLS = r.walls; CARD = c.card; ON_WALL = c.onWall || {}; JOINED = c.walls || []; cacheSet('platform', { me: ME, walls: WALLS }); cacheSet('card', CARD); cacheSet('cardx', { onWall: ON_WALL, walls: JOINED }); };
   const first = () => {
-    if (manageId && WALLS.some(w => w.id === manageId)) { TAB = 'sent'; go({ view: 'detail', id: manageId }); }
+    if (manageId && WALLS.some(w => w.id === manageId)) { TAB = 'walls'; go({ view: 'detail', id: manageId }); }
     else { render(); if (!PARAMS.has('notour')) maybeStartTour(); }
   };
-  if (cached && cached.me) {
-    ME = cached.me; WALLS = cached.walls || []; first();
-    boot.then(([me, r]) => { ME = me; WALLS = r.walls; cacheSet('platform', { me: ME, walls: WALLS }); softRefresh(); }).catch(e => toast(e.message));
+  if (cached && cached.me && cachedCard) {
+    ME = cached.me; WALLS = cached.walls || []; CARD = cachedCard; ON_WALL = (cx && cx.onWall) || {}; JOINED = (cx && cx.walls) || [];
+    first();
+    boot.then(res => { apply(res); softRefresh(); }).catch(e => toast(e.message));
     return;
   }
   view(loading());
-  const [me, r] = await boot;
-  ME = me; WALLS = r.walls; cacheSet('platform', { me: ME, walls: WALLS });
+  apply(await boot);
   first();
 }
 
 function softRefresh() {
-  const n = document.querySelector('[data-tab=sent] .n'); if (n) n.textContent = WALLS.length;
-  if (ROUTE.view === 'tabs' && TAB === 'sent') renderSent();
+  const n = document.querySelector('[data-tab=walls] .n'); if (n) n.textContent = WALLS.length + JOINED.filter(w => !WALLS.some(x => x.id === w.id)).length;
+  if (ROUTE.view !== 'tabs') return;
+  if (TAB === 'walls') renderWallsTab();
+  if (TAB === 'card' && CARD_MODE === 'view') renderCard();
 }
 
 const saveDraft = () => { try { localStorage.setItem(DRAFT_KEY, JSON.stringify(draft)); } catch (e) {} };
@@ -767,21 +1129,24 @@ function render() {
   resetTheme();
   if (ROUTE.view === 'detail') return renderDetail(ROUTE.id);
   if (ROUTE.view === 'edit') return renderEdit(ROUTE.id);
+  if (ROUTE.view === 'towall') return renderToWall();
+  const wallCount = WALLS.length + JOINED.filter(w => !WALLS.some(x => x.id === w.id)).length;
   view(`
-    <header class="top"><a class="brand" href="./" id="home"><span class="logo">${pomSvg()}</span><div><h1>建立代禱牆圖卡</h1><p class="sub">LINE 代禱牆・以小排為單位同心代禱</p></div></a><button class="help" id="help" type="button" aria-label="使用教學">?</button></header>
+    <header class="top"><a class="brand" href="./" id="home"><span class="logo">${pomSvg()}</span><div><h1>同心代禱</h1><p class="sub">個人代禱卡・團體代禱牆</p></div></a><button class="help" id="help" type="button" aria-label="使用教學">?</button></header>
     ${DEMO ? `<p class="demo-note">預覽模式：目前使用範例資料。</p>` : ''}
     <nav class="tabs" role="tablist">
-      <button role="tab" aria-selected="${TAB === 'new'}" data-tab="new">新代禱牆</button>
-      <button role="tab" aria-selected="${TAB === 'sent'}" data-tab="sent">已建立<span class="n">${WALLS.length}</span></button>
+      <button role="tab" aria-selected="${TAB === 'card'}" data-tab="card">我的代禱卡</button>
+      <button role="tab" aria-selected="${TAB === 'walls'}" data-tab="walls">代禱牆<span class="n">${wallCount}</span></button>
+      <button role="tab" aria-selected="${TAB === 'new'}" data-tab="new">建立代禱牆</button>
     </nav>
     <div id="panel"></div>
     <footer class="page-foot">${isStandalone() ? '' : '<button class="link" id="install-link">安裝到手機桌面</button>'}<button class="link" onclick="myDataFlow()">我的個人資料</button></footer>
     ${TAB === 'new' ? `<div class="dock"><div class="inner"><button class="btn send" id="send">${ICON_SEND}建立並傳到 LINE 群組</button></div></div>` : ''}`);
-  document.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { TAB = b.dataset.tab; render(); });
-  $('help').onclick = () => startTour(TOUR_STEPS);
-  $('home').onclick = e => { e.preventDefault(); TAB = 'new'; go({ view: 'tabs' }); };
+  document.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { if (TAB === 'card' && CARD_MODE === 'edit' && b.dataset.tab !== 'card') return toast('請先儲存或取消編輯'); TAB = b.dataset.tab; render(); if (!PARAMS.has('notour')) maybeStartTour(); });
+  $('help').onclick = () => startTour(TAB === 'card' ? CARD_TOUR : TOUR_STEPS);
+  $('home').onclick = e => { e.preventDefault(); TAB = 'card'; go({ view: 'tabs' }); };
   if ($('install-link')) $('install-link').onclick = startInstall;
-  if (TAB === 'new') renderCompose(); else renderSent();
+  if (TAB === 'new') renderCompose(); else if (TAB === 'walls') renderWallsTab(); else renderCard();
 }
 
 /** 草稿 → 預覽用的代禱牆（還沒有名單） */
@@ -898,20 +1263,11 @@ async function createAndSend() {
   try {
     const { wall } = await api('createWall', { wall: toPayload(draft) });
     WALLS.unshift({ ...wall, mine: true }); cacheSet('platform', { me: ME, walls: WALLS });
+    if (!JOINED.some(x => x.id === wall.id)) JOINED.unshift({ ...wall, mine: true });
     draft = blankDraft(); try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
-    TAB = 'sent'; go({ view: 'detail', id: wall.id });
+    TAB = 'walls'; go({ view: 'detail', id: wall.id });
     await share(wall);
   } catch (e) { toast(e.message); btn.disabled = false; btn.innerHTML = `${ICON_SEND}建立並傳到 LINE 群組`; }
-}
-
-function renderSent() {
-  if (!WALLS.length) { $('panel').innerHTML = `<div class="empty-box"><div style="width:72px;margin:0 auto">${pomSvg()}</div><p>還沒有建立代禱牆。</p><button class="btn send small" id="to-new">建立第一面代禱牆</button></div>`; $('to-new').onclick = () => { TAB = 'new'; render(); }; return; }
-  $('panel').innerHTML = WALLS.map(w => `<button class="wall-item" data-open="${esc(w.id)}" style="${themeVars(themeOf(w))}">
-      <b>${esc(w.title)}</b>
-      <span class="meta"><span class="state ${w.open ? '' : 'off'}">${w.open ? '填寫中' : '已停止'}</span><span>${w.total} 位福音朋友</span><span>${w.filled} 排已填・${w.unfilled} 排未填</span></span>
-      <span class="meta"><span>${esc(w.created)}${ME.isAdmin && !w.mine ? `・${esc(w.creator)}` : ''}</span></span>
-    </button>`).join('');
-  document.querySelectorAll('[data-open]').forEach(b => b.onclick = () => go({ view: 'detail', id: b.dataset.open }));
 }
 
 /* ---------- 代禱牆管理頁 ---------- */
@@ -951,7 +1307,7 @@ function drawDetail(w) {
     </section>
     <button class="btn danger" id="d-del">刪除這面代禱牆</button>
     <p class="hint" style="text-align:center">刪除後名單也會一起刪除，群組裡的舊圖卡會打不開。</p>`);
-  $('back').onclick = () => { if (PARAMS.has('manage')) history.replaceState(null, '', location.pathname + (DEMO ? '?demo' : '')); TAB = 'sent'; go({ view: 'tabs' }); };
+  $('back').onclick = () => { if (PARAMS.has('manage')) history.replaceState(null, '', location.pathname + (DEMO ? '?demo' : '')); TAB = 'walls'; go({ view: 'tabs' }); };
   $('d-share').onclick = () => share(w);
   $('d-open').onclick = () => { location.href = `${location.pathname}?wall=${encodeURIComponent(w.id)}${DEMO ? '&demo' : ''}`; };
   $('d-edit').onclick = () => go({ view: 'edit', id: w.id });
@@ -964,7 +1320,7 @@ function drawDetail(w) {
   bindRemove($('d-list'), w.id, wall => { updateLocal(wall); const y = window.scrollY; drawDetail(wall); window.scrollTo(0, y); });
   $('d-del').onclick = () => armThen($('d-del'), '確定刪除？再按一次', async () => {
     $('d-del').disabled = true;
-    try { await api('deleteWall', { wallId: w.id }); WALLS = WALLS.filter(x => x.id !== w.id); cacheSet('platform', { me: ME, walls: WALLS }); toast('已刪除'); TAB = 'sent'; go({ view: 'tabs' }); }
+    try { await api('deleteWall', { wallId: w.id }); WALLS = WALLS.filter(x => x.id !== w.id); cacheSet('platform', { me: ME, walls: WALLS }); toast('已刪除'); TAB = 'walls'; go({ view: 'tabs' }); }
     catch (e) { toast(e.message); $('d-del').disabled = false; }
   });
 }
@@ -1007,6 +1363,7 @@ async function myDataFlow() {
       <p><b>LINE 名稱：</b>${esc(d.displayName)}</p>
       <p style="margin-bottom:0"><b>我填過的名字（${d.entries.length}）</b></p>
       ${d.entries.length ? `<ul class="mylist">${d.entries.map(e => `<li>${esc(e.name)}<br><span class="muted small">${esc(e.wall)}・${esc(e.group)}・${esc(e.time)}</span></li>`).join('')}</ul>` : '<p class="muted">沒有。</p>'}
+      <p><b>我的代禱卡：</b>${d.cardCount || 0} 個名字（只有你看得到）</p>
       ${d.walls.length ? `<p class="muted small">你建立了 ${d.walls.length} 面代禱牆（${esc(d.walls.join('、'))}），請在平台「已建立」裡管理或刪除。</p>` : ''}
       <button class="btn danger" id="del-me" style="margin-top:10px">刪除我填過的名字與登入紀錄</button>
     </div>${back}</section>`);
@@ -1061,18 +1418,30 @@ const TOUR_STEPS = [
   { sel: '#f-theme', title: '4. 挑一個色調', text: '上面的預覽會跟著變，就是群組裡看到的樣子。' },
   { sel: '#send', title: '5. 發送到群組', text: '選好群組就發出去。大家填完名字，可以選擇把最新的代禱牆貼回群組。之後在「已建立」裡管理名單。' },
 ];
+const CARD_TOUR = [
+  { sel: '.days', title: '1. 一週七天', text: '每天為一類人禱告：主日家人、週一親戚、週二好友……今天會有一個小金點。' },
+  { sel: '.pcard .grid', title: '2. 點名字代禱', text: '為誰禱告過就點一下，石榴籽會變紅。每天重新開始。' },
+  { sel: '#card-edit', title: '3. 編輯名單', text: '加名字、改類別都在這裡。也可以「貼上名字」，或用名單代碼和金香壇代禱卡互通。' },
+  { sel: '#card-towall', title: '4. 放上代禱牆', text: '挑幾位福音朋友放上小區、小排的團體代禱牆，大家一起同心代禱。在代禱牆填的名字，也可以同時加回你的代禱卡。' },
+];
+const CARD_TOUR_KEY = 'pw.tour.card';
 const tourSeen = () => { try { return parseInt(localStorage.getItem(TOUR_KEY) || '0', 10) || 0; } catch (e) { return TOUR_VERSION; } };
 function maybeStartTour() {
+  if (TAB === 'card') {
+    let seenCard = 0; try { seenCard = +(localStorage.getItem(CARD_TOUR_KEY) || 0); } catch (e) { seenCard = 1; }
+    if (!seenCard && CARD && $('card-edit')) setTimeout(() => startTour(CARD_TOUR, 'card'), 500);
+    return;
+  }
   const seen = tourSeen();
   if (seen >= TOUR_VERSION || TAB !== 'new') return;
   const steps = seen ? TOUR_STEPS.filter(s => (s.since || 1) > seen) : TOUR_STEPS;
   if (steps.length) setTimeout(() => startTour(steps), 500);
 }
 let TOUR = null;
-function startTour(steps) {
-  if (TAB !== 'new' || ROUTE.view !== 'tabs') { TAB = 'new'; go({ view: 'tabs' }); }
+function startTour(steps, tab = steps === CARD_TOUR ? 'card' : 'new') {
+  if (TAB !== tab || ROUTE.view !== 'tabs') { TAB = tab; go({ view: 'tabs' }); }
   endTour(true);
-  TOUR = { steps, i: 0 };
+  TOUR = { steps, i: 0, tab };
   document.body.insertAdjacentHTML('beforeend', `<div class="tour-mask" id="tour-mask"></div><div class="tour-hole" id="tour-hole"></div>
     <div class="tour-tip" id="tour-tip" role="dialog" aria-modal="true" aria-labelledby="tour-h"><div class="k" id="tour-k"></div><h3 id="tour-h"></h3><p id="tour-p"></p>
     <div class="acts"><button class="link" id="tour-skip">略過</button><div><button class="btn small ghost" id="tour-prev">上一步</button><button class="btn small send" id="tour-next">下一步</button></div></div></div>`);
@@ -1109,7 +1478,7 @@ addEventListener('resize', placeTour);
 function endTour(silent) {
   ['tour-mask', 'tour-hole', 'tour-tip'].forEach(id => { const el = $(id); el && el.remove(); });
   removeEventListener('keydown', tourKey);
-  if (TOUR && !silent) { try { localStorage.setItem(TOUR_KEY, String(TOUR_VERSION)); } catch (e) {} window.scrollTo({ top: 0, behavior: 'smooth' }); }
+  if (TOUR && !silent) { try { localStorage.setItem(TOUR.tab === 'card' ? CARD_TOUR_KEY : TOUR_KEY, TOUR.tab === 'card' ? '1' : String(TOUR_VERSION)); } catch (e) {} window.scrollTo({ top: 0, behavior: 'smooth' }); }
   TOUR = null;
 }
 

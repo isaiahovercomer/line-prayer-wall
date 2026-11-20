@@ -7,12 +7,14 @@ const CONFIG = {
   CHANNEL_ID: '2012412693', // LINE Developers → LINE Login channel → Basic settings 的 Channel ID
 };
 
-const SH = { WALLS: '代禱牆', NAMES: '代禱名單', PUBLISHERS: '發布者' };
+const SH = { WALLS: '代禱牆', NAMES: '代禱名單', PUBLISHERS: '發布者', CARDS: '代禱卡', JOINED: '參與紀錄' };
 
 const HEADERS = {
   '代禱牆': ['代禱牆代碼', '標題', '標語', '經文', '說明', '排', '允許新增排', '色調', '開放', '建立者', '建立時間'],
   '代禱名單': ['紀錄代碼', '時間', '代禱牆代碼', '排', '名字', '填寫者', '填寫者 userId'],
   '發布者': ['LINE userId', '名稱', '備註'],
+  '代禱卡': ['LINE userId', 'LINE名稱', '名單', '更新時間'],
+  '參與紀錄': ['LINE userId', '代禱牆代碼', '最後開啟'],
 };
 
 // 欄位位置（從 0 開始）
@@ -52,8 +54,10 @@ function doPost(e) {
       case 'session':     out = { ok: true, ...createSession(user) }; break;
       case 'logout':      deleteSession(req.session); out = { ok: true }; break;
       case 'me':          out = { ok: true, userId: user.userId, displayName: user.displayName, isAdmin: isPublisher(user.userId) }; break;
-      case 'wall':        out = { ok: true, wall: wallView(req.wallId, user) }; break;
-      case 'addNames':    out = { ok: true, ...addNames(user, req.wallId, req.group, req.names) }; break;
+      case 'wall':        out = { ok: true, wall: wallView(req.wallId, user) }; markJoined(user, req.wallId); break;
+      case 'addNames':    out = { ok: true, ...addNames(user, req.wallId, req.group, req.names, req.cardDay) }; break;
+      case 'getCard':     out = { ok: true, ...getCard(user) }; break;
+      case 'saveCard':    out = { ok: true, ...saveCard(user, req.card) }; break;
       case 'removeName':  out = { ok: true, wall: removeName(user, req.wallId, req.entryId) }; break;
       case 'createWall':  out = { ok: true, wall: createWall(user, req.wall || {}) }; break;
       case 'listWalls':   out = { ok: true, walls: listWalls(user) }; break;
@@ -297,7 +301,7 @@ function cleanNames(list) {
   return out;
 }
 
-function addNames(user, wallId, group, list) {
+function addNames(user, wallId, group, list, cardDay) {
   group = clip(group, LIMITS.GROUP_LEN);
   if (!group) throw new Error('請先選擇你的排');
   const names = cleanNames(list);
@@ -323,7 +327,10 @@ function addNames(user, wallId, group, list) {
       sh.getRange(sh.getLastRow() + 1, 1, added.length, 7)
         .setValues(added.map(n => [newId('N'), now, wallId, group, n, by, user.userId]));
     }
-    return { wall: buildView(f.row, user), group, added, skipped };
+    const res = { wall: buildView(f.row, user), group, added, skipped };
+    // 同時加入自己的個人代禱卡（選了哪一天就放在那一天）
+    if (cardDay !== undefined && cardDay !== null && cardDay !== '' && +cardDay >= 0 && +cardDay <= 6) res.cardAdded = mergeIntoCard(user, +cardDay, names);
+    return res;
   });
 }
 
@@ -348,7 +355,9 @@ function myData(user) {
   const entries = rows(SH.NAMES).filter(r => String(r[N.UID]) === user.userId)
     .map(r => ({ wall: titles[String(r[N.WALL])] || '（已刪除）', group: String(r[N.GROUP]), name: String(r[N.NAME]), time: fmt(r[N.TIME], 'yyyy/MM/dd') }));
   const walls = rows(SH.WALLS).filter(r => creatorOf(r) === user.userId).map(r => String(r[W.TITLE]));
-  return { displayName: user.displayName, entries, walls };
+  const card = readCard(user.userId);
+  const cardCount = card ? card.days.reduce((s, d) => s + d.names.length, 0) : 0;
+  return { displayName: user.displayName, entries, walls, cardCount };
 }
 
 function deleteMyData(user) {
@@ -356,8 +365,98 @@ function deleteMyData(user) {
     const nsh = sheet(SH.NAMES), data = nsh.getDataRange().getValues();
     let entries = 0;
     for (let i = data.length - 1; i >= 1; i--) if (String(data[i][N.UID]) === user.userId) { nsh.deleteRow(i + 1); entries++; }
+    [SH.CARDS, SH.JOINED].forEach(name => {
+      const sh = sheet(name); if (!sh) return;
+      const d = sh.getDataRange().getValues();
+      for (let i = d.length - 1; i >= 1; i--) if (String(d[i][0]) === user.userId) sh.deleteRow(i + 1);
+    });
     const ssh = sessionSheet(), sd = ssh.getDataRange().getValues();
     for (let i = sd.length - 1; i >= 1; i--) if (String(sd[i][1]) === user.userId) ssh.deleteRow(i + 1);
     return { entries };
   });
+}
+
+/* ---------- 個人代禱卡（每週七天、每天一個類別） ---------- */
+const CARD_CATS = ['家人', '親戚', '好友', '同事(學)', '鄰居', '聖徒', '馬路'];
+const CARD_MAX = 60; // 每天最多幾個名字
+
+function cardSheet() {
+  const ss = SpreadsheetApp.getActive();
+  let sh = ss.getSheetByName(SH.CARDS);
+  if (!sh) { sh = ss.insertSheet(SH.CARDS); sh.appendRow(HEADERS[SH.CARDS]); sh.setFrozenRows(1); }
+  return sh;
+}
+function blankCard() { return { days: CARD_CATS.map(cat => ({ cat, names: [] })) }; }
+function cleanCard(c) {
+  const out = blankCard();
+  const days = c && Array.isArray(c.days) ? c.days : [];
+  for (let i = 0; i < 7; i++) {
+    const d = days[i] || {};
+    out.days[i].cat = clip(d.cat, 8) || CARD_CATS[i];
+    const seen = {};
+    out.days[i].names = (Array.isArray(d.names) ? d.names : []).map(n => clip(n, LIMITS.NAME_LEN)).filter(n => n && !seen[n] && (seen[n] = 1)).slice(0, CARD_MAX);
+  }
+  return out;
+}
+function findCardRow(uid) {
+  const sh = cardSheet(), data = sh.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) if (String(data[i][0]) === uid) return { sh, index: i + 1, row: data[i] };
+  return { sh, index: 0, row: null };
+}
+function readCard(uid) { const f = findCardRow(uid); return f.row ? cleanCard(parseJson(f.row[2], null)) : null; }
+function writeCard(user, card) {
+  const f = findCardRow(user.userId), vals = [user.userId, user.displayName || '', JSON.stringify(card), new Date()];
+  if (f.index) f.sh.getRange(f.index, 1, 1, 4).setValues([vals]); else f.sh.appendRow(vals);
+}
+function mergeIntoCard(user, day, names) {
+  const card = readCard(user.userId) || blankCard();
+  const list = card.days[day].names, added = [];
+  names.forEach(n => { if (list.indexOf(n) < 0 && list.length < CARD_MAX) { list.push(n); added.push(n); } });
+  if (added.length) writeCard(user, card);
+  return { day, cat: card.days[day].cat, added };
+}
+
+/** 個人代禱卡＋我參與的代禱牆＋哪些名字已經放在代禱牆上 */
+function getCard(user) {
+  const card = readCard(user.userId) || blankCard();
+  const titles = {}, wallRows = {};
+  rows(SH.WALLS).forEach(r => { titles[String(r[W.ID])] = String(r[W.TITLE]); wallRows[String(r[W.ID])] = r; });
+  const all = rows(SH.NAMES);
+  const onWall = {}, myWallIds = {};
+  all.forEach(r => {
+    if (String(r[N.UID]) !== user.userId) return;
+    const wid = String(r[N.WALL]); if (!titles[wid]) return;
+    myWallIds[wid] = 1;
+    const n = String(r[N.NAME]);
+    (onWall[n] = onWall[n] || []).indexOf(titles[wid]) < 0 && onWall[n].push(titles[wid]);
+  });
+  const js = sheet(SH.JOINED);
+  const joined = js ? rows(SH.JOINED).filter(r => String(r[0]) === user.userId).sort((a, b) => (b[2] || 0) - (a[2] || 0)).map(r => String(r[1])) : [];
+  Object.keys(myWallIds).forEach(id => { if (joined.indexOf(id) < 0) joined.push(id); });
+  const walls = joined.filter(id => wallRows[id]).slice(0, 30).map(id => {
+    const v = buildView(wallRows[id], user, all.filter(n => String(n[N.WALL]) === id));
+    v.mine = creatorOf(wallRows[id]) === user.userId;
+    return v;
+  });
+  return { card, onWall, walls };
+}
+
+function saveCard(user, input) {
+  const card = cleanCard(input);
+  withLock(() => writeCard(user, card));
+  return { card };
+}
+
+/** 記錄打開過哪些代禱牆，方便從個人代禱卡把名字放上去 */
+function markJoined(user, wallId) {
+  try {
+    withLock(() => {
+      const ss = SpreadsheetApp.getActive();
+      let sh = ss.getSheetByName(SH.JOINED);
+      if (!sh) { sh = ss.insertSheet(SH.JOINED); sh.appendRow(HEADERS[SH.JOINED]); sh.setFrozenRows(1); }
+      const data = sh.getDataRange().getValues();
+      for (let i = 1; i < data.length; i++) if (String(data[i][0]) === user.userId && String(data[i][1]) === String(wallId)) { sh.getRange(i + 1, 3).setValue(new Date()); return; }
+      sh.appendRow([user.userId, wallId, new Date()]);
+    });
+  } catch (e) {}
 }
