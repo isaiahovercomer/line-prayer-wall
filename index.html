@@ -240,6 +240,14 @@
   .import-note { background: var(--sheet); border: 1.5px dashed var(--olive); border-radius: 18px; padding: 12px 14px; margin-bottom: 14px; }
   .import-note p { margin: 0; font-size: 14px; }
   .import-note .actions { margin-top: 10px; }
+  .sync-row { display: flex; gap: 8px; align-items: center; }
+  .sync-row .inp { flex: 1; min-width: 0; letter-spacing: .04em; text-transform: uppercase; }
+  .sync-row .btn { flex: none; }
+  .move-card .move-pom { width: 64px; height: 64px; margin: 0 auto 6px; }
+  .move-card .move-pom svg { width: 100%; height: 100%; }
+  .move-card .btn { display: block; width: 100%; text-align: center; margin-top: 16px; box-sizing: border-box; }
+  .old-box { background: var(--sheet); border: 1.5px dashed var(--olive); border-radius: 18px; padding: 12px 14px; margin: 12px 0; }
+  .old-box p { margin: 0 0 8px; font-size: 14px; }
   .pick-names { display: flex; flex-wrap: wrap; gap: 8px; }
   .pick-names button { border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 6px 14px; font-family: var(--kai); font-size: 16px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
   .pick-names button small { font-family: var(--sans); font-size: 10px; color: var(--olive-ink); }
@@ -462,6 +470,22 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbzftHK_A8R2ZggkERNxaZV2
 const PARAMS = new URLSearchParams(location.search);
 // 還沒設定好，或網址有 ?demo：用範例資料預覽
 const DEMO = LIFF_ID.startsWith('請填') || PARAMS.has('demo');
+
+/* 從舊站「金香壇代禱卡」搬家：舊網址轉過來時帶 #n=名單&s=同步碼。
+   先存到這支手機（登入 LINE 會重新導向，網址上的 # 會不見），再把網址清乾淨。 */
+const MOVE_KEY = 'pw.move';
+(function captureMove() {
+  const h = new URLSearchParams(location.hash.replace(/^#/, ''));
+  const n = h.get('n') || (PARAMS.get('sync') ? String(PARAMS.get('import') || '').replace(/^GIA1\./, '') : ''), sc = (h.get('s') || PARAMS.get('sync') || '').toUpperCase().replace(/[^A-Z2-9]/g, '');
+  if (!n && sc.length !== 20) return;
+  try {
+    const old = JSON.parse(localStorage.getItem(MOVE_KEY) || 'null') || {};
+    localStorage.setItem(MOVE_KEY, JSON.stringify({ n: n || old.n || '', s: sc.length === 20 ? sc : (old.s || ''), at: Date.now() }));
+  } catch (e) {}
+  if (location.hash) history.replaceState(null, '', location.pathname + location.search);
+})();
+const getMove = () => { try { const m = JSON.parse(localStorage.getItem(MOVE_KEY) || 'null'); return m && (m.n || m.s) && Date.now() - m.at < 30 * 864e5 ? m : null; } catch (e) { return null; } };
+const clearMove = () => { try { localStorage.removeItem(MOVE_KEY); } catch (e) {} };
 
 const $app = document.getElementById('app');
 const $ = id => document.getElementById(id);
@@ -686,7 +710,7 @@ async function demoApi(action, d) {
     case 'setOpenMany': demo.walls.forEach(x => { if (d.wallIds.includes(x.id)) x.open = d.open; }); return { ok: true, updated: d.wallIds, open: d.open };
     case 'adminOverview': {
       const walls = demo.walls.map(w => ({ ...demoView(w), fillers: 6 })).reverse();
-      return { ok: true, walls, stats: { walls: walls.length, open: walls.filter(w => w.open).length, names: walls.reduce((s, w) => s + w.total, 0), fillers: 12, cardUsers: 9, cardNames: 86 } };
+      return { ok: true, walls, stats: { walls: walls.length, open: walls.filter(w => w.open).length, names: walls.reduce((s, w) => s + w.total, 0), fillers: 12, cardUsers: 9, cardNames: 86 }, old: { lists: 0, claimed: 0 } };
     }
     case 'removeName': {
       const w = find(d.wallId), [g, n] = d.entryId.split('#');
@@ -696,6 +720,8 @@ async function demoApi(action, d) {
     case 'saveCard': demo.card = JSON.parse(JSON.stringify(d.card)); return { ok: true, card: d.card };
     case 'myData': return { ok: true, displayName: demo.me.displayName, entries: [{ wall: '小區福音代禱牆', group: '霧峰姊妹排', name: '康英滿', time: '2026/11/20' }], walls: ['小區福音代禱牆'] };
     case 'deleteMyData': return { ok: true, entries: 1 };
+    case 'claimOld': return /^[A-Z2-9]{20}$/.test(d.code) ? { ok: true, found: true, nameCount: 3, data: { days: ['家人', '親戚', '好友', '同事(學)', '鄰居', '聖徒', '馬路'].map((cat, i) => ({ cat, names: i === 0 ? ['舊站爸爸', '舊站媽媽', ''] : i === 6 ? ['早餐店老闆'] : [] })) } } : { ok: true, found: false };
+    case 'importOld': return { ok: true, added: d.lists.length, updated: 0, skipped: 0, total: d.lists.length };
   }
   throw new Error('預覽模式不支援：' + action);
 }
@@ -731,6 +757,7 @@ async function api(action, data = {}) {
 async function main() {
   try {
     if (PARAMS.has('install')) return installFlow();
+    if (!DEMO && getMove() && !getSession() && !PARAMS.has('liff.state') && !PARAMS.has('here') && !/\bLine\//i.test(navigator.userAgent)) return moveWelcome();
     if (!DEMO && (!getSession() || PARAMS.has('liff.state'))) {
       // 第一次登入，或 LINE 帶著 liff.state 轉址時，才需要等 LINE 初始化
       await LIFF_READY;
@@ -746,6 +773,25 @@ async function main() {
   } catch (e) {
     view(`<section class="solo"><div class="msg-card"><div style="font-size:34px">🙏</div><h1>無法開啟</h1><p>${esc(e.message)}</p><p class="muted small">請關閉後從 LINE 重新開啟一次。</p></div></section>`);
   }
+}
+
+/* ================= 舊站搬過來的歡迎頁（在 LINE 以外的瀏覽器打開時） ================= */
+function moveWelcome() {
+  const m = getMove(), inc = m.n ? decodeList('#n=' + m.n) : null, cnt = inc ? countList(inc) : 0;
+  const q = new URLSearchParams({ tab: 'card' });
+  if (inc) q.set('import', encodeList(inc));
+  if (m.s) q.set('sync', m.s);
+  const lineUrl = `https://liff.line.me/${LIFF_ID}?${q}`;
+  view(`<section class="solo"><div class="msg-card move-card">
+    <div class="move-pom">${pomSvg()}</div>
+    <h1>金香壇代禱卡搬家了</h1>
+    <p>新家是「${SITE_TITLE}」。${cnt ? `這支手機上的 <b>${cnt} 個名字</b>已經一起帶過來了` : '你的名單會用同步碼接回來'}${cnt && m.s ? '，雲端名單也會用同步碼接回' : ''}。</p>
+    <p class="muted small">新網站用 LINE 登入，名單跟著你的 LINE 帳號，換手機也不會不見；以後不必再記同步碼。</p>
+    <a class="btn send" id="mv-line" href="${esc(lineUrl)}">在 LINE 裡打開（建議）</a>
+    <button class="btn ghost" id="mv-here" style="margin-top:10px">在這個瀏覽器登入 LINE</button>
+    <p class="muted small" style="margin-top:14px">打開後會先問你要不要合併，原有的名字不會被刪掉。</p>
+  </div></section>`);
+  $('mv-here').onclick = () => { location.href = location.pathname + '?here=1&tab=card'; };
 }
 
 /* ================= 成員：代禱牆頁 ================= */
@@ -1250,7 +1296,21 @@ const CARD_VERSE = { text: '至於我，斷不停止為你們禱告，免得我�
 const blankCard = () => ({ days: CARD_CATS.map(cat => ({ cat, names: [] })) });
 const cardCats = () => (CARD || cacheGet('card') || blankCard()).days.map(d => d.cat);
 let CARD = null, ON_WALL = {}, JOINED = [], CARD_SEL = new Date().getDay(), CARD_MODE = 'view', CARD_DRAFT = null, PASTE_TEXT = '', PASTE_PARSED = null;
-let PENDING_IMPORT = null;
+let PENDING_IMPORT = null, PENDING_FROM = '', SYNC_BUSY = false;
+const countList = d => d.days.reduce((s, x) => s + (x.names || []).filter(n => String(n || '').trim()).length, 0);
+/** 用舊站同步碼接回雲端名單；auto＝搬家時自動接回（併到待合併名單），否則直接合併到代禱卡 */
+async function claimSync(code, auto) {
+  SYNC_BUSY = true; if (auto && CARD && ROUTE.view === 'tabs' && TAB === 'card') renderCard();
+  try {
+    const r = await api('claimOld', { code });
+    if (!r.found) { toast(auto ? '雲端沒有找到這個同步碼的名單，先合併這支手機帶來的名字' : '找不到這個同步碼的名單，請再確認一次'); return false; }
+    if (auto) { PENDING_IMPORT = PENDING_IMPORT ? mergeCard(PENDING_IMPORT, r.data).card : r.data; return true; }
+    const m = mergeCard(CARD, r.data); CARD_MODE = 'view'; renderCard();
+    await persistCard(m.card, m.added ? `已接回舊名單，加入 ${m.added} 個名字` : '舊名單裡的名字都已經在代禱卡上了');
+    return true;
+  } catch (e) { toast(e.message); return false; }
+  finally { SYNC_BUSY = false; if (ROUTE.view === 'tabs' && TAB === 'card' && CARD) renderCard(); }
+}
 const todayKey = () => { const d = new Date(); return `pw.marks.${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`; };
 let MARKS = {}; try { MARKS = JSON.parse(localStorage.getItem(todayKey()) || '{}') || {}; } catch (e) {}
 const saveMarks = () => { try { localStorage.setItem(todayKey(), JSON.stringify(MARKS)); } catch (e) {} };
@@ -1310,7 +1370,8 @@ function renderCard() {
   const today = new Date().getDay(), sel = CARD_SEL, d = CARD.days[sel];
   const marked = new Set((MARKS[sel] || []).filter(n => d.names.includes(n)));
   const dayNav = `<nav class="days" role="tablist" aria-label="選擇代禱日">${CARD.days.map((x, i) => `<button role="tab" aria-selected="${i === sel}" class="day ${i === sel ? 'on' : ''} ${i === today ? 'today' : ''}" data-day="${i}"><span class="wd">${i === 0 ? '主日' : WD[i]}</span><span class="ct">${esc(x.cat)}</span></button>`).join('')}</nav>`;
-  const pend = PENDING_IMPORT ? `<div class="import-note"><p><b>收到一份代禱卡名單</b>（${PENDING_IMPORT.days.reduce((s, x) => s + x.names.filter(n => String(n).trim()).length, 0)} 個名字），要合併到你的代禱卡嗎？原有的名字不會被刪掉。</p><div class="actions"><button class="btn small send" id="imp-ok">合併</button><button class="btn small ghost" id="imp-no">略過</button></div></div>` : '';
+  const pend = SYNC_BUSY && PENDING_FROM === 'old' ? `<div class="import-note"><p><b>正在用同步碼接回舊代禱卡的雲端名單…</b></p></div>`
+    : PENDING_IMPORT ? `<div class="import-note"><p><b>${PENDING_FROM === 'old' ? '從舊的「金香壇代禱卡」帶來的名單' : '收到一份代禱卡名單'}</b>（${countList(PENDING_IMPORT)} 個名字），要合併到你的代禱卡嗎？原有的名字不會被刪掉。</p><div class="actions"><button class="btn small send" id="imp-ok">合併</button><button class="btn small ghost" id="imp-no">略過</button></div></div>` : '';
   let body = '';
   if (CARD_MODE === 'edit') {
     const n = CARD_DRAFT.names;
@@ -1330,6 +1391,8 @@ function renderCard() {
       <p class="paste-sub">和「金香壇代禱卡」的名單代碼互通。把同伴傳來的代碼（GIA1. 開頭）貼在這裡，會合併到你的代禱卡，不會刪掉原有的名字。</p>
       <textarea class="inp" id="code-in" placeholder="GIA1.…"></textarea>
       <div class="actions"><button class="btn small send" id="code-import">匯入名單</button><button class="btn small" id="code-copy">複製我的名單代碼</button><button class="btn small" id="code-link">複製含名單的連結</button><button class="btn small ghost" id="code-close">收起</button></div>
+      <p class="paste-sub" style="margin-top:14px">以前在「金香壇代禱卡」設過<b>雲端同步碼</b>（20 碼）？輸入後就能把舊的雲端名單接回來。</p>
+      <div class="sync-row"><input class="inp" id="sync-in" placeholder="例如 ABCD-EFGH-JKLM-NPQR-STUV" autocomplete="off" autocapitalize="characters" spellcheck="false"><button class="btn small send" id="sync-go">接回舊名單</button></div>
       <p class="hint">你的代碼有 ${code.length} 個字，只會複製，不會公開。</p></div>`;
   } else {
     const slots = d.names.slice(); while (slots.length < 12 || slots.length % 2) slots.push('');
@@ -1368,8 +1431,8 @@ function bindCard() {
     CARD_SEL = +b.dataset.day; CARD_MODE = 'view'; PASTE_PARSED = null; renderCard();
   });
   if ($('imp-ok')) {
-    $('imp-ok').onclick = async () => { const r = mergeCard(CARD, PENDING_IMPORT); PENDING_IMPORT = null; renderCard(); await persistCard(r.card, r.added ? `已匯入 ${r.added} 個名字` : '這些名字都已經在名單裡了'); renderCard(); };
-    $('imp-no').onclick = () => { PENDING_IMPORT = null; renderCard(); };
+    $('imp-ok').onclick = async () => { const r = mergeCard(CARD, PENDING_IMPORT); PENDING_IMPORT = null; PENDING_FROM = ''; clearMove(); renderCard(); await persistCard(r.card, r.added ? `已匯入 ${r.added} 個名字` : '這些名字都已經在名單裡了'); renderCard(); };
+    $('imp-no').onclick = () => { PENDING_IMPORT = null; PENDING_FROM = ''; clearMove(); renderCard(); };
   }
   document.querySelectorAll('[data-letter]').forEach(b => b.onclick = () => {
     if (DEMO) return toast(`預覽模式：正式版會打開寫給「${b.dataset.letter}」的信紙`);
@@ -1408,6 +1471,12 @@ function bindCard() {
   on('code-close', () => { CARD_MODE = 'view'; renderCard(); });
   on('code-copy', () => copyText(encodeList(CARD), '已複製名單代碼，貼到 LINE 給同伴'));
   on('code-link', () => copyText(`https://liff.line.me/${LIFF_ID}?tab=card&import=${encodeList(CARD)}`, '已複製連結，同伴打開就能匯入這份名單'));
+  on('sync-go', async () => {
+    const code = $('sync-in').value.toUpperCase().replace(/[^A-Z2-9]/g, '');
+    if (code.length !== 20) return toast('同步碼是 20 碼英文字母和數字，請再確認一次');
+    const b = $('sync-go'); b.disabled = true; b.textContent = '接回中…';
+    if (!(await claimSync(code, false))) { const x = $('sync-go'); if (x) { x.disabled = false; x.textContent = '接回舊名單'; } }
+  });
   on('code-import', async () => {
     const inc = decodeList($('code-in').value);
     if (!inc) return toast('看不懂這段代碼，請確認是「名單代碼」（GIA1. 開頭）');
@@ -1656,12 +1725,29 @@ function drawAdmin() {
       <div><b>${s.cardUsers}</b><span>使用代禱卡（${s.cardNames} 個名字）</span></div>
     </div>
     <p class="hint">個人代禱卡是每個人自己的名單，後台只看人數，不顯示內容。</p>
+    <div class="old-box"><p><b>舊站「金香壇代禱卡」搬家</b>：已匯入 ${(ADMIN.old || {}).lists || 0} 份舊名單，其中 ${(ADMIN.old || {}).claimed || 0} 份已用同步碼接回。聖徒輸入舊同步碼時會先查舊站雲端，查不到才用這裡的備份。</p>
+      <label class="btn small" for="a-old">匯入舊站匯出檔（.json）</label><input type="file" id="a-old" accept=".json,application/json" hidden></div>
     <input class="inp" id="a-q" placeholder="搜尋代禱牆名稱或建立者" value="${esc(AFILTER)}" style="margin:12px 0 8px" aria-label="搜尋">
     <div class="sel-head"><label class="m-all"><input type="checkbox" id="a-all" ${list.length && list.every(w => WSEL.has(w.id)) ? 'checked' : ''}> 全選</label><button class="btn small ghost" id="a-copy">複製統計</button></div>
     ${selBarHtml('a-sel', WSEL.size)}
     <div id="a-list">${list.length ? wallRows(list, { selectable: true, showCreator: true }) : '<p class="muted">沒有符合的代禱牆。</p>'}</div>`);
   $('back').onclick = () => { WSEL.clear(); TAB = 'walls'; go({ view: 'tabs' }); };
   $('a-q').oninput = e => { AFILTER = e.target.value; const pos = e.target.selectionStart; drawAdmin(); const x = $('a-q'); x.focus(); x.setSelectionRange(pos, pos); };
+  $('a-old').onchange = async e => {
+    const f = e.target.files[0]; if (!f) return;
+    let ex; try { ex = JSON.parse(await f.text()); } catch (err) { return toast('讀不懂這個檔案，請選舊站匯出的 .json'); }
+    if (!ex || ex.format !== 'praycards-export/1' || !Array.isArray(ex.lists)) return toast('這不是舊站的匯出檔（praycards-export/1）');
+    const lists = ex.lists.filter(x => x && x.nameCount !== 0).map(x => ({ id: x.id, updatedAt: x.updatedAt, data: x.data }));
+    let added = 0, updated = 0, skipped = ex.lists.length - lists.length;
+    try {
+      for (let i = 0; i < lists.length; i += 150) {
+        toast(`匯入中… ${Math.min(i + 150, lists.length)} / ${lists.length}`);
+        const r = await api('importOld', { lists: lists.slice(i, i + 150) }); added += r.added; updated += r.updated; skipped += r.skipped;
+      }
+      toast(`匯入完成：新增 ${added} 份、更新 ${updated} 份、略過 ${skipped} 份`);
+    } catch (err) { toast(err.message); }
+    ADMIN = await api('adminOverview').catch(() => ADMIN); drawAdmin();
+  };
   $('a-all').onchange = e => { list.forEach(w => e.target.checked ? WSEL.add(w.id) : WSEL.delete(w.id)); drawAdmin(); };
   $('a-copy').onclick = () => copyText([`${document.title}｜總管理統計`, `代禱牆 ${s.walls} 面（填寫中 ${s.open}）`, `福音朋友名字 ${s.names} 個、填寫過的人 ${s.fillers} 位`, `使用個人代禱卡 ${s.cardUsers} 人（${s.cardNames} 個名字）`, '', ...ADMIN.walls.map(w => `・${w.title}（${w.creator || '—'}）${w.total} 位・${w.open ? '填寫中' : '已停止'}`)].join('\n'), '已複製統計');
   bindWallRows($('a-list'), id => { const w = ADMIN.walls.find(x => x.id === id); if (w) updateLocal(w); go({ view: 'detail', id, from: 'admin' }); }, drawAdmin);
@@ -1706,6 +1792,15 @@ async function platformFlow() {
   try { const saved = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null'); if (saved && saved.groups) draft = { ...blankDraft(), ...saved }; } catch (e) {}
   const imp = PARAMS.get('import') || (/[#&]n=/.test(location.hash) ? location.hash : '');
   if (imp) { PENDING_IMPORT = decodeList(imp); if (PENDING_IMPORT) TAB = 'card'; }
+  const move = getMove();
+  if (move) {
+    const inc = move.n ? decodeList('#n=' + move.n) : null;
+    if (inc) PENDING_IMPORT = PENDING_IMPORT ? mergeCard(PENDING_IMPORT, inc).card : inc;
+    PENDING_FROM = 'old'; TAB = 'card';
+    if (move.s) claimSync(move.s, true);
+  } else if (PARAMS.get('sync')) { PENDING_FROM = 'old'; TAB = 'card'; claimSync(PARAMS.get('sync'), true); }
+  if (PENDING_IMPORT && !PENDING_FROM && /[?&]import=/.test(location.search)) PENDING_FROM = 'link';
+  if (PARAMS.has('import') || PARAMS.has('sync') || PARAMS.has('here')) { const q = new URLSearchParams(location.search); ['import', 'sync', 'here'].forEach(k => q.delete(k)); history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '')); }
   const cached = cacheGet('platform'), cachedCard = cacheGet('card'), cx = cacheGet('cardx');
   const boot = api('boot').then(r => [r.me, { walls: r.created }, r]); // 首頁資料一次拿齊（r.walls 是我參與的代禱牆）
   const manageId = PARAMS.get('manage');

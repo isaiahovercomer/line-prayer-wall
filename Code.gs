@@ -35,6 +35,7 @@ function setup() {
   });
   ss.getSheetByName(SH.NAMES).getRange('E:E').setNumberFormat('@'); // 名字一律當文字
   sessionSheet();
+  oldSheet();
   const first = ss.getSheetByName('工作表1') || ss.getSheetByName('Sheet1');
   if (first && first.getLastRow() === 0 && ss.getSheets().length > 1) ss.deleteSheet(first);
 }
@@ -76,6 +77,8 @@ function doPost(e) {
       case 'editName':    out = { ok: true, wall: editName(user, req.wallId, req.entryId, req.name, req.group) }; break;
       case 'moveNames':   own(); out = { ok: true, wall: moveNames(user, req.wallId, req.entryIds, req.group) }; break;
       case 'adminOverview': requirePublisher(user); out = { ok: true, ...adminOverview(user) }; break;
+      case 'claimOld':    out = { ok: true, ...claimOld(user, req.code) }; break;
+      case 'importOld':   requirePublisher(user); out = { ok: true, ...importOld(req.lists) }; break;
       case 'myData':      out = { ok: true, ...myData(user) }; break;
       case 'deleteMyData': out = { ok: true, ...deleteMyData(user) }; break;
       default: throw new Error('未知的動作');
@@ -403,6 +406,11 @@ function deleteMyData(user) {
     });
     const ssh = sessionSheet(), sd = ssh.getDataRange().getValues();
     for (let i = sd.length - 1; i >= 1; i--) if (String(sd[i][1]) === user.userId) ssh.deleteRow(i + 1);
+    const osh = SpreadsheetApp.getActive().getSheetByName(OLD.SHEET); // 舊代禱卡：只清掉「接回者」紀錄，舊名單本身屬於同步碼持有人
+    if (osh && osh.getLastRow() > 1) {
+      const o = osh.getRange(2, 6, osh.getLastRow() - 1, 2).getValues();
+      o.forEach((r, i) => { if (String(r[0]).indexOf('(' + user.userId + ')') >= 0) osh.getRange(i + 2, 6, 1, 2).setValues([['', '']]); });
+    }
     return { entries };
   });
 }
@@ -649,5 +657,119 @@ function adminOverview(user) {
     v.fillers = Object.keys(names.filter(n => String(n[N.WALL]) === String(r[W.ID])).reduce((o, n) => (o[String(n[N.UID])] = 1, o), {})).length;
     return v;
   }).reverse();
-  return { walls, stats: { walls: walls.length, open: walls.filter(w => w.open).length, names: names.length, fillers: Object.keys(uids).length, cardUsers: cards.length, cardNames } };
+  return { walls, stats: { walls: walls.length, open: walls.filter(w => w.open).length, names: names.length, fillers: Object.keys(uids).length, cardUsers: cards.length, cardNames }, old: oldStats() };
+}
+
+/* ---------- 舊站「金香壇代禱卡」搬家 ----------
+   舊站名單存在 Firebase Firestore（專案 praycards-cb5d2，集合 lists），文件 id ＝ SHA-256(同步碼) 的十六進位字串。
+   「舊代禱卡」工作表：舊站匯出檔（praycards-export/1）匯進來的名單，以及有人用同步碼接回時順便存下的最新版本。
+   接回時先查舊站雲端（最新），查不到或舊站已關閉就用工作表裡的備份。 */
+const OLD = {
+  SHEET: '舊代禱卡',
+  HEAD: ['同步碼雜湊', '名單', '舊站更新時間', '名字數', '來源', '接回者', '接回時間'],
+  PROJECT: 'praycards-cb5d2',
+  CONFIG_URL: 'https://shc5556-hsinhua.github.io/praycards/config.js',
+};
+function oldSheet() {
+  const ss = SpreadsheetApp.getActive();
+  let sh = ss.getSheetByName(OLD.SHEET);
+  if (!sh) {
+    sh = ss.insertSheet(OLD.SHEET);
+    sh.getRange(1, 1, 1, OLD.HEAD.length).setValues([OLD.HEAD]).setFontWeight('bold');
+    sh.setFrozenRows(1);
+    sh.getRange('A:A').setNumberFormat('@');
+  }
+  return sh;
+}
+function normSyncCode(x) { return String(x || '').toUpperCase().replace(/[^A-Z2-9]/g, ''); }
+function sha256Hex(str) {
+  return Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, str, Utilities.Charset.UTF_8)
+    .map(b => ('0' + (b & 255).toString(16)).slice(-2)).join('');
+}
+function countNames(d) { let n = 0; ((d && d.days) || []).forEach(x => (x.names || []).forEach(v => { if (String(v || '').trim()) n++; })); return n; }
+function validOldData(d) { return d && Array.isArray(d.days) && d.days.length === 7; }
+
+/** 舊站的公開 API 金鑰（就寫在舊站 config.js 裡）；第一次讀到後存在指令碼屬性 */
+function oldApiKey() {
+  const props = PropertiesService.getScriptProperties();
+  let key = props.getProperty('OLD_FB_KEY');
+  if (key) return key;
+  try {
+    const t = UrlFetchApp.fetch(OLD.CONFIG_URL, { muteHttpExceptions: true }).getContentText();
+    const m = /apiKey\s*:\s*["']([^"']+)/.exec(t);
+    if (m) { key = m[1]; props.setProperty('OLD_FB_KEY', key); }
+  } catch (e) {}
+  return key || '';
+}
+/** 直接向舊站雲端讀一份名單（和舊站自己讀的方式一樣，用文件 id 讀單一份，不能列出全部） */
+function fetchOldLive(id) {
+  const key = oldApiKey(); if (!key) return null;
+  try {
+    const url = 'https://firestore.googleapis.com/v1/projects/' + OLD.PROJECT + '/databases/(default)/documents/lists/' + id + '?key=' + encodeURIComponent(key);
+    const r = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+    if (r.getResponseCode() !== 200) return null;
+    const f = JSON.parse(r.getContentText()).fields || {};
+    const data = parseJson((f.data && f.data.stringValue) || 'null', null);
+    if (!validOldData(data)) return null;
+    return { data, updatedAt: parseInt((f.updatedAt && f.updatedAt.integerValue) || '0', 10) || 0 };
+  } catch (e) { return null; }
+}
+function findOldRow(sh, id) {
+  const ids = sh.getLastRow() > 1 ? sh.getRange(2, 1, sh.getLastRow() - 1, 1).getValues() : [];
+  for (let i = 0; i < ids.length; i++) if (String(ids[i][0]) === id) return i + 2;
+  return 0;
+}
+
+/** 用舊站同步碼接回名單：回傳舊名單，前端讓使用者確認後合併到自己的代禱卡 */
+function claimOld(user, code) {
+  code = normSyncCode(code);
+  if (code.length !== 20) throw new Error('同步碼應該是 20 碼（英文字母和數字），請再確認一次');
+  const id = sha256Hex(code);
+  const live = fetchOldLive(id);
+  return withLock(() => {
+    const sh = oldSheet(), at = findOldRow(sh, id);
+    let rec = null;
+    if (at) {
+      const r = sh.getRange(at, 1, 1, OLD.HEAD.length).getValues()[0];
+      const data = parseJson(r[1], null);
+      if (validOldData(data)) rec = { data, updatedAt: Number(r[2]) || 0 };
+    }
+    if (live && (!rec || live.updatedAt >= rec.updatedAt)) rec = live;
+    if (!rec) return { found: false };
+    const vals = [id, JSON.stringify(rec.data), rec.updatedAt, countNames(rec.data), live ? '舊站雲端' : '匯出檔', (user.displayName || '') + ' (' + user.userId + ')', new Date()];
+    if (at) sh.getRange(at, 1, 1, vals.length).setValues([vals]); else sh.appendRow(vals);
+    return { found: true, data: rec.data, updatedAt: rec.updatedAt, nameCount: countNames(rec.data) };
+  });
+}
+
+/** 總管理者匯入舊站匯出檔（praycards-export/1 的 lists）；同一份以較新的為準，空名單略過 */
+function importOld(lists) {
+  if (!Array.isArray(lists)) throw new Error('匯入資料格式不對');
+  return withLock(() => {
+    const sh = oldSheet(), last = sh.getLastRow();
+    const data = last > 1 ? sh.getRange(2, 1, last - 1, OLD.HEAD.length).getValues() : [];
+    const index = {}; data.forEach((r, i) => { index[String(r[0])] = i; });
+    let added = 0, updated = 0, skipped = 0;
+    const append = [];
+    lists.slice(0, 2000).forEach(item => {
+      const id = String((item && item.id) || '').toLowerCase();
+      const d = item && item.data, ts = Number(item && item.updatedAt) || 0;
+      if (!/^[0-9a-f]{64}$/.test(id) || !validOldData(d) || !countNames(d)) { skipped++; return; }
+      const row = [id, JSON.stringify(d), ts, countNames(d), '匯出檔', '', ''];
+      if (id in index) {
+        const r = data[index[id]];
+        if ((Number(r[2]) || 0) >= ts) { skipped++; return; }
+        row[5] = r[5]; row[6] = r[6]; data[index[id]] = row; updated++;
+      } else { index[id] = -1; append.push(row); added++; }
+    });
+    if (updated) sh.getRange(2, 1, data.length, OLD.HEAD.length).setValues(data);
+    if (append.length) sh.getRange(sh.getLastRow() + 1, 1, append.length, OLD.HEAD.length).setValues(append);
+    return { added, updated, skipped, total: sh.getLastRow() - 1 };
+  });
+}
+function oldStats() {
+  const sh = SpreadsheetApp.getActive().getSheetByName(OLD.SHEET);
+  if (!sh || sh.getLastRow() < 2) return { lists: 0, claimed: 0 };
+  const v = sh.getRange(2, 6, sh.getLastRow() - 1, 1).getValues();
+  return { lists: v.length, claimed: v.filter(r => String(r[0]).trim()).length };
 }
