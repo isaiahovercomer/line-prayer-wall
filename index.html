@@ -489,10 +489,32 @@ const DEMO = LIFF_ID.startsWith('請填') || PARAMS.has('demo');
 /* 從舊站「金香壇代禱卡」搬家：舊網址轉過來時帶 #n=名單&s=同步碼。
    先存到這支手機（登入 LINE 會重新導向，網址上的 # 會不見），再把網址清乾淨。 */
 const MOVE_KEY = 'pw.move';
+/* 偵測這個瀏覽器有沒有用過舊的金香壇代禱卡：舊站的資料只有舊網址自己讀得到（瀏覽器規定不能跨網站讀），
+   所以第一次打開時先跳到舊站的 bridge.html 讀一下，馬上帶著名單（#n=、#s=）跳回來；每個瀏覽器只做一次。 */
+const OLDCHK_KEY = 'pw.oldchk';
+const OLD_BRIDGE = 'https://shc5556-hsinhua.github.io/praycards/bridge.html';
+async function probeOldSite() {
+  try {
+    if (DEMO || localStorage.getItem(OLDCHK_KEY) || getMove() || navigator.onLine === false) return false;
+    if (['wall', 'share', 'mydata', 'manage', 'install', 'liff.state', 'code', 'login', 'import', 'noprobe'].some(k => PARAMS.has(k))) return false;
+    const today = new Date().toDateString();
+    if (localStorage.getItem('pw.oldtry') === today) return false;   // bridge 還沒上線：一天最多試一次
+    localStorage.setItem('pw.oldtry', today);
+    const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), 2500);
+    const r = await fetch(OLD_BRIDGE, { method: 'HEAD', cache: 'no-store', signal: ctl.signal }); clearTimeout(t);
+    if (!r.ok) return false;
+    location.replace(OLD_BRIDGE + '?back=' + encodeURIComponent(location.origin + location.pathname + location.search));
+    return true;
+  } catch (e) { return false; }
+}
 function moveKey(n, sc) { let h = 2166136261; const t = String(n || '') + '|' + String(sc || ''); for (let i = 0; i < t.length; i++) { h ^= t.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; } return h.toString(36) + t.length.toString(36); }
 function moveDone() { try { return JSON.parse(localStorage.getItem('pw.moved') || '[]') || []; } catch (e) { return []; } }
 (function captureMove() {
   const h = new URLSearchParams(location.hash.replace(/^#/, ''));
+  if (h.has('old')) {   // 從舊站的 bridge.html 回來：不管有沒有名單，都記下「這個瀏覽器查過了」
+    try { localStorage.setItem(OLDCHK_KEY, '1'); } catch (e) {}
+    if (!h.get('n') && !h.get('s')) { history.replaceState(null, '', location.pathname + location.search); return; }
+  }
   const n = h.get('n') || (PARAMS.get('sync') ? String(PARAMS.get('import') || '').replace(/^GIA1\./, '') : ''), sc = (h.get('s') || PARAMS.get('sync') || '').toUpperCase().replace(/[^A-Z2-9]/g, '');
   if (!n && sc.length !== 20) return;
   if (location.hash) history.replaceState(null, '', location.pathname + location.search);
@@ -777,6 +799,7 @@ async function api(action, data = {}) {
 async function main() {
   try {
     if (PARAMS.has('install')) return installFlow();
+    if (await probeOldSite()) return;
     // 不在 LINE 的 LIFF 裡、也還沒登入過：先用「這支手機」模式打開代禱卡，不要一進來就要求登入（和舊的金香壇代禱卡一樣）
     GUEST = !DEMO && !getSession() && !PARAMS.has('liff.state') && !PARAMS.has('login') && !PARAMS.has('code') && !/LIFF\//i.test(navigator.userAgent)
       && !PARAMS.get('wall') && !PARAMS.get('share') && !PARAMS.has('mydata') && !PARAMS.has('manage');
