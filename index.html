@@ -866,6 +866,7 @@ function moveLanding() {
     <button class="btn send huge" id="mv-sync">同步代禱名單</button>
     <p class="muted small" style="margin-top:14px">會請你用 LINE 登入一次。之後名單就跟著你的 LINE，換手機也不會不見。</p>
     <button class="link small" id="mv-skip" style="margin-top:18px">先不要登入，只在這支手機使用</button>
+    <p class="small" style="margin-top:10px"><a href="move.html" target="_blank" rel="noopener">看圖文教學</a></p>
   </div></section>`);
   $('mv-sync').onclick = () => { $('mv-sync').disabled = true; $('mv-sync').textContent = '正在前往 LINE…'; loginNow('card'); };
   $('mv-skip').onclick = () => guestFlow();
@@ -1469,7 +1470,7 @@ function renderCard() {
       <p class="paste-sub">和「金香壇代禱卡」的名單代碼互通。把同伴傳來的代碼（GIA1. 開頭）貼在這裡，會合併到你的代禱卡，不會刪掉原有的名字。</p>
       <textarea class="inp" id="code-in" placeholder="GIA1.…"></textarea>
       <div class="actions"><button class="btn small send" id="code-import">匯入名單</button><button class="btn small" id="code-copy">複製我的名單代碼</button><button class="btn small" id="code-link">複製含名單的連結</button><button class="btn small ghost" id="code-close">收起</button></div>
-      <p class="paste-sub" style="margin-top:14px">以前在「金香壇代禱卡」設過<b>雲端同步碼</b>（20 碼）？輸入後就能把舊的雲端名單接回來。</p>
+      <p class="paste-sub" style="margin-top:14px">以前在「金香壇代禱卡」設過<b>雲端同步碼</b>（20 碼）？輸入後就能把舊的雲端名單接回來。<a href="move.html#w4" target="_blank" rel="noopener">教學</a></p>
       <div class="sync-row"><input class="inp" id="sync-in" placeholder="例如 ABCD-EFGH-JKLM-NPQR-STUV" autocomplete="off" autocapitalize="characters" spellcheck="false"><button class="btn small send" id="sync-go">接回舊名單</button></div>
       <p class="hint">你的代碼有 ${code.length} 個字，只會複製，不會公開。</p></div>`;
   } else {

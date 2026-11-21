@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F2F1E4">
+<title>舊代禱卡怎麼搬過來｜我的代禱卡．小區代禱牆</title>
+<meta name="description" content="金香壇代禱卡的舊名單，搬到「我的代禱卡．小區代禱牆」的幾種簡單方法，有圖示與動畫示範。">
+<meta property="og:title" content="舊代禱卡怎麼搬過來？">
+<meta property="og:description" content="一個按鈕就能把金香壇代禱卡的名單同步到新網站。">
+<meta property="og:image" content="https://praywall.pages.dev/img/hero-pom.jpg">
+<link rel="icon" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@400;700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<style>
+  :root {
+    --paper: #F2F1E4; --sheet: #FBFAF2; --ink: #2E322F; --muted: #6B7068; --line: #A8ACA4; --rule: #D9D8CC;
+    --olive: #B6A359; --olive-ink: #7E6F25; --stamp: #A12A3C; --stamp-deep: #6F1A28; --pill: #F1DDE0;
+    --kai: "LXGW WenKai TC", "Kaiti TC", "BiauKai", "DFKai-SB", serif;
+    --sans: "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--sans); font-size: 18px; line-height: 1.75; -webkit-text-size-adjust: 100%; }
+  a { color: var(--stamp); }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 0 18px 60px; }
+
+  header.hero { text-align: center; padding: 34px 6px 10px; }
+  .hero .pom { width: 76px; height: 76px; }
+  .hero h1 { font-family: var(--kai); font-size: 2rem; line-height: 1.3; margin: 8px 0 6px; color: var(--stamp); letter-spacing: .04em; }
+  .hero p { margin: 0 auto; max-width: 30em; color: var(--muted); }
+  .promise { display: inline-flex; gap: 8px; align-items: center; margin-top: 14px; background: var(--sheet); border: 1.5px solid var(--olive); border-radius: 999px; padding: 6px 16px; font-size: .95rem; color: var(--olive-ink); }
+
+  /* 我該用哪一種 */
+  .chooser { margin: 26px 0 8px; background: var(--sheet); border: 1.5px solid var(--rule); border-radius: 22px; padding: 18px; }
+  .chooser h2 { font-family: var(--kai); font-size: 1.35rem; margin: 0 0 10px; text-align: center; }
+  .choices { display: grid; gap: 10px; }
+  .choice { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--ink); background: #fff; border: 1.5px solid var(--rule); border-radius: 16px; padding: 12px 14px; transition: border-color .2s, transform .2s; }
+  .choice:hover, .choice:focus-visible { border-color: var(--stamp); transform: translateY(-1px); }
+  .choice .no { flex: none; width: 38px; height: 38px; border-radius: 50%; background: var(--stamp); color: #fff; display: grid; place-items: center; font-weight: 700; font-family: var(--kai); font-size: 1.15rem; }
+  .choice b { display: block; font-size: 1.02rem; }
+  .choice span { display: block; font-size: .88rem; color: var(--muted); line-height: 1.5; }
+  .choice .easy { margin-left: auto; flex: none; font-size: .78rem; background: var(--pill); color: var(--stamp-deep); border-radius: 999px; padding: 2px 10px; white-space: nowrap; }
+
+  /* 方法區塊 */
+  section.way { margin-top: 34px; background: var(--sheet); border: 1.5px solid var(--line); border-radius: 26px; padding: 22px 18px 18px; position: relative; scroll-margin-top: 12px; }
+  .way > .tag { position: absolute; top: -14px; left: 18px; background: var(--stamp); color: #fff; font-family: var(--kai); border-radius: 999px; padding: 2px 14px; font-size: 1rem; }
+  .way h2 { font-family: var(--kai); font-size: 1.5rem; line-height: 1.35; margin: 6px 0 4px; }
+  .way .who { color: var(--muted); margin: 0 0 14px; font-size: .95rem; }
+  .way-body { display: grid; gap: 18px; }
+  @media (min-width: 720px) { .way-body { grid-template-columns: 300px 1fr; align-items: start; } }
+
+  ol.steps { list-style: none; margin: 0; padding: 0; counter-reset: s; }
+  ol.steps li { counter-increment: s; position: relative; padding: 10px 10px 10px 54px; border-radius: 14px; margin-bottom: 6px; transition: background .25s; }
+  ol.steps li::before { content: counter(s); position: absolute; left: 10px; top: 10px; width: 32px; height: 32px; border-radius: 50%; background: #fff; border: 2px solid var(--stamp); color: var(--stamp); display: grid; place-items: center; font-weight: 700; font-size: .95rem; }
+  ol.steps li.on { background: var(--pill); }
+  ol.steps li.on::before { background: var(--stamp); color: #fff; }
+  ol.steps li b { color: var(--stamp-deep); }
+  .btnlike { display: inline-block; background: var(--stamp); color: #fff; border-radius: 999px; padding: 0 10px; font-size: .9em; font-weight: 700; line-height: 1.7; white-space: nowrap; }
+  .btnlike.ghost { background: #fff; color: var(--stamp); border: 1.5px solid var(--stamp); }
+  .note { margin: 12px 0 0; background: #fff; border-left: 4px solid var(--olive); border-radius: 10px; padding: 10px 14px; font-size: .92rem; color: #4B514D; }
+  .note b { color: var(--ink); }
+
+  /* 動畫手機 */
+  .player { margin: 0 auto; width: 100%; max-width: 300px; }
+  .phone { position: relative; width: 100%; aspect-ratio: 390 / 844; border-radius: 38px; background: #1f1d1c; padding: 10px; box-shadow: 0 16px 34px rgba(60, 40, 30, .22); cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; }
+  .screen { position: relative; width: 100%; height: 100%; border-radius: 29px; overflow: hidden; background: var(--paper); }
+  .screen img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .45s ease; }
+  .screen img.on { opacity: 1; }
+  .finger { position: absolute; width: 46px; height: 46px; margin: -23px 0 0 -23px; border-radius: 50%; background: rgba(161, 42, 60, .28); border: 3px solid rgba(161, 42, 60, .85); opacity: 0; pointer-events: none; z-index: 3; }
+  .finger.go { animation: tap 1.1s ease forwards; }
+  @keyframes tap { 0% { opacity: 0; transform: scale(1.6); } 30% { opacity: 1; transform: scale(1); } 55% { transform: scale(.78); } 75% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(1.5); } }
+  .ring { position: absolute; border: 3px solid var(--olive); border-radius: 14px; box-shadow: 0 0 0 4px rgba(182, 163, 89, .28); opacity: 0; pointer-events: none; z-index: 3; }
+  .ring.go { animation: ring 1.6s ease forwards; }
+  @keyframes ring { 0% { opacity: 0; } 25% { opacity: 1; } 60% { opacity: .55; } 85% { opacity: 1; } 100% { opacity: 1; } }
+  .cap { min-height: 3.4em; text-align: center; margin: 12px 4px 4px; font-weight: 700; color: var(--stamp-deep); line-height: 1.6; }
+  .ctrl { display: flex; justify-content: center; align-items: center; gap: 10px; }
+  .ctrl button { font: inherit; font-size: .9rem; border: 1.5px solid var(--stamp); background: #fff; color: var(--stamp); border-radius: 999px; padding: 4px 14px; cursor: pointer; }
+  .dots { display: flex; gap: 6px; }
+  .dots i { width: 8px; height: 8px; border-radius: 50%; background: var(--rule); transition: background .2s, transform .2s; }
+  .dots i.on { background: var(--stamp); transform: scale(1.25); }
+
+  /* 縮圖（不想看動畫也能一張張看） */
+  details.shots { margin-top: 14px; }
+  details.shots summary { cursor: pointer; color: var(--stamp); font-size: .95rem; }
+  .thumbs { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin-top: 10px; }
+  .thumbs figure { margin: 0; }
+  .thumbs img { width: 100%; border-radius: 12px; border: 1px solid var(--rule); display: block; }
+  .thumbs figcaption { font-size: .8rem; color: var(--muted); text-align: center; line-height: 1.4; margin-top: 4px; }
+
+  /* 常見問題 */
+  .faq { margin-top: 38px; }
+  .faq h2 { font-family: var(--kai); font-size: 1.5rem; text-align: center; margin: 0 0 12px; }
+  .faq details { background: var(--sheet); border: 1.5px solid var(--rule); border-radius: 16px; padding: 12px 16px; margin-bottom: 10px; }
+  .faq summary { cursor: pointer; font-weight: 700; }
+  .faq details p { margin: 8px 0 0; color: #4B514D; }
+
+  .cta { text-align: center; margin: 34px 0 0; }
+  .cta a { display: inline-block; text-decoration: none; background: var(--stamp); color: #fff; border-radius: 999px; padding: 14px 28px; font-weight: 700; font-size: 1.1rem; box-shadow: 0 6px 16px rgba(161, 42, 60, .25); }
+  footer { text-align: center; color: var(--muted); font-size: .85rem; margin-top: 30px; }
+  @media (prefers-reduced-motion: reduce) { .screen img { transition: none; } .finger.go, .ring.go { animation: none; opacity: 1; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <svg class="pom" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 12 l6 9 9-4-2 10" fill="#7a1d2c"/><circle cx="50" cy="56" r="36" fill="#A12A3C"/><circle cx="50" cy="56" r="27" fill="#F4E3DF"/><g fill="#A12A3C"><circle cx="40" cy="46" r="4.6"/><circle cx="52" cy="42" r="4.6"/><circle cx="62" cy="50" r="4.6"/><circle cx="46" cy="57" r="4.6"/><circle cx="58" cy="61" r="4.6"/><circle cx="38" cy="66" r="4.6"/><circle cx="50" cy="70" r="4.6"/><circle cx="63" cy="71" r="4.4"/></g><path d="M64 20c10-8 20-6 24-2-6 6-16 8-24 2z" fill="#8DB38A"/></svg>
+  <h1>舊代禱卡怎麼搬過來？</h1>
+  <p>「金香壇代禱卡」已經搬到新家「我的代禱卡．小區代禱牆」。你原本的名單，大多只要按<b>一個按鈕</b>就搬好了。</p>
+  <div class="promise">✓ 都是「合併」：原有的名字不會被刪掉、也不會重複</div>
+</header>
+
+<nav class="chooser" aria-label="選擇適合你的方法">
+  <h2>我該用哪一種？</h2>
+  <div class="choices">
+    <a class="choice" href="#w1"><span class="no">1</span><div><b>點舊的網址或桌面圖示</b><span>會自動跳到新網站</span></div><span class="easy">最簡單</span></a>
+    <a class="choice" href="#w2"><span class="no">2</span><div><b>直接打開新網站</b><span>同一支手機、以前用過舊代禱卡</span></div><span class="easy">一個按鈕</span></a>
+    <a class="choice" href="#w3"><span class="no">3</span><div><b>從 LINE 群組的圖卡打開</b><span>已經用 LINE 登入過</span></div><span class="easy">不用按</span></a>
+    <a class="choice" href="#w4"><span class="no">4</span><div><b>換了新手機</b><span>用舊代禱卡的「同步碼」接回來</span></div></a>
+    <a class="choice" href="#w5"><span class="no">5</span><div><b>別人傳名單給我／自己複製名單</b><span>用「名單代碼」（GIA1. 開頭）</span></div></a>
+  </div>
+</nav>
+
+<section class="way" id="w1">
+  <span class="tag">方法 1</span>
+  <h2>點舊的網址或桌面圖示</h2>
+  <p class="who">適合：手機桌面上還有舊的「金香壇代禱卡」圖示，或收藏了舊網址的人。</p>
+  <div class="way-body">
+    <div class="player" data-frames="redirect|自動跳到新網站，會把這支手機上的名單一起帶過去;landing|按大大的「同步代禱名單」;line|LINE 會跳出確認畫面，按「許可」;synced|看到「代禱名單同步好了」就完成了;card-after|名字都在代禱卡上了"></div>
+    <div>
+      <ol class="steps">
+        <li>照平常一樣，點舊的圖示或舊網址。畫面會自動跳到新網站。</li>
+        <li>按紅色大按鈕 <span class="btnlike">同步代禱名單</span>。</li>
+        <li>LINE 會問你要不要讓這個網站使用 LINE，按 <b>「許可」</b>。（只有第一次會問）</li>
+        <li>回到代禱卡，看到 <b>「✓ 代禱名單同步好了」</b> 就完成了。</li>
+        <li>名字都在原來的日子裡：主日家人、週一親戚……一個都沒少。</li>
+      </ol>
+      <p class="note"><b>還沒按也沒關係：</b>每次從舊網址進來，都會再出現這個按鈕，直到同步完成為止。</p>
+      <p class="note"><b>不想用 LINE 登入？</b>可以按下面的「先不要登入，只在這支手機使用」。名字會先放在這支手機上，但畫面會一直提醒你「同步代禱名單」；換手機或清除瀏覽器資料就會不見，建議還是同步到 LINE。</p>
+    </div>
+  </div>
+</section>
+
+<section class="way" id="w2">
+  <span class="tag">方法 2</span>
+  <h2>直接打開新網站</h2>
+  <p class="who">適合：以前在<b>這支手機的這個瀏覽器</b>用過舊代禱卡，現在直接打開 praywall.pages.dev 的人。</p>
+  <div class="way-body">
+    <div class="player" data-frames="bridge|第一次打開時，會先檢查這支手機上有沒有舊代禱卡（約 1 秒）;landing|找到舊名單，就會出現「同步代禱名單」;line|按「許可」用 LINE 登入;synced|同步好了"></div>
+    <div>
+      <ol class="steps">
+        <li>打開新網站，畫面會短暫顯示「正在檢查這支手機上舊的代禱卡…」，馬上就回來。</li>
+        <li>如果找到舊名單，會出現 <span class="btnlike">同步代禱名單</span>，按下去。</li>
+        <li>LINE 跳出確認畫面，按 <b>「許可」</b>。</li>
+        <li>看到「✓ 代禱名單同步好了」就完成了。</li>
+      </ol>
+      <p class="note"><b>為什麼要「同一個瀏覽器」？</b>舊名單存在你當初用的瀏覽器裡（例如 Safari 或 Chrome）。換了瀏覽器、或在 LINE 裡打開，可能讀不到，請改用<a href="#w1">方法 1</a>（點舊網址）或<a href="#w4">方法 4</a>（同步碼）。</p>
+    </div>
+  </div>
+</section>
+
+<section class="way" id="w3">
+  <span class="tag">方法 3</span>
+  <h2>從 LINE 群組的圖卡打開</h2>
+  <p class="who">適合：已經在 LINE 裡用過新網站（登入過）的人。</p>
+  <div class="way-body">
+    <div class="player" data-frames="bridge|在 LINE 裡打開，自動檢查舊代禱卡;synced|有舊名單就自動同步，什麼都不用按;card-after|名字都在代禱卡上了"></div>
+    <div>
+      <ol class="steps">
+        <li>在小區或小排的 LINE 群組，點代禱牆圖卡，或點「我的代禱卡」入口。</li>
+        <li>如果這支手機的 LINE 裡有舊代禱卡的名單，會<b>自動同步</b>，不用按任何按鈕。</li>
+        <li>看到「✓ 代禱名單同步好了」，按 <span class="btnlike ghost">好</span> 收起來。</li>
+      </ol>
+      <p class="note"><b>已經登入過的人，從方法 1、2 進來也一樣：</b>不會再出現按鈕，直接自動同步。</p>
+    </div>
+  </div>
+</section>
+
+<section class="way" id="w4">
+  <span class="tag">方法 4</span>
+  <h2>換了新手機：用「同步碼」接回</h2>
+  <p class="who">適合：以前在舊代禱卡設過「雲端同步」，現在換了手機或換了瀏覽器的人。同步碼是 20 個英文字母和數字。</p>
+  <div class="way-body">
+    <div class="player" data-frames="old-main|在舊代禱卡點「同步設定」;old-sync|按「複製同步碼」（或把同步碼抄下來）;new-card|到新網站「我的代禱卡」，按「名單代碼」;code-sync|把同步碼貼在下面的格子，按「接回舊名單」;code-sync-done|看到「已接回舊名單」就完成了"></div>
+    <div>
+      <ol class="steps">
+        <li>找出你的同步碼：在舊代禱卡最下面點 <b>「☁ 同步設定」</b>。</li>
+        <li>按 <span class="btnlike ghost">複製同步碼</span>，或把那 20 碼抄下來。</li>
+        <li>打開新網站的「我的代禱卡」，往下找到 <span class="btnlike ghost">名單代碼</span>，按下去。</li>
+        <li>在「以前在金香壇代禱卡設過雲端同步碼」下面的格子貼上（或輸入）同步碼，按 <span class="btnlike">接回舊名單</span>。</li>
+        <li>看到「已接回舊名單，加入 N 個名字」就完成了。</li>
+      </ol>
+      <p class="note"><b>舊手機不見了，也忘了同步碼？</b>舊網址還保留舊版：<a href="https://shc5556-hsinhua.github.io/praycards/old.html">打開舊版代禱卡</a>，在任何一支設過同步的手機上就看得到同步碼。輸入時大小寫、有沒有「-」都沒關係。</p>
+    </div>
+  </div>
+</section>
+
+<section class="way" id="w5">
+  <span class="tag">方法 5</span>
+  <h2>用「名單代碼」（GIA1. 開頭）</h2>
+  <p class="who">適合：同伴把名單傳給你，或你想把舊代禱卡的名單複製過來。新舊網站的名單代碼互通。</p>
+  <div class="way-body">
+    <div class="player" data-frames="old-code|在舊代禱卡按「複製名單代碼」;new-card|到新網站「我的代禱卡」，按「名單代碼」;code-paste|把代碼貼在上面的大格子，按「匯入名單」;code-paste-done|看到「已匯入 N 個名字」就完成了"></div>
+    <div>
+      <ol class="steps">
+        <li>在舊代禱卡按 <span class="btnlike ghost">複製名單代碼</span>（同伴傳來的代碼就直接複製）。</li>
+        <li>打開新網站的「我的代禱卡」，按 <span class="btnlike ghost">名單代碼</span>。</li>
+        <li>在上面的大格子長按、貼上，按 <span class="btnlike">匯入名單</span>。</li>
+        <li>看到「已匯入 N 個名字」就完成了。</li>
+      </ol>
+      <p class="note"><b>舊代禱卡的「含名單的連結」</b>也可以用：直接點那個連結，就會跳到新網站並把名單帶過來。</p>
+    </div>
+  </div>
+</section>
+
+<section class="faq">
+  <h2>常見問題</h2>
+  <details><summary>同步會不會把我在新網站加的名字蓋掉？</summary><p>不會。每一種方法都是「合併」：把舊名單裡新網站還沒有的名字加進來，原有的名字都保留，同一個名字不會出現兩次。</p></details>
+  <details><summary>為什麼要用 LINE 登入？</summary><p>名單跟著你的 LINE 帳號存到雲端，換手機、清除瀏覽器資料都不會不見；也可以用小區、小排的代禱牆。第一次登入時 LINE 會請你按「許可」，之後就不用再按。</p></details>
+  <details><summary>我按了同步，可是說「舊代禱卡裡沒有找到名字」？</summary><p>代表這個瀏覽器裡沒有舊名單。請改用<a href="#w4">方法 4</a>（同步碼）或<a href="#w5">方法 5</a>（名單代碼），在你當初用舊代禱卡的那支手機上操作。</p></details>
+  <details><summary>同步碼會被別人看到嗎？</summary><p>不會。新網站和舊網站一樣，只保存由同步碼算出來、無法反推回去的代號，不保存同步碼本身。請不要把同步碼傳給別人。</p></details>
+  <details><summary>以前加到手機桌面的圖示還能用嗎？</summary><p>可以，點了會自動跳到新網站。同步好之後，建議在新網站重新「加入主畫面」，以後就直接打開新家。</p></details>
+  <details><summary>還是不會操作怎麼辦？</summary><p>請把這一頁傳給小排裡熟悉手機的弟兄姊妹，請他陪你按一次；用<a href="#w1">方法 1</a> 通常只要按兩下。</p></details>
+</section>
+
+<div class="cta"><a href="https://liff.line.me/2012412693-LFVpYPMf?tab=card">打開我的代禱卡</a></div>
+<footer>我的代禱卡．小區代禱牆　·　<a href="./">praywall.pages.dev</a><br>圖中的 LINE 確認畫面為示意圖，實際畫面依手機而不同。</footer>
+</div>
+
+<script>
+/* 每個方法一台「動畫手機」：一張張截圖輪播，該按的地方出現手指點按，完成的地方出現框框 */
+const META = {"redirect":{},"bridge":{},"landing":{"tap":{"x":50,"y":41.5}},"guest":{"tap":{"x":50,"y":67.7}},"synced":{"ring":{"x":50,"y":55,"w":91.8,"h":15.2}},"card-after":{"ring":{"x":50,"y":50.5,"w":91.8,"h":6.2}},"new-card":{"tap":{"x":43.5,"y":57.3}},"code-sync":{"tap":{"x":74,"y":52}},"code-sync-done":{"ring":{"x":50,"y":84.5,"w":50,"h":8.3}},"code-paste":{"tap":{"x":25.8,"y":64.1}},"code-paste-done":{"ring":{"x":50,"y":85.9,"w":38.5,"h":5.5}},"old-main":{"tap":{"x":51.8,"y":78.3}},"old-sync":{"tap":{"x":25.9,"y":96.6}},"old-code":{"tap":{"x":23,"y":64.5}},"line":{"tap":{"x":50,"y":88.4}}};
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+document.querySelectorAll('.player').forEach(el => {
+  const frames = el.dataset.frames.split(';').map(s => { const [img, cap] = s.split('|'); return { img, cap }; });
+  const steps = el.closest('.way').querySelectorAll('ol.steps li');
+  el.innerHTML = `<div class="phone" role="button" tabindex="0" aria-label="動畫示範，點一下看下一步"><div class="screen">${frames.map((f, i) => `<img src="guide/${f.img}.jpg" alt="${f.cap}" loading="lazy" decoding="async"${i ? '' : ' class="on"'}>`).join('')}<div class="finger"></div><div class="ring"></div></div></div>
+    <p class="cap" aria-live="polite"></p><div class="ctrl"><button type="button" class="pp">暫停</button><div class="dots">${frames.map(() => '<i></i>').join('')}</div><button type="button" class="nx">下一步</button></div>`;
+  const imgs = el.querySelectorAll('img'), dots = el.querySelectorAll('.dots i'), finger = el.querySelector('.finger'), ring = el.querySelector('.ring'), cap = el.querySelector('.cap'), pp = el.querySelector('.pp');
+  let i = 0, timer = null, playing = !REDUCED, visible = false;
+  function show(n) {
+    i = (n + frames.length) % frames.length;
+    imgs.forEach((im, k) => im.classList.toggle('on', k === i));
+    dots.forEach((d, k) => d.classList.toggle('on', k === i));
+    steps.forEach((s, k) => s.classList.toggle('on', k === Math.min(i, steps.length - 1) && frames.length > 1));
+    cap.textContent = frames[i].cap;
+    finger.classList.remove('go'); ring.classList.remove('go'); void finger.offsetWidth;
+    const m = META[frames[i].img] || {};
+    if (m.tap) { finger.style.left = m.tap.x + '%'; finger.style.top = m.tap.y + '%'; setTimeout(() => finger.classList.add('go'), REDUCED ? 0 : 700); }
+    if (m.ring) { Object.assign(ring.style, { left: (m.ring.x - m.ring.w / 2) + '%', top: (m.ring.y - m.ring.h / 2) + '%', width: m.ring.w + '%', height: m.ring.h + '%' }); setTimeout(() => ring.classList.add('go'), REDUCED ? 0 : 500); }
+    schedule();
+  }
+  function schedule() { clearTimeout(timer); if (playing && visible) timer = setTimeout(() => show(i + 1), i === frames.length - 1 ? 4200 : 3000); }
+  function setPlay(p) { playing = p; pp.textContent = p ? '暫停' : '播放'; schedule(); }
+  el.querySelector('.phone').addEventListener('click', () => { setPlay(false); show(i + 1); });
+  el.querySelector('.phone').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setPlay(false); show(i + 1); } });
+  el.querySelector('.nx').onclick = () => { setPlay(false); show(i + 1); };
+  pp.onclick = () => setPlay(!playing);
+  // 捲到畫面上才開始播，離開就停，省電也不會錯過開頭
+  new IntersectionObserver(es => es.forEach(e => { const was = visible; visible = e.isIntersecting; if (visible && !was) show(0); else schedule(); }), { threshold: 0.45 }).observe(el);
+  cap.textContent = frames[0].cap;
+  // 不看動畫也能一張張看
+  const det = document.createElement('details'); det.className = 'shots';
+  det.innerHTML = `<summary>看全部截圖</summary><div class="thumbs">${frames.map((f, k) => `<figure><img src="guide/${f.img}.jpg" alt="${f.cap}" loading="lazy"><figcaption>${k + 1}. ${f.cap}</figcaption></figure>`).join('')}</div>`;
+  el.closest('.way-body').lastElementChild.appendChild(det);
+});
+</script>
+</body>
+</html>
