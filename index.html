@@ -515,7 +515,7 @@ function moveDone() { try { return JSON.parse(localStorage.getItem('pw.moved') |
     try { localStorage.setItem(OLDCHK_KEY, '1'); } catch (e) {}
     if (!h.get('n') && !h.get('s')) { history.replaceState(null, '', location.pathname + location.search); return; }
   }
-  const n = h.get('n') || (PARAMS.get('sync') ? String(PARAMS.get('import') || '').replace(/^GIA1\./, '') : ''), sc = (h.get('s') || PARAMS.get('sync') || '').toUpperCase().replace(/[^A-Z2-9]/g, '');
+  const n = h.get('n') || (PARAMS.get('sync') || PARAMS.has('mv') ? String(PARAMS.get('import') || '').replace(/^GIA1\./, '') : ''), sc = (h.get('s') || PARAMS.get('sync') || '').toUpperCase().replace(/[^A-Z2-9]/g, '');
   if (!n && sc.length !== 20) return;
   if (location.hash) history.replaceState(null, '', location.pathname + location.search);
   if (moveDone().includes(moveKey(n, sc))) return;   // 這份已經同步到 LINE 帳號過了，舊網址再帶來就不必再問
@@ -787,9 +787,9 @@ async function api(action, data = {}) {
     if (j.error === 'SESSION_EXPIRED') {
       setSession(null); await LIFF_READY;
       if (liff.isLoggedIn()) return api(action, data);
-      liff.login({ redirectUri: location.href }); throw new Error('登入已過期，正在重新登入');
+      doLogin(); throw new Error('登入已過期，正在重新登入');
     }
-    if (j.error === 'TOKEN_EXPIRED') { await LIFF_READY; liff.logout(); liff.login({ redirectUri: location.href }); throw new Error('登入已過期，正在重新登入'); }
+    if (j.error === 'TOKEN_EXPIRED') { await LIFF_READY; liff.logout(); doLogin(); throw new Error('登入已過期，正在重新登入'); }
     throw new Error(j.error);
   }
   return j;
@@ -800,6 +800,8 @@ async function main() {
   try {
     if (PARAMS.has('install')) return installFlow();
     if (await probeOldSite()) return;
+    // 在 LINE 聊天室點開的「LINE 內建瀏覽器」（不是 LIFF 視窗）：改用 LIFF 網址打開，LINE 會自動登入，不必跳登入頁
+    if (!DEMO && IN_LINE_APP && !getSession() && !CAME_VIA_LIFF && !PARAMS.has('code') && hopOnce()) { location.replace(liffOpenUrl()); return; }
     // 不在 LINE 的 LIFF 裡、也還沒登入過：先用「這支手機」模式打開代禱卡，不要一進來就要求登入（和舊的金香壇代禱卡一樣）
     GUEST = !DEMO && !getSession() && !PARAMS.has('liff.state') && !PARAMS.has('login') && !PARAMS.has('code') && !/LIFF\//i.test(navigator.userAgent)
       && !PARAMS.get('wall') && !PARAMS.get('share') && !PARAMS.has('mydata') && !PARAMS.has('manage');
@@ -808,9 +810,13 @@ async function main() {
     if (GUEST) return guestFlow();
     if (!DEMO && (!getSession() || PARAMS.has('liff.state'))) {
       // 第一次登入，或 LINE 帶著 liff.state 轉址時，才需要等 LINE 初始化
-      await LIFF_READY;
-      if (!liff.isLoggedIn() && !getSession()) { liff.login({ redirectUri: location.href }); return; }
+      try { await LIFF_READY; } catch (e) { if (PARAMS.has('code')) return loginFailed(); throw e; }
+      if (!liff.isLoggedIn() && !getSession()) {
+        if (PARAMS.has('code') || PARAMS.has('error')) return loginFailed();   // 剛從 LINE 登入回來卻沒登入成功：不要再自動重登（會一直繞圈）
+        doLogin(); return;
+      }
       if (liff.isLoggedIn() && !getSession()) { try { setSession(await api('session')); } catch (e) {} }
+      if (getSession()) { try { sessionStorage.removeItem('pw.logintry'); sessionStorage.removeItem('pw.liffhop'); } catch (e) {} }
     }
     const wallId = PARAMS.get('wall') || (DEMO && ['wall', 'invite'].includes(PARAMS.get('demo')) ? 'W1' : '');
     const shareId = PARAMS.get('share');
@@ -831,9 +837,60 @@ const GUEST_KEY = 'pw.guest.card';
 const guestCard = () => { try { const c = JSON.parse(localStorage.getItem(GUEST_KEY) || 'null'); return c && c.days && c.days.length === 7 ? c : null; } catch (e) { return null; } };
 const blankCardLocal = () => ({ days: ['家人', '親戚', '好友', '同事(學)', '鄰居', '聖徒', '馬路'].map(cat => ({ cat, names: [] })) });
 function loginNow(tab) {
-  const back = location.origin + location.pathname + `?login=1&tab=${tab || TAB || 'card'}`;
   toast('正在前往 LINE 登入…');
-  LIFF_READY.then(() => liff.login({ redirectUri: back })).catch(() => toast('LINE 登入元件載入失敗，請稍後再試，或改用「在 LINE 裡打開」'));
+  try { sessionStorage.removeItem('pw.logintry'); } catch (e) {}   // 使用者自己按的：重新計算
+  if (IN_LINE_APP && !CAME_VIA_LIFF) { location.href = liffOpenUrl(); return; }
+  LIFF_READY.then(() => doLogin({ login: '1', tab: tab || TAB || 'card' })).catch(() => loginFailed());
+}
+
+/* ---------- 登入（防止一直重複登入） ----------
+   之前的問題：從 LINE 登入回來時網址帶著 code=…，若沒登入成功（例如在 LINE 內建瀏覽器裡、或登入後被開到別的瀏覽器），
+   程式又用「目前網址」（含舊的 code）再登入一次，就一直繞圈，最後 LINE 顯示 400 Bad Request。
+   現在：登入前先把 code 等參數清掉；同一個分頁最多自動登入 2 次，還不成功就顯示說明頁；在 LINE 內建瀏覽器改用 LIFF 網址打開。 */
+const IN_LINE_APP = /\bLine\//i.test(navigator.userAgent) && !/LIFF\//i.test(navigator.userAgent);
+const CAME_VIA_LIFF = PARAMS.has('pwl') || /pwl(=|%3D)1/.test(PARAMS.get('liff.state') || '');
+const LOGIN_PARAMS = ['code', 'state', 'liffClientId', 'liffRedirectUri', 'error', 'error_description', 'friendship_status_changed'];
+function hopOnce() { try { if (sessionStorage.getItem('pw.liffhop')) return false; sessionStorage.setItem('pw.liffhop', '1'); } catch (e) {} return true; }
+function cleanHref(extra) {
+  const u = new URL(location.href);
+  LOGIN_PARAMS.forEach(k => u.searchParams.delete(k)); u.hash = '';
+  if (extra) Object.keys(extra).forEach(k => u.searchParams.set(k, extra[k]));
+  return u.toString();
+}
+/** 用 LIFF 網址打開（在 LINE 裡會自動登入）；把這支手機上還沒同步的名單和同步碼一起帶過去 */
+function liffOpenUrl() {
+  const q = new URLSearchParams();
+  ['tab', 'wall', 'share', 'manage', 'mydata'].forEach(k => { if (PARAMS.get(k) !== null) q.set(k, PARAMS.get(k)); });
+  if (!q.has('wall') && !q.has('share') && !q.has('tab')) q.set('tab', 'card');
+  const m = getMove(), c = guestCard();
+  let d = m && m.n ? decodeList('#n=' + m.n) : null;
+  if (d) d = mergeCard(blankCardLocal(), d).card;   // 去掉空格子，網址短一點
+  if (c && countList(c)) d = d ? mergeCard(d, c).card : c;
+  if (d && countList(d)) { q.set('import', encodeList(d)); q.set('mv', '1'); }
+  if (m && m.s) q.set('sync', m.s);
+  q.set('pwl', '1');
+  return `https://liff.line.me/${LIFF_ID}?${q}`;
+}
+function doLogin(extra) {
+  let n = 0;
+  try { n = +sessionStorage.getItem('pw.logintry') || 0; sessionStorage.setItem('pw.logintry', String(n + 1)); } catch (e) {}
+  if (n >= 2) return loginFailed();
+  liff.login({ redirectUri: cleanHref(extra) });
+}
+function loginFailed() {
+  try { sessionStorage.removeItem('pw.logintry'); } catch (e) {}
+  if (LOGIN_PARAMS.some(k => PARAMS.has(k))) history.replaceState(null, '', cleanHref());
+  view(`<section class="solo"><div class="msg-card move-card">
+    <div class="move-pom">${pomSvg()}</div>
+    <h1>LINE 登入沒有完成</h1>
+    <p>沒關係，你的名單還在。請按下面的大按鈕，改在 LINE 裡打開，LINE 會自動幫你登入並同步名單。</p>
+    <a class="btn send huge" href="${esc(liffOpenUrl())}">在 LINE 裡打開</a>
+    <button class="btn ghost" id="lf-retry" style="margin-top:12px">再試一次登入</button>
+    <button class="link small" id="lf-guest" style="margin-top:16px">先只在這支手機使用</button>
+    <p class="muted small" style="margin-top:14px">也可以在代禱卡的「名單代碼」輸入舊的同步碼接回名單。<a href="move.html" target="_blank" rel="noopener">看圖文教學</a></p>
+  </div></section>`);
+  $('lf-retry').onclick = () => { try { sessionStorage.removeItem('pw.logintry'); } catch (e) {} LIFF_READY.then(() => doLogin({ login: '1', tab: 'card' })).catch(() => toast('LINE 登入元件載入失敗，請改用「在 LINE 裡打開」')); };
+  $('lf-guest').onclick = () => { GUEST = true; guestFlow(); };
 }
 const openInLineUrl = () => { const c = guestCard(); const q = new URLSearchParams({ tab: 'card' }); if (c && countList(c)) q.set('import', encodeList(c)); return `https://liff.line.me/${LIFF_ID}?${q}`; };
 function guestNote() {
@@ -1142,7 +1199,7 @@ async function postWall(w, news) {
 async function share(w) {
   if (DEMO) { toast('預覽模式：正式版會在這裡跳出群組選單'); return false; }
   try { await LIFF_READY; } catch (e) { toast(e.message); return false; }
-  if (!liff.isLoggedIn()) { toast('發送到群組前需要登入 LINE 一次'); setTimeout(() => liff.login({ redirectUri: location.href }), 600); return false; }
+  if (!liff.isLoggedIn()) { toast('發送到群組前需要登入 LINE 一次'); setTimeout(() => doLogin(), 600); return false; }
   if (!liff.isApiAvailable('shareTargetPicker')) { toast('無法開啟群組選單，請確認 LIFF 已開啟 Share target picker'); return false; }
   try {
     const res = await liff.shareTargetPicker([buildWallFlex(w)], { isMultiple: true });
@@ -1440,7 +1497,7 @@ function cardText(i) {
 async function persistCard(card, msg) {
   if (GUEST) { CARD = card; try { localStorage.setItem(GUEST_KEY, JSON.stringify(card)); } catch (e) {} if (msg) toast(msg); return; }
   CARD = card; cacheSet('card', CARD);
-  try { const r = await api('saveCard', { card }); CARD = r.card; cacheSet('card', CARD); if (msg) toast(msg); }
+  try { const r = await api('saveCard', { card }); CARD = r.card || card; cacheSet('card', CARD); if (msg) toast(msg); }
   catch (e) { toast('儲存失敗：' + e.message); }
 }
 
@@ -1872,10 +1929,10 @@ async function platformFlow() {
   resetTheme();
   try { const saved = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null'); if (saved && saved.groups) draft = { ...blankDraft(), ...saved }; } catch (e) {}
   const imp = PARAMS.get('import') || (/[#&]n=/.test(location.hash) ? location.hash : '');
-  if (imp) { PENDING_IMPORT = decodeList(imp); if (PENDING_IMPORT) TAB = 'card'; }
+  if (imp && !PARAMS.has('mv')) { PENDING_IMPORT = decodeList(imp); if (PENDING_IMPORT) TAB = 'card'; }   // mv=1：搬家帶來的，交給自動同步
   if (needMigrate()) { TAB = 'card'; MIGRATING = { state: 'busy' }; }
   if (PENDING_IMPORT && !PENDING_FROM && /[?&]import=/.test(location.search)) PENDING_FROM = 'link';
-  if (PARAMS.has('import') || PARAMS.has('sync') || PARAMS.has('here') || PARAMS.has('login')) { const q = new URLSearchParams(location.search); ['import', 'sync', 'here', 'login'].forEach(k => q.delete(k)); history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '')); }
+  if (['import', 'sync', 'here', 'login', 'mv', 'pwl'].some(k => PARAMS.has(k))) { const q = new URLSearchParams(location.search); ['import', 'sync', 'here', 'login', 'mv', 'pwl'].forEach(k => q.delete(k)); history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '')); }
   const cached = cacheGet('platform'), cachedCard = cacheGet('card'), cx = cacheGet('cardx');
   const boot = api('boot').then(r => [r.me, { walls: r.created }, r]); // 首頁資料一次拿齊（r.walls 是我參與的代禱牆）
   const manageId = PARAMS.get('manage');
