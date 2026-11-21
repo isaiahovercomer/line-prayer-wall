@@ -799,9 +799,15 @@ async function api(action, data = {}) {
 async function main() {
   try {
     if (PARAMS.has('install')) return installFlow();
+    if (!DEMO && isWebLoginReturn()) return webLoginReturn();
     if (await probeOldSite()) return;
-    // 在 LINE 聊天室點開的「LINE 內建瀏覽器」（不是 LIFF 視窗）：改用 LIFF 網址打開，LINE 會自動登入，不必跳登入頁
-    if (!DEMO && IN_LINE_APP && !getSession() && !CAME_VIA_LIFF && !PARAMS.has('code') && hopOnce()) { location.replace(liffOpenUrl()); return; }
+    if (!DEMO && !getSession() && !IN_LIFF_UA && !PARAMS.has('liff.state') && !PARAMS.has('code')) await loadLoginConfig();
+    // 在 LINE 聊天室點開的「LINE 內建瀏覽器」（不是 LIFF 視窗）：LIFF 的登入在這裡會出現 400 錯誤，
+    // 有網頁版 LINE Login 就直接用（在 LINE 裡會自動登入，不用按）；沒有就先試著改用 LIFF 網址打開
+    if (!DEMO && IN_LINE_APP && !getSession() && !PARAMS.has('code')) {
+      if (WEB_LOGIN) { doLogin(); return; }
+      if (!CAME_VIA_LIFF && hopOnce()) { location.replace(liffOpenUrl()); return; }
+    }
     // 不在 LINE 的 LIFF 裡、也還沒登入過：先用「這支手機」模式打開代禱卡，不要一進來就要求登入（和舊的金香壇代禱卡一樣）
     GUEST = !DEMO && !getSession() && !PARAMS.has('liff.state') && !PARAMS.has('login') && !PARAMS.has('code') && !/LIFF\//i.test(navigator.userAgent)
       && !PARAMS.get('wall') && !PARAMS.get('share') && !PARAMS.has('mydata') && !PARAMS.has('manage');
@@ -846,8 +852,8 @@ const blankCardLocal = () => ({ days: ['家人', '親戚', '好友', '同事(學
 function loginNow(tab) {
   toast('正在前往 LINE 登入…');
   try { sessionStorage.removeItem('pw.logintry'); } catch (e) {}   // 使用者自己按的：重新計算
-  if (IN_LINE_APP && !CAME_VIA_LIFF) { LOGGING_IN = true; location.href = liffOpenUrl(); return; }
-  if (IN_LINE_APP) return doLogin({ tab: tab || TAB || 'card' });
+  LOGGING_IN = false;
+  if (WEB_LOGIN || IN_LINE_APP) return doLogin({ login: '1', tab: tab || TAB || 'card' });
   LIFF_READY.then(() => doLogin({ login: '1', tab: tab || TAB || 'card' })).catch(() => loginFailed());
 }
 
@@ -855,7 +861,8 @@ function loginNow(tab) {
    之前的問題：從 LINE 登入回來時網址帶著 code=…，若沒登入成功（例如在 LINE 內建瀏覽器裡、或登入後被開到別的瀏覽器），
    程式又用「目前網址」（含舊的 code）再登入一次，就一直繞圈，最後 LINE 顯示 400 Bad Request。
    現在：登入前先把 code 等參數清掉；同一個分頁最多自動登入 2 次，還不成功就顯示說明頁；在 LINE 內建瀏覽器改用 LIFF 網址打開。 */
-const IN_LINE_APP = /\bLine\//i.test(navigator.userAgent) && !/LIFF\//i.test(navigator.userAgent);
+const IN_LIFF_UA = /LIFF\//i.test(navigator.userAgent);
+const IN_LINE_APP = /\bLine\//i.test(navigator.userAgent) && !IN_LIFF_UA;
 const CAME_VIA_LIFF = PARAMS.has('pwl') || /pwl(=|%3D)1/.test(PARAMS.get('liff.state') || '');
 const LOGIN_PARAMS = ['code', 'state', 'liffClientId', 'liffRedirectUri', 'error', 'error_description', 'friendship_status_changed', 'openExternalBrowser'];
 function hopOnce() { try { if (sessionStorage.getItem('pw.liffhop')) return false; sessionStorage.setItem('pw.liffhop', '1'); } catch (e) {} return true; }
@@ -893,30 +900,68 @@ function externalUrl(extra) {
 }
 function doLogin(extra) {
   if (LOGGING_IN) return;              // 同一頁只登入一次（避免同時好幾個地方都要求登入，把次數算錯）
-  if (IN_LINE_APP && !PARAMS.has('openExternalBrowser')) {   // 已經要求過用手機瀏覽器開、卻還在 LINE 裡：就直接在這裡登入（有次數限制）
-    LOGGING_IN = true;
-    if (!CAME_VIA_LIFF && hopOnce()) { location.replace(liffOpenUrl()); return; }   // 先試：改在 LINE 的 LIFF 視窗打開（自動登入）
-    location.href = externalUrl(extra); return;                                       // 再不行：改用手機的瀏覽器登入
-  }
+  if (LIFF_OK && liff.isInClient && liff.isInClient()) { LOGGING_IN = true; liff.login(); return; }
   let n = 0;
   try { n = +sessionStorage.getItem('pw.logintry') || 0; sessionStorage.setItem('pw.logintry', String(n + 1)); } catch (e) {}
   if (n >= 2) return loginFailed();
+  if (WEB_LOGIN) { LOGGING_IN = true; return webLogin(extra); }          // 一般 LINE Login：各種瀏覽器都穩
+  if (IN_LINE_APP) return loginFailed('inapp');                          // LIFF 登入在 LINE 內建瀏覽器會 400，不要用
   LOGGING_IN = true;
   liff.login({ redirectUri: cleanHref(extra) });
 }
-function loginFailed() {
+
+/* ---------- 網頁版 LINE Login（不靠 LIFF；在 LINE 內建瀏覽器裡會自動登入） ---------- */
+const WEB_REDIRECT = 'https://praywall.pages.dev/';
+let WEB_LOGIN = (() => { try { return localStorage.getItem('pw.weblogin') === '1'; } catch (e) { return false; } })();
+async function loadLoginConfig() {
+  try {
+    const at = +localStorage.getItem('pw.weblogin.at') || 0;
+    if (Date.now() - at < 6 * 3600e3 && localStorage.getItem('pw.weblogin') !== null) return;
+    const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), 5000);
+    const j = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'loginConfig' }), signal: ctl.signal }).then(r => r.json()); clearTimeout(t);
+    WEB_LOGIN = !!(j && j.webLogin);
+    localStorage.setItem('pw.weblogin', WEB_LOGIN ? '1' : '0'); localStorage.setItem('pw.weblogin.at', String(Date.now()));
+  } catch (e) {}
+}
+function webLogin(extra) {
+  const state = 'pw' + Math.random().toString(36).slice(2, 12), nonce = Math.random().toString(36).slice(2, 12);
+  const back = new URL(cleanHref(extra)); ['openExternalBrowser', 'pwl'].forEach(k => back.searchParams.delete(k));
+  try { localStorage.setItem('pw.wl.state', state); localStorage.setItem('pw.wl.back', back.toString()); } catch (e) {}
+  const q = new URLSearchParams({ response_type: 'code', client_id: '2012412693', redirect_uri: WEB_REDIRECT, state, scope: 'openid profile', nonce });
+  location.href = 'https://access.line.me/oauth2/v2.1/authorize?' + q;
+}
+const isWebLoginReturn = () => /^pw/.test(PARAMS.get('state') || '') && !PARAMS.has('liffClientId') && (PARAMS.has('code') || PARAMS.has('error'));
+async function webLoginReturn() {
+  let back = '/';
+  try { back = localStorage.getItem('pw.wl.back') || '/'; localStorage.removeItem('pw.wl.back'); localStorage.removeItem('pw.wl.state'); } catch (e) {}
+  if (!back.startsWith(WEB_REDIRECT)) back = WEB_REDIRECT;
+  if (PARAMS.has('error')) { history.replaceState(null, '', back); return loginFailed(); }   // 使用者在 LINE 畫面按了取消
+  view(`<section class="solo"><div class="msg-card"><div class="move-pom">${pomSvg()}</div><h1>正在登入…</h1>${loading()}</div></section>`);
+  try {
+    const j = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'lineCode', code: PARAMS.get('code'), redirectUri: WEB_REDIRECT }) }).then(r => r.json());
+    if (!j.ok) throw new Error(j.error);
+    setSession(j);
+    try { sessionStorage.removeItem('pw.logintry'); } catch (e) {}
+    location.replace(back);
+  } catch (e) { history.replaceState(null, '', back); loginFailed(); }
+}
+function loginFailed(reason) {
   try { sessionStorage.removeItem('pw.logintry'); } catch (e) {}
+  LOGGING_IN = false;
   if (LOGIN_PARAMS.some(k => PARAMS.has(k))) history.replaceState(null, '', cleanHref());
+  const inapp = reason === 'inapp' || IN_LINE_APP;
   view(`<section class="solo"><div class="msg-card move-card">
     <div class="move-pom">${pomSvg()}</div>
-    <h1>LINE 登入沒有完成</h1>
-    <p>沒關係，你的名單還在。請按下面的大按鈕，改在 LINE 裡打開，LINE 會自動幫你登入並同步名單。</p>
-    <a class="btn send huge" href="${esc(liffOpenUrl())}">在 LINE 裡打開</a>
-    <button class="btn ghost" id="lf-retry" style="margin-top:12px">再試一次登入</button>
+    <h1>${reason === 'inapp' ? '這個畫面沒辦法登入 LINE' : 'LINE 登入沒有完成'}</h1>
+    <p>沒關係，你的名單還在。${inapp ? '請按下面的大按鈕，改用手機的瀏覽器（Safari 或 Chrome）打開，再按「登入」。' : '請按下面的大按鈕，改在 LINE 裡打開，LINE 會自動幫你登入並同步名單。'}</p>
+    ${inapp ? `<a class="btn send huge" href="${esc(externalUrl({ tab: 'card' }))}">用手機瀏覽器打開</a>
+    <p class="muted small" style="margin-top:10px">沒有反應的話：點右上角「⋯」，選「用預設瀏覽器開啟」。</p>
+    <a class="btn ghost" href="${esc(liffOpenUrl())}" style="margin-top:10px">在 LINE 裡打開</a>` : `<a class="btn send huge" href="${esc(liffOpenUrl())}">在 LINE 裡打開</a>`}
+    <button class="btn ghost" id="lf-retry" style="margin-top:12px${inapp && !WEB_LOGIN ? ';display:none' : ''}">再試一次登入</button>
     <button class="link small" id="lf-guest" style="margin-top:16px">先只在這支手機使用</button>
     <p class="muted small" style="margin-top:14px">也可以在代禱卡的「名單代碼」輸入舊的同步碼接回名單。<a href="move.html" target="_blank" rel="noopener">看圖文教學</a></p>
   </div></section>`);
-  $('lf-retry').onclick = () => { try { sessionStorage.removeItem('pw.logintry'); } catch (e) {} LOGGING_IN = false; LIFF_READY.then(() => doLogin({ login: '1', tab: 'card' })).catch(() => toast('LINE 登入元件載入失敗，請改用「在 LINE 裡打開」')); };
+  $('lf-retry').onclick = () => loginNow('card');
   $('lf-guest').onclick = () => { GUEST = true; guestFlow(); };
 }
 const openInLineUrl = () => { const c = guestCard(); const q = new URLSearchParams({ tab: 'card' }); if (c && countList(c)) q.set('import', encodeList(c)); return `https://liff.line.me/${LIFF_ID}?${q}`; };
@@ -1226,7 +1271,11 @@ async function postWall(w, news) {
 async function share(w) {
   if (DEMO) { toast('預覽模式：正式版會在這裡跳出群組選單'); return false; }
   try { await LIFF_READY; } catch (e) { toast(e.message); return false; }
-  if (!liff.isLoggedIn()) { toast('發送到群組前需要登入 LINE 一次'); setTimeout(() => doLogin(), 600); return false; }
+  if (!liff.isLoggedIn()) {
+    // 傳到群組要用 LINE 的選單（LIFF）：LINE 內建瀏覽器或用網頁登入時沒有，改複製連結
+    if (IN_LINE_APP || getSession()) { copyText(w && w.id ? `https://liff.line.me/${LIFF_ID}?wall=${w.id}` : `https://liff.line.me/${LIFF_ID}`, '已複製連結，請貼到 LINE 群組；或從 LINE 的「我的代禱卡」入口打開再傳'); return false; }
+    toast('發送到群組前需要登入 LINE 一次'); setTimeout(() => { LOGGING_IN = true; liff.login({ redirectUri: cleanHref() }); }, 600); return false;
+  }
   if (!liff.isApiAvailable('shareTargetPicker')) { toast('無法開啟群組選單，請確認 LIFF 已開啟 Share target picker'); return false; }
   try {
     const res = await liff.shareTargetPicker([buildWallFlex(w)], { isMultiple: true });
@@ -1892,12 +1941,19 @@ function drawAdmin() {
     <p class="hint">個人代禱卡是每個人自己的名單，後台只看人數，不顯示內容。</p>
     <div class="old-box"><p><b>舊站「金香壇代禱卡」搬家</b>：已匯入 ${(ADMIN.old || {}).lists || 0} 份舊名單，其中 ${(ADMIN.old || {}).claimed || 0} 份已用同步碼接回。聖徒輸入舊同步碼時會先查舊站雲端，查不到才用這裡的備份。</p>
       <label class="btn small" for="a-old">匯入舊站匯出檔（.json）</label><input type="file" id="a-old" accept=".json,application/json" hidden></div>
+    <div class="old-box"><p><b>網頁登入（LINE 內建瀏覽器、Safari、桌面圖示用）</b>：<span id="a-wl">${WEB_LOGIN ? '✓ 已啟用' : '尚未設定'}</span>。到 LINE Developers →「活動報名」channel → Basic settings 複製 <b>Channel secret</b>，貼在這裡按儲存。只存在後端，不會顯示出來。</p>
+      <div class="sync-row"><input class="inp" id="a-secret" type="password" placeholder="Channel secret（32 碼）" autocomplete="off" spellcheck="false"><button class="btn small send" id="a-secret-go">儲存</button></div></div>
     <input class="inp" id="a-q" placeholder="搜尋代禱牆名稱或建立者" value="${esc(AFILTER)}" style="margin:12px 0 8px" aria-label="搜尋">
     <div class="sel-head"><label class="m-all"><input type="checkbox" id="a-all" ${list.length && list.every(w => WSEL.has(w.id)) ? 'checked' : ''}> 全選</label><button class="btn small ghost" id="a-copy">複製統計</button></div>
     ${selBarHtml('a-sel', WSEL.size)}
     <div id="a-list">${list.length ? wallRows(list, { selectable: true, showCreator: true }) : '<p class="muted">沒有符合的代禱牆。</p>'}</div>`);
   $('back').onclick = () => { WSEL.clear(); TAB = 'walls'; go({ view: 'tabs' }); };
   $('a-q').oninput = e => { AFILTER = e.target.value; const pos = e.target.selectionStart; drawAdmin(); const x = $('a-q'); x.focus(); x.setSelectionRange(pos, pos); };
+  $('a-secret-go').onclick = async () => {
+    const v = $('a-secret').value.trim(); if (!v) return toast('請先貼上 Channel secret');
+    try { await api('setSecret', { secret: v }); $('a-secret').value = ''; WEB_LOGIN = true; try { localStorage.setItem('pw.weblogin', '1'); localStorage.setItem('pw.weblogin.at', String(Date.now())); } catch (e) {} $('a-wl').textContent = '✓ 已啟用'; toast('已儲存，網頁登入啟用了'); }
+    catch (e) { toast(e.message); }
+  };
   $('a-old').onchange = async e => {
     const f = e.target.files[0]; if (!f) return;
     let ex; try { ex = JSON.parse(await f.text()); } catch (err) { return toast('讀不懂這個檔案，請選舊站匯出的 .json'); }

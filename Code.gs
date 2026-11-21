@@ -48,6 +48,9 @@ function doPost(e) {
   let out;
   try {
     const req = JSON.parse((e && e.postData && e.postData.contents) || '{}');
+    // 不用先登入的：查網頁登入是否可用、用 LINE Login 的授權碼換通行證
+    if (req.action === 'loginConfig') return json({ ok: true, webLogin: !!channelSecret() });
+    if (req.action === 'lineCode') return json({ ok: true, ...webLoginExchange(req.code, req.redirectUri) });
     MEMO = ['boot', 'wall', 'listWalls', 'getCard', 'adminOverview', 'myData', 'me'].indexOf(req.action) >= 0 ? {} : null;
     // 有平台自己的通行證就用通行證（60 天有效），否則向 LINE 驗證 ID token
     // 用舊同步碼接回名單可以不登入（和舊站一樣，知道 20 碼同步碼才讀得到那一份）
@@ -78,6 +81,7 @@ function doPost(e) {
       case 'removeNames': out = { ok: true, wall: removeNames(user, req.wallId, req.entryIds) }; break;
       case 'editName':    out = { ok: true, wall: editName(user, req.wallId, req.entryId, req.name, req.group) }; break;
       case 'moveNames':   own(); out = { ok: true, wall: moveNames(user, req.wallId, req.entryIds, req.group) }; break;
+      case 'setSecret':   requirePublisher(user); out = { ok: true, ...setChannelSecret(req.secret) }; break;
       case 'adminOverview': requirePublisher(user); out = { ok: true, ...adminOverview(user) }; break;
       case 'claimOld':    out = { ok: true, ...claimOld(user, req.code) }; break;
       case 'importOld':   requirePublisher(user); out = { ok: true, ...importOld(req.lists) }; break;
@@ -775,4 +779,29 @@ function oldStats() {
   if (!sh || sh.getLastRow() < 2) return { lists: 0, claimed: 0 };
   const v = sh.getRange(2, 6, sh.getLastRow() - 1, 1).getValues();
   return { lists: v.length, claimed: v.filter(r => String(r[0]).trim()).length };
+}
+
+/* ---------- 網頁版 LINE Login（不靠 LIFF） ----------
+   在 LINE 內建瀏覽器裡，LIFF 的登入會出現 400 Bad Request；改用一般的 LINE Login（在 LINE 裡會自動登入）。
+   授權碼要用 Channel secret 換成 ID token，secret 只存在指令碼屬性，不會傳到前端。 */
+const WEB_LOGIN_REDIRECT = 'https://praywall.pages.dev/';
+function channelSecret() { return PropertiesService.getScriptProperties().getProperty('LINE_CHANNEL_SECRET') || ''; }
+function setChannelSecret(secret) {
+  secret = String(secret || '').trim();
+  if (!/^[0-9a-f]{32}$/i.test(secret)) throw new Error('Channel secret 應該是 32 個英文字母和數字，請再確認一次');
+  PropertiesService.getScriptProperties().setProperty('LINE_CHANNEL_SECRET', secret);
+  return { webLogin: true };
+}
+function webLoginExchange(code, redirectUri) {
+  const secret = channelSecret();
+  if (!secret) throw new Error('網頁登入還沒設定好');
+  if (!code) throw new Error('缺少授權碼');
+  const r = UrlFetchApp.fetch('https://api.line.me/oauth2/v2.1/token', {
+    method: 'post', muteHttpExceptions: true,
+    payload: { grant_type: 'authorization_code', code: String(code), redirect_uri: redirectUri === WEB_LOGIN_REDIRECT ? redirectUri : WEB_LOGIN_REDIRECT, client_id: CONFIG.CHANNEL_ID, client_secret: secret },
+  });
+  const d = JSON.parse(r.getContentText() || '{}');
+  if (r.getResponseCode() !== 200 || !d.id_token) throw new Error('LINE 登入失敗：' + (d.error_description || d.error || r.getResponseCode()));
+  const user = verifyIdToken(d.id_token);
+  return createSession(user);
 }
