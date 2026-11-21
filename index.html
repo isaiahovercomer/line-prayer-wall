@@ -252,6 +252,9 @@
   .mig-note.busy .loading { flex: none; }
   .move-card .big { font-size: 1.15rem; line-height: 1.7; margin: 10px 0 4px; }
   .move-card .btn.huge { font-size: 1.3rem; padding: 18px 20px; border-radius: 999px; }
+  .old-help { background: var(--sheet); border: 1.5px dashed var(--stamp, #A12A3C); border-radius: 18px; padding: 12px 14px; margin-bottom: 14px; }
+  .old-help p { margin: 0; font-size: 14px; line-height: 1.6; }
+  .old-help .actions { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
   .guest-note { background: var(--sheet); border: 1.5px solid var(--line, rgba(0,0,0,.1)); border-radius: 18px; padding: 12px 14px; margin-bottom: 14px; }
   .guest-note p { margin: 0; font-size: 14px; line-height: 1.6; }
   .guest-note .actions { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
@@ -493,13 +496,19 @@ const MOVE_KEY = 'pw.move';
    所以第一次打開時先跳到舊站的 bridge.html 讀一下，馬上帶著名單（#n=、#s=）跳回來；每個瀏覽器只做一次。 */
 const OLDCHK_KEY = 'pw.oldchk';
 const OLD_BRIDGE = 'https://shc5556-hsinhua.github.io/praycards/bridge.html';
+/** 使用者自己按「從這支手機找舊代禱卡」：不管之前查過沒，再去舊站讀一次 */
+function forceProbeOld() {
+  try { localStorage.removeItem(OLDCHK_KEY); localStorage.removeItem('pw.moved'); } catch (e) {}
+  const back = new URL(location.origin + location.pathname + location.search);
+  back.searchParams.set('oldask', '1'); back.searchParams.set('tab', 'card');
+  location.href = OLD_BRIDGE + '?back=' + encodeURIComponent(back.toString());
+}
 async function probeOldSite() {
   try {
     if (DEMO || localStorage.getItem(OLDCHK_KEY) || getMove() || navigator.onLine === false) return false;
     if (['wall', 'share', 'mydata', 'manage', 'install', 'liff.state', 'code', 'login', 'import', 'noprobe'].some(k => PARAMS.has(k))) return false;
-    const today = new Date().toDateString();
-    if (localStorage.getItem('pw.oldtry') === today) return false;   // bridge 還沒上線：一天最多試一次
-    localStorage.setItem('pw.oldtry', today);
+    if (sessionStorage.getItem('pw.oldtry')) return false;   // 同一次打開只試一次（bridge 沒回應時不會一直跳）
+    sessionStorage.setItem('pw.oldtry', '1');
     const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), 2500);
     const r = await fetch(OLD_BRIDGE, { method: 'HEAD', cache: 'no-store', signal: ctl.signal }); clearTimeout(t);
     if (!r.ok) return false;
@@ -512,7 +521,7 @@ function moveDone() { try { return JSON.parse(localStorage.getItem('pw.moved') |
 (function captureMove() {
   const h = new URLSearchParams(location.hash.replace(/^#/, ''));
   if (h.has('old')) {   // 從舊站的 bridge.html 回來：不管有沒有名單，都記下「這個瀏覽器查過了」
-    try { localStorage.setItem(OLDCHK_KEY, '1'); } catch (e) {}
+    try { localStorage.setItem(OLDCHK_KEY, h.get('n') || h.get('s') ? 'found' : 'none'); } catch (e) {}
     if (!h.get('n') && !h.get('s')) { history.replaceState(null, '', location.pathname + location.search); return; }
   }
   const n = h.get('n') || (PARAMS.get('sync') || PARAMS.has('mv') ? String(PARAMS.get('import') || '').replace(/^GIA1\./, '') : ''), sc = (h.get('s') || PARAMS.get('sync') || '').toUpperCase().replace(/[^A-Z2-9]/g, '');
@@ -849,8 +858,9 @@ let GUEST = false;
 const GUEST_KEY = 'pw.guest.card';
 const guestCard = () => { try { const c = JSON.parse(localStorage.getItem(GUEST_KEY) || 'null'); return c && c.days && c.days.length === 7 ? c : null; } catch (e) { return null; } };
 const blankCardLocal = () => ({ days: ['家人', '親戚', '好友', '同事(學)', '鄰居', '聖徒', '馬路'].map(cat => ({ cat, names: [] })) });
-function loginNow(tab) {
+async function loginNow(tab) {
   toast('正在前往 LINE 登入…');
+  if (!WEB_LOGIN) await loadLoginConfig();
   try { sessionStorage.removeItem('pw.logintry'); } catch (e) {}   // 使用者自己按的：重新計算
   LOGGING_IN = false;
   if (WEB_LOGIN || IN_LINE_APP) return doLogin({ login: '1', tab: tab || TAB || 'card' });
@@ -863,6 +873,8 @@ function loginNow(tab) {
    現在：登入前先把 code 等參數清掉；同一個分頁最多自動登入 2 次，還不成功就顯示說明頁；在 LINE 內建瀏覽器改用 LIFF 網址打開。 */
 const IN_LIFF_UA = /LIFF\//i.test(navigator.userAgent);
 const IN_LINE_APP = /\bLine\//i.test(navigator.userAgent) && !IN_LIFF_UA;
+// 手機上的一般瀏覽器（Safari／Chrome）：點 LIFF 網址會直接打開 LINE 並自動登入，比在瀏覽器裡輸入 LINE 帳號密碼簡單
+const MOBILE_EXT = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) && !IN_LINE_APP && !IN_LIFF_UA;
 const CAME_VIA_LIFF = PARAMS.has('pwl') || /pwl(=|%3D)1/.test(PARAMS.get('liff.state') || '');
 const LOGIN_PARAMS = ['code', 'state', 'liffClientId', 'liffRedirectUri', 'error', 'error_description', 'friendship_status_changed', 'openExternalBrowser'];
 function hopOnce() { try { if (sessionStorage.getItem('pw.liffhop')) return false; sessionStorage.setItem('pw.liffhop', '1'); } catch (e) {} return true; }
@@ -916,7 +928,7 @@ let WEB_LOGIN = (() => { try { return localStorage.getItem('pw.weblogin') === '1
 async function loadLoginConfig() {
   try {
     const at = +localStorage.getItem('pw.weblogin.at') || 0;
-    if (Date.now() - at < 6 * 3600e3 && localStorage.getItem('pw.weblogin') !== null) return;
+    if (Date.now() - at < 6 * 3600e3 && localStorage.getItem('pw.weblogin') === '1') return;   // 「還沒啟用」不快取，每次都再問一次
     const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), 5000);
     const j = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'loginConfig' }), signal: ctl.signal }).then(r => r.json()); clearTimeout(t);
     WEB_LOGIN = !!(j && j.webLogin);
@@ -964,15 +976,15 @@ function loginFailed(reason) {
   $('lf-retry').onclick = () => loginNow('card');
   $('lf-guest').onclick = () => { GUEST = true; guestFlow(); };
 }
-const openInLineUrl = () => { const c = guestCard(); const q = new URLSearchParams({ tab: 'card' }); if (c && countList(c)) q.set('import', encodeList(c)); return `https://liff.line.me/${LIFF_ID}?${q}`; };
+const openInLineUrl = () => liffOpenUrl();
 function guestNote() {
   return `<div class="guest-note"><p><b>目前名單只存在這支手機。</b>登入 LINE 後可以存到雲端（換手機不會不見），也能使用小區代禱牆。</p>
-    <div class="actions"><button class="btn small send" data-login>登入 LINE</button><a class="btn small" href="${esc(openInLineUrl())}">在 LINE 裡打開</a></div></div>`;
+    <div class="actions"><button class="btn small send" data-login>登入 LINE</button><a class="btn small" href="${esc(liffOpenUrl())}">在 LINE 裡打開</a></div></div>`;
 }
 function guestLocked(what) {
   $('panel').innerHTML = `<div class="msg-card guest-lock"><div class="move-pom">${pomSvg()}</div><h2>${what}需要登入 LINE</h2>
     <p class="muted">代禱牆是和小區、小排的弟兄姊妹一起用的，需要知道你是誰。登入後，這支手機上的代禱卡名單也可以一起存到雲端。</p>
-    <button class="btn send" data-login>登入 LINE</button><a class="btn ghost" href="${esc(openInLineUrl())}">在 LINE 裡打開</a></div>`;
+    <button class="btn send" data-login>登入 LINE</button><a class="btn ghost" href="${esc(liffOpenUrl())}">在 LINE 裡打開</a></div>`;
   bindLogin();
 }
 function bindLogin() { document.querySelectorAll('[data-login]').forEach(b => b.onclick = () => loginNow(TAB)); }
@@ -988,12 +1000,15 @@ async function guestFlow() {
 
 /** 從舊站轉過來、還沒登入：只有一個大按鈕「同步代禱名單」→ 登入 LINE → 回來自動同步 */
 function moveLanding() {
+  const m = getMove(), d = m && m.n ? decodeList('#n=' + m.n) : null, cnt = d ? countList(d) : 0;
   view(`<section class="solo"><div class="msg-card move-card">
     <div class="move-pom">${pomSvg()}</div>
     <h1>金香壇代禱卡搬家了</h1>
-    <p class="big">請按下面的按鈕，<br>把你的代禱名單搬過來。</p>
-    <button class="btn send huge" id="mv-sync">同步代禱名單</button>
-    <p class="muted small" style="margin-top:14px">會請你用 LINE 登入一次。之後名單就跟著你的 LINE，換手機也不會不見。</p>
+    <p class="big">${cnt ? `在這支手機找到舊代禱卡的 <b>${cnt} 個名字</b>${m.s ? '，<br>雲端的名單也會一起接回' : ''}。` : m && m.s ? '找到舊代禱卡的雲端名單。' : ''}<br>請按下面的按鈕，把名單搬過來。</p>
+    ${MOBILE_EXT ? `<a class="btn send huge" id="mv-sync-line" href="${esc(liffOpenUrl())}">同步代禱名單</a>
+    <p class="muted small" style="margin-top:14px">會打開 LINE，自動登入並搬好名單。之後名單就跟著你的 LINE，換手機也不會不見。</p>
+    <button class="btn ghost" id="mv-sync" style="margin-top:10px">在這個瀏覽器登入 LINE</button>` : `<button class="btn send huge" id="mv-sync">同步代禱名單</button>
+    <p class="muted small" style="margin-top:14px">會請你用 LINE 登入一次。之後名單就跟著你的 LINE，換手機也不會不見。</p>`}
     <button class="link small" id="mv-skip" style="margin-top:18px">先不要登入，只在這支手機使用</button>
     <p class="small" style="margin-top:10px"><a href="move.html" target="_blank" rel="noopener">看圖文教學</a></p>
   </div></section>`);
@@ -1571,10 +1586,10 @@ function cardText(i) {
   return `金香壇代禱｜${dayLabel(i)}－${d.cat}\n${d.names.length ? d.names.map((n, k) => `${k + 1}. ${n}`).join('\n') : '（尚無名單）'}\n\n撒上十二23「${CARD_VERSE.text}」\n\n我的代禱卡：https://liff.line.me/${LIFF_ID}?tab=card`;
 }
 async function persistCard(card, msg) {
-  if (GUEST) { CARD = card; try { localStorage.setItem(GUEST_KEY, JSON.stringify(card)); } catch (e) {} if (msg) toast(msg); return; }
+  if (GUEST) { CARD = card; try { localStorage.setItem(GUEST_KEY, JSON.stringify(card)); } catch (e) {} if (msg) toast(msg); return true; }
   CARD = card; cacheSet('card', CARD);
-  try { const r = await api('saveCard', { card }); CARD = r.card || card; cacheSet('card', CARD); if (msg) toast(msg); }
-  catch (e) { toast('儲存失敗：' + e.message); }
+  try { const r = await api('saveCard', { card }); CARD = r.card || card; cacheSet('card', CARD); if (msg) toast(msg); return true; }
+  catch (e) { toast('儲存失敗：' + e.message); return false; }
 }
 
 function renderCard() {
@@ -1624,7 +1639,7 @@ function renderCard() {
       </div>
       </div>`;
   }
-  $('panel').innerHTML = `${cardHeroHtml()}${migrateNote()}${pend}${GUEST && !PENDING_IMPORT && !MIGRATING ? guestNote() : ''}${dayNav}
+  $('panel').innerHTML = `${cardHeroHtml()}${migrateNote()}${pend}${GUEST && !PENDING_IMPORT && !MIGRATING ? guestNote() : ''}${oldHelpNote()}${dayNav}
     <div id="card-shot">
     <section class="pcard">${scatterSeeds(6, 13)}
       <div class="head"><span class="wd">${dayLabel(sel)}</span>${sel === today ? '<span class="tag">今天</span>' : ''}<h2>${esc(d.cat)}</h2></div>
@@ -1700,6 +1715,8 @@ function bindCard() {
     shot: () => cardPoster(sel) });
   bindLogin();
   on('mig-ok', () => { MIGRATING = null; renderCard(); });
+  on('old-find', () => { toast('正在找舊代禱卡…'); forceProbeOld(); });
+  on('old-code', () => { const b = $('card-code'); if (b) { b.click(); setTimeout(() => { const i = $('sync-in'); if (i) { i.scrollIntoView({ block: 'center' }); i.focus(); } }, 300); } });
   on('card-towall', () => { if (GUEST) return guestLocked('放上代禱牆'); TOWALL = { picked: new Set(), wallId: '', group: '' }; go({ view: 'towall' }); });
 }
 /** 代禱卡存圖：石榴頁首＋這一天的名單＋經文（不含按鈕） */
@@ -2048,16 +2065,28 @@ async function autoMigrate() {
   if (gc) inc = mergeCard(inc, gc).card;
   if (move && move.s) { try { const r = await api('claimOld', { code: move.s }); if (r.found) { inc = mergeCard(inc, r.data).card; cloud = true; } } catch (e) {} }
   const m = mergeCard(CARD, inc);
-  await persistCard(m.card);
+  const saved = await persistCard(m.card);
+  if (!saved) { MIGRATING = null; if (ROUTE.view === 'tabs') render(); toast('名單還沒存到雲端，請稍後再打開一次，會再自動同步'); return; }   // 沒存成功就不要清掉搬家資料，下次再試
   if (!GUEST) { clearMove(); try { localStorage.removeItem(GUEST_KEY); } catch (e) {} }
   MIGRATING = { state: 'done', added: m.added, total: countList(inc), cloud };
   if (ROUTE.view === 'tabs') { TAB = 'card'; render(); }
+}
+/** 代禱卡還是空的：提供「從這支手機找舊代禱卡」和「用同步碼接回」 */
+function oldHelpNote() {
+  if (MIGRATING || PENDING_IMPORT || !CARD || countList(CARD) > 0) return '';
+  let chk = ''; try { chk = localStorage.getItem(OLDCHK_KEY) || ''; } catch (e) {}
+  const asked = PARAMS.has('oldask');
+  const none = asked && chk === 'none';
+  return `<div class="old-help"><p><b>${none ? '這支手機的這個瀏覽器裡，沒有找到舊代禱卡的名單' : '以前用過「金香壇代禱卡」嗎？'}</b><br>${none
+    ? '舊名單存在你當初用舊代禱卡的那個地方（例如 LINE 裡點開的、或 Safari／Chrome）。請在那個地方打開舊網址，或用下面的「同步碼」接回。'
+    : '按下面的按鈕，會到這支手機裡找舊的名單，找到就自動搬過來。'}</p>
+    <div class="actions">${none ? '' : '<button class="btn small send" id="old-find">從這支手機找舊代禱卡</button>'}<button class="btn small" id="old-code">用同步碼接回</button><a class="btn small ghost" href="move.html" target="_blank" rel="noopener">看教學</a></div></div>`;
 }
 function migrateNote() {
   if (!MIGRATING) return '';
   if (MIGRATING.state === 'busy') return `<div class="mig-note busy"><span class="loading" style="padding:0"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span><p><b>正在同步代禱名單…</b><br>請稍等，不用按任何按鈕。</p></div>`;
   const { added, total } = MIGRATING;
-  if (GUEST) return `<div class="mig-note"><p><b>還差一步：同步到你的 LINE</b><br>${total ? `舊代禱卡的 ${total} 個名字先放在這支手機。` : ''}按下面的按鈕登入 LINE，名單才會存好，換手機也不會不見。</p></div><button class="btn send huge-sync" data-login>同步代禱名單</button>`;
+  if (GUEST) return `<div class="mig-note"><p><b>還差一步：同步到你的 LINE</b><br>${total ? `舊代禱卡的 ${total} 個名字先放在這支手機。` : ''}按下面的按鈕${MOBILE_EXT ? '打開 LINE' : '登入 LINE'}，名單才會存好，換手機也不會不見。</p></div>${MOBILE_EXT ? `<a class="btn send huge-sync" href="${esc(liffOpenUrl())}">同步代禱名單</a>` : '<button class="btn send huge-sync" data-login>同步代禱名單</button>'}`;
   return `<div class="mig-note"><div class="ok" aria-hidden="true">✓</div><p><b>代禱名單同步好了</b><br>${total ? `舊代禱卡的 ${total} 個名字都在這裡了${added < total ? `（其中 ${total - added} 個原本就有）` : ''}。` : '舊代禱卡裡沒有找到名字。'}${GUEST ? '' : '以後從 LINE 打開就看得到。'}</p><button class="btn small" id="mig-ok">好</button></div>`;
 }
 
